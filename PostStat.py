@@ -2,7 +2,7 @@ import numpy as np
 import tables
 import wx
 import os as pwd
-import scipy.stats
+
 # Stat=scipy.stats.ttest_ind(DataAppris,DataNonAppris,axis=0)# unpaired
 # Stat=scipy.stats.ttest_rel(DataAppris,DataNonAppris,axis=0) # paired
 # Class de traitement des test multiple.
@@ -37,8 +37,9 @@ class Data:
         for node in self.file.listNodes("".join(text)):
             if node.name == 'Mask':
                 self.file.removeNode("".join(["".join(text), '/Mask']))
-        self.Mask = self.file.createEArray(
-            "".join(text), 'Mask', tables.Float64Atom(), (shape[0], shape[1], 0))
+        self.Mask = self.file.createEArray("".join(text), 'Mask',
+                                           tables.Float64Atom(),
+                                           (shape[0], shape[1], 0))
         text.append('P')
         self.P = self.file.getNode("".join(text))
         if len(self.P.read().shape) > 1:
@@ -67,14 +68,15 @@ class Data:
         self.Anova = Anova
         self.GFP = DataGFP
 
-    def MathematicalMorphology(self, alpha, TF=1, SpaceCriteria=1, SpaceFile=None):
+    def MathematicalMorphology(self, alpha, TF=1,
+                               SpaceCriteria=1, SpaceFile=None):
         # Erosition suivit de dilatation = ouverture
 
         if self.shape[0] == 1:  # test nnumber of time frame
             TF = 1
         if self.shape[1] == 1:  # test number of space point
             SpaceCriteria = 1
-        if SpaceFile != None:
+        if SpaceFile is not None:
             self.MatrixDist(SpaceFile)
             Distance = self.Distance
         if TF == 1 and SpaceCriteria == 1:  # aucun crtitere
@@ -89,8 +91,11 @@ class Data:
         else:  # morphologie mathematique
             if SpaceCriteria == 1:  # time criteria only
                 NbCaclul = (self.NbTerms * self.shape[0] * 2)
-                dlg = wx.ProgressDialog('Multiple Test Correction', 'Calculation in progress : 0 %',
-                                        NbCaclul, parent=self.parent, style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                dlg = wx.ProgressDialog(
+                    'Multiple Test Correction',
+                    'Calculation in progress : 0 %',
+                    NbCaclul, parent=self.parent,
+                    style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
                 dlg.SetSize((200, 130))
                 TimeStart = (TF - 1) / 2
                 TimeEnd = TF - TimeStart
@@ -119,8 +124,8 @@ class Data:
                             n += 1
                             pourcent = str(100.0 * (n) / (NbCaclul))
                             pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(
-                                n, " ".join(['Progression  :', pourcent, ' %']))
+                            dlg.Update(n, " ".join(['Progression  :',
+                                                    pourcent, ' %']))
 
                     # dilataion
                     Data = Mask[:, :, 0]
@@ -141,15 +146,18 @@ class Data:
                             n += 1
                             pourcent = str(100.0 * (n) / (NbCaclul))
                             pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(
-                                n, " ".join(['Progression  :', pourcent, ' %']))
+                            dlg.Update(n, " ".join(['Progression  :',
+                                                    pourcent, ' %']))
                     self.Mask.append(Mask)
 
             # sapcial criterai only
             elif TF == 1:
                 NbCaclul = (self.NbTerms * self.shape[1] * 2)
-                dlg = wx.ProgressDialog('Multiple Test Correction', 'Calculation in progress : 0 %',
-                                        NbCaclul, parent=self.parent, style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                dlg = wx.ProgressDialog(
+                    'Multiple Test Correction',
+                    'Calculation in progress : 0 %',
+                    NbCaclul, parent=self.parent,
+                    style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
                 dlg.SetSize((200, 130))
                 n = 0
                 for i in range(self.NbTerms):
@@ -170,8 +178,8 @@ class Data:
                             n += 1
                             pourcent = str(100.0 * (n) / (NbCaclul))
                             pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(
-                                n, " ".join(['Progression  :', pourcent, ' %']))
+                            dlg.Update(n, " ".join(['Progression  :',
+                                                    pourcent, ' %']))
                     # dilataion
                     Data = Mask[:, :, 0]
                     Mask = np.zeros((self.shape[0], self.shape[1], 1))
@@ -186,13 +194,16 @@ class Data:
                             n += 1
                             pourcent = str(100.0 * (n) / (NbCaclul))
                             pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(
-                                n, " ".join(['Progression  :', pourcent, ' %']))
+                            dlg.Update(n, " ".join(['Progression  :',
+                                                    pourcent, ' %']))
                     self.Mask.append(Mask)
             else:
                 NbCaclul = (self.NbTerms * self.shape[1] * self.shape[0] * 2)
-                dlg = wx.ProgressDialog('Multiple Test Correction', 'Calculation in progress : 0 %',
-                                        NbCaclul, parent=self.parent, style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                dlg = wx.ProgressDialog(
+                    'Multiple Test Correction',
+                    'Calculation in progress : 0 %',
+                    NbCaclul, parent=self.parent,
+                    style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
                 dlg.SetSize((200, 130))
                 n = 0
                 TimeStart = (TF - 1) / 2
@@ -226,8 +237,8 @@ class Data:
                                 n += 1
                                 pourcent = str(100.0 * (n) / (NbCaclul))
                                 pourcent = pourcent[0:pourcent.find('.') + 3]
-                                dlg.Update(
-                                    n, " ".join(['Progression  :', pourcent, ' %']))
+                                dlg.Update(n, " ".join(['Progression  :',
+                                                        pourcent, ' %']))
                     # dilatation
                     Data = Mask[:, :, 0]
                     Mask = np.zeros((self.shape[0], self.shape[1], 1))
@@ -249,20 +260,17 @@ class Data:
                                 n += 1
                                 pourcent = str(100.0 * (n) / (NbCaclul))
                                 pourcent = pourcent[0:pourcent.find('.') + 3]
-                                dlg.Update(
-                                    n, " ".join(['Progression  :', pourcent, ' %']))
+                                dlg.Update(n, " ".join(['Progression  :',
+                                                        pourcent, ' %']))
                     self.Mask.append(Mask)
             dlg.Close()
             dlg.Destroy()
 
     def WriteIntermediateResult(self, ResultFolder, DataGFP=False):
-        ##################################################################
-        # Write Estimator, not real slope and real mean depending on design
-        ##################################################################
+        """ Write Estimator, not real slope and
+        real mean depending on design"""
 
-        ######################
         # Create result Folder
-        ######################
         IntermediateResultPath = "\\".join([ResultFolder, 'ItermediateResult'])
         try:
             pwd.mkdir(IntermediateResultPath)
@@ -283,15 +291,15 @@ class Data:
 
             NameBetween = self.file.getNode('/Names/Between')
             NameBetween = NameBetween.read()
-            if NameBetween == False:
+            if not NameBetween:
                 NameBetween = []
             NameCovariate = self.file.getNode('/Names/Covariate')
             NameCovariate = NameCovariate.read()
-            if NameCovariate == False:
+            if not NameCovariate:
                 NameCovariate = []
             NameWithin = self.file.getNode('/Names/Within')
             NameWithin = NameWithin.read()
-            if NameWithin == False:
+            if not NameWithin:
                 NameWithin = []
             Subject = self.file.getNode('/Model/Subject')
             Subject = Subject.read()
@@ -307,17 +315,11 @@ class Data:
             Within = self.file.getNode('/Model/Within')
             Within = Within.read()
 
-            ################################
             # Write real Mean and Real slope
-            ################################
-
             Covariate = self.file.getNode('/Model/Covariate')
             Covariate = np.array(Covariate.read())
 
-            ###################################
             # Simple Regression only Covariate
-            ###################################
-
             if NameWithin == [] and NameBetween == []:
                 # Extracting Data
                 Data = []
@@ -378,9 +380,8 @@ class Data:
                     R = self.file.createArray(SlopeGroup, 'R', RTmp)
 # R.append(RTmp)
 # SlopeData.append(Slope)
-            #########################################################
+
             # Within/Between Subject Factor and or not and covariate
-            #########################################################
             else:
 
                 LevelWithin = self.file.getNode('/Info/Level')
@@ -422,9 +423,9 @@ class Data:
 
                 fs = self.file.getNode('/Info/FS')
                 fs = fs.read()
-                ###############################################################
-                # Generating Varaible named with Within and Between subject name and their levels
-                ###############################################################
+
+                # Generating Varaible named with Within and Between subject
+                # name and their levels
                 ConditionTxt = []
                 Level = []
 
@@ -443,16 +444,15 @@ class Data:
                         NbLevel = int(Between[:, i].max())
                     except:
                         NbLevel = int(Between.max())
-                    Cond = []
+
                     Level.append(NbLevel)
                     for j in range(NbLevel):
                         text = [w, str(j + 1), '=0']
                         exec("".join(text))
                     ConditionTxt.append(w)
                 Level = np.array(Level)
-                ##############################################################
+
                 # Generating all combinaison between and within subject factors
-                ##############################################################
                 NbCondition = Level.prod()
                 Combinaison = np.zeros((NbCondition, len(Level)))
                 for k, i in enumerate(Level):
@@ -479,9 +479,8 @@ class Data:
                     Condition = Within
                 else:
                     Condition = np.concatenate((Within, Between), axis=1)
-                #####################################
+
                 # Extracting Data for each Combinaison
-                #####################################
                 if DataGFP:
                     shape = self.file.getNode('/Info/ShapeGFP')
                     shape = shape.read()
@@ -492,7 +491,7 @@ class Data:
                     shape = (shape[0], shape[1])
                 Moyenne = np.zeros(shape)
                 SE = np.zeros(shape)
-               #/Result/IntermediateResult/{FileName}
+                # /Result/IntermediateResult/{FileName}
                 n = 0
                 InterceptData = ['Intercept']
                 CovData = ['Cov']
@@ -505,19 +504,21 @@ class Data:
                     InterceptData.append(str(n))
                     CovData.append(str(n))
                     n += 1
-                    self.CaluclatingIntercept(
-                        InterceptData, DataGFP, SubjectTmp, ConditionTmp, ConditionTxt, c, Subject)
-                    ####
+                    self.CaluclatingIntercept(InterceptData, DataGFP,
+                                              SubjectTmp, ConditionTmp,
+                                              ConditionTxt, c, Subject)
+
                     # Covariate
-                    ####
                     for j, cov in enumerate(NameCovariate):
                         EphFile = self.file.getNode(
-                            "/".join(['/Result/IntermediateResult/', "".join(InterceptData), 'Name']))
+                            "/".join(['/Result/IntermediateResult/',
+                                      "".join(InterceptData), 'Name']))
                         EphFile = EphFile.read()
                         EphFile.append(cov)
                         CovData.append(str(j))
-                        self.CalculatingSlope(
-                            CovData, SubjectTmp, ConditionTmp, j, EphFile, DataGFP, Covariate, tmp)
+                        self.CalculatingSlope(CovData, SubjectTmp,
+                                              ConditionTmp, j, EphFile,
+                                              DataGFP, Covariate, tmp)
                         tmp = CovData.pop(-1)
         IntermediateResults = self.file.listNodes(
             '/Result/IntermediateResult/')
@@ -533,17 +534,21 @@ class Data:
             if IntTest == -1:  # covarience Data
                 Slope = i.Slope.read()
                 self.WriteEphFile(
-                    "/".join([IntermediateResultPath, Name.replace('txt', 'Slope')]), Slope)
+                    "/".join([IntermediateResultPath,
+                              Name.replace('txt', 'Slope')]), Slope)
                 R = i.R.read()
                 self.WriteEphFile(
-                    "/".join([IntermediateResultPath, Name.replace('txt', 'R')]), R)
+                    "/".join([IntermediateResultPath,
+                              Name.replace('txt', 'R')]), R)
             else:  # intercept data
                 MeanData = i.Mean.read()
                 self.WriteEphFile(
-                    "/".join([IntermediateResultPath, Name.replace('txt', 'Mean')]), MeanData)
+                    "/".join([IntermediateResultPath,
+                              Name.replace('txt', 'Mean')]), MeanData)
                 SE = i.SE.read()
                 self.WriteEphFile(
-                    "/".join([IntermediateResultPath, Name.replace('txt', 'SE')]), SE)
+                    "/".join([IntermediateResultPath,
+                              Name.replace('txt', 'SE')]), SE)
         # Remove GFP and WaveForm keep only if IS that is long to calculate
         if self.shape[1] < 500 or DataGFP:
             self.file.removeNode('/Result/IntermediateResult', recursive=True)
@@ -572,7 +577,8 @@ class Data:
         for i, s in enumerate(SubjectTmp):
             if DataGFP:
                 text = [
-                    '/DataGFP/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    '/DataGFP/Subject', str(int(s - 1)),
+                    '/Condition', str(int(ConditionTmp[i] - 1))]
                 DataTmp = self.file.getNode("".join(text))
                 if self.shape[0] == 1:
                     Data.append(DataTmp.read())
@@ -580,7 +586,8 @@ class Data:
                     Data.append(DataTmp.read()[t])
             else:
                 text = [
-                    '/Data/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    '/Data/Subject', str(int(s - 1)),
+                    '/Condition', str(int(ConditionTmp[i] - 1))]
                 DataTmp = self.file.getNode("".join(text))
                 if self.shape[0] == 1:
                     Data.append(DataTmp.read())
@@ -588,7 +595,9 @@ class Data:
                     Data.append(DataTmp.read()[t, :])
         self.Data = np.array(Data)
 
-    def CaluclatingIntercept(self, GroupName, DataGFP, SubjectTmp, ConditionTmp, ConditionTxt, Combinaison, Subject):
+    def CaluclatingIntercept(self, GroupName, DataGFP, SubjectTmp,
+                             ConditionTmp, ConditionTxt,
+                             Combinaison, Subject):
         if DataGFP:
             EphFile = ['GFP-Level']
         else:
@@ -624,7 +633,8 @@ class Data:
                 SETmp = SETmp.reshape((1, len(SETmp)))
             SE.append(SETmp)
 
-    def CalculatingSlope(self, GroupName, SubjectTmp, ConditionTmp, CovLabel, EphFile, DataGFP, Covariate, tmp):
+    def CalculatingSlope(self, GroupName, SubjectTmp, ConditionTmp,
+                         CovLabel, EphFile, DataGFP, Covariate, tmp):
 
         SlopeGroup = self.file.createGroup(
             '/Result/IntermediateResult/', "".join(GroupName))
@@ -655,8 +665,8 @@ class Data:
     def WriteData(self, ResultFolder):
         # Ecrire les resultats en Eph
         """ TODO: translate to english
-        ecritrue de l'eph : 
-        nom de l'eph = name_eph  
+        ecritrue de l'eph :
+        nom de l'eph = name_eph
         path de l'eph = path_result"""
         OutPutFiles = []
         pwd.chdir(ResultFolder)
@@ -702,7 +712,9 @@ class Data:
                 OutPutFiles.append(FileNameP)
                 if len(".".join(FileNameP)) + len(ResultFolder) > 256:
                     txt = " ".join(
-                        ['Path is too long for', ".".join(FileNameP), 'File it will be not write'])
+                        ['Path is too long for',
+                         ".".join(FileNameP),
+                         'File it will be not write'])
                     dlg = wx.MessageDialog(
                         None, txt, "Error", style=wx.OK | wx.ICON_INFORMATION)
                     retour = dlg.ShowModal()
@@ -781,7 +793,9 @@ class Data:
                 OutPutFiles.append(FileNameP)
                 if len(".".join(FileNameP)) + len(ResultFolder) > 256:
                     txt = " ".join(
-                        ['Path is too long for', ".".join(FileNameP), 'File it will be not write'])
+                        ['Path is too long for',
+                         ".".join(FileNameP),
+                         'File it will be not write'])
                     dlg = wx.MessageDialog(
                         None, txt, "Error", style=wx.OK | wx.ICON_INFORMATION)
                     retour = dlg.ShowModal()

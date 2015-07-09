@@ -20,7 +20,8 @@ Fonction principale lançant STEN composer de 4 Modules
 class principale(wx.Frame):
 
     """ TODO: translate to english
-    Initialisation de l'interface lancement des modules LeftPanel, Panels, creation du bouton start"""
+    Initialisation de l'interface lancement des modules LeftPanel,
+    Panels, creation du bouton start"""
 
     def __init__(self):
         wx.Frame.__init__(self, None, -1, title="STEN 1.0", size=(1000, 500))
@@ -35,12 +36,12 @@ class principale(wx.Frame):
         self.Tab = wx.Notebook(PanelData, 1, style=wx.NB_TOP)
         self.AnovaWave = Panels.PanelAnovaWave(self.Tab)
         self.AnovaIS = Panels.PanelAnovaIS(self.Tab)
-        #self.ManovaWave = Panels.PanelManovaWave(self.Tab)
-        #self.ManovaIS = Panels.PanelManovaIS(self.Tab)
+        # self.ManovaWave = Panels.PanelManovaWave(self.Tab)
+        # self.ManovaIS = Panels.PanelManovaIS(self.Tab)
         self.Tab.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
         self.Tab.AddPage(self.AnovaIS, 'ANOVA  on Brain Space')
-        #self.Tab.AddPage(self.ManovaWave, 'MANOVA on Wave/GFP')
-        #self.Tab.AddPage(self.ManovaIS, 'MANOVA  on Brain Space')
+        # self.Tab.AddPage(self.ManovaWave, 'MANOVA on Wave/GFP')
+        # self.Tab.AddPage(self.ManovaIS, 'MANOVA  on Brain Space')
         self.AnovaWave.SetFocus()
         DataSizer.Add(self.Tab, 0, wx.EXPAND)
         PanelData.SetSizer(DataSizer)
@@ -55,32 +56,36 @@ class principale(wx.Frame):
         self.SetSizerAndFit(FrameSizer)
         # sizer.SetSizeHints(self)
         self.Show(True)
-        ####
         wx.EVT_BUTTON(self, 1, self.Start)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
-        #####################################################################
-        # function quand on ferme, demande si ok de fermer, puis detruit tout
-        #####################################################################
+
+        # TODO: function quand on ferme, demande si ok de fermer, puis detruit
+        # tout
 
     def OnClose(self, event):
-        dlg = wx.MessageDialog(self, "Do you really want to close this application?",
-                               "Confirm Exit", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+        dlg = wx.MessageDialog(self,
+                               "Do you really want to close this application?",
+                               "Confirm Exit",
+                               wx.OK | wx.CANCEL | wx.ICON_QUESTION)
         result = dlg.ShowModal()
         dlg.Destroy()
         if result == wx.ID_OK:
             self.Destroy()
             quit()
-    ##########################################################################
-    # Lancement de l'interface
-    # 1) Test si toute les parametres sont ok
-    # 2) Test si dans le H5 il y a deja des resultats si oui on demande si faut faire 3 ou on passe directement a 4
-    # 3) Calcul de l'ANOVA
-    # 4) Post Traitement correction test multiple (mathematiical morphologie) + ecriture des résultats
-    ##########################################################################
+
+    """Lancement de l'interface
+    1) Test si toute les parametres sont ok
+    2) Test si dans le H5 il y a deja des resultats si oui on demande si faut faire 3 ou on passe directement a 4
+    3) Calcul de l'ANOVA
+    4) Post Traitement correction test multiple (mathematiical morphologie) + ecriture des résultats"""
 
     def Start(self, event):
         """ TODO: translate to english
-        lancement de l'interface, 1) test des variables 2) calcul anova 3) post treatment 4) ecriture vrb, reuslt """
+        lancement de l'interface,
+        1) test des variables
+        2) calcul anova
+        3) post treatment
+        4) ecriture vrb, reuslt """
 
         self.Cancel = False
         self.StartButton.Disable()
@@ -88,9 +93,7 @@ class principale(wx.Frame):
         self.mark = 0
         self.InputTest()
 
-        #######################################################################
         # test si tout est entree correctement
-        #######################################################################
         if self.InputError != []:
             dlg = wx.MessageDialog(
                 self, "\n".join(self.InputError), style=wx.OK)
@@ -98,9 +101,9 @@ class principale(wx.Frame):
             dlg.Destroy()
             self.StartButton.Enable()
         else:
-            ###################################################################
-            # si Anova est coche on regarde si il y a des resultats Anova dans le H5
-            ###################################################################
+
+            # si Anova est coche on regarde si il y a des resultats Anova dans
+            # le H5
             if self.AnovaCheck:
                 # test sur le fichier
                 file = tables.openFile(self.H5, 'r+')
@@ -121,7 +124,7 @@ class principale(wx.Frame):
                     if self.AnovaParam and Param:
                         TextDataRecording = [
                             'Results are fund in H5 file for Parametric Anova :\n\n']
-                    elif self.AnovaParam == False and Param == False:
+                    elif not self.AnovaParam and not Param:
                         TextDataRecording = [
                             'Results are fund in H5 file for Non-Parametric Anova :\n\n']
                     if "".join(TextDataRecording) != 'Results are fund in H5 file for Anova :\n\n':
@@ -139,7 +142,7 @@ class principale(wx.Frame):
                     if self.AnovaParam and Param:
                         TextDataRecording = [
                             'Results are fund in H5 file for Parametric Anova :\n\n']
-                    elif self.AnovaParam == False and Param == False:
+                    elif not self.AnovaParam and not Param:
                         TextDataRecording = [
                             'Results are fund in H5 file for Non-Parametric Anova :\n\n']
                     if "".join(TextDataRecording) != 'Results are fund in H5 file for Anova :\n\n':
@@ -169,8 +172,11 @@ class principale(wx.Frame):
                 if "".join(TextDataRecording) != 'Results are fund in H5 file for Anova :\n\n':
                     TextDataRecording.append(
                         '\n Do you want to recalculate the ANOVA (YES) or just applying correction on results (NO)?')
-                    dlg = wx.MessageDialog(None, "".join(
-                        TextDataRecording), "Analyse Data", wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
+                    dlg = wx.MessageDialog(
+                        None,
+                        "".join(TextDataRecording),
+                        "Analyse Data",
+                        wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
                     dlg.SetSize((800, 800))
                     response = dlg.ShowModal()
                     if response == wx.ID_YES:
@@ -201,10 +207,8 @@ class principale(wx.Frame):
                         file.createGroup('/Result/Anova', 'All')
                 file.close()
 
-            ###################################################################
-            # si postHoc est coche on regarde si il y a des resultats postHoc dans le H5
-            ###################################################################
-
+            # si postHoc est coche on regarde si il y a des resultats postHoc
+            # dans le H5
             if self.PostHoc:
                 # test sur le fichier POSTHOC
                 file = tables.openFile(self.H5, 'r+')
@@ -249,8 +253,11 @@ class principale(wx.Frame):
                 if "".join(TextDataRecording) != 'Results are fund in H5 file PostHoc :\n\n':
                     TextDataRecording.append(
                         '\n Do you want to recalculate the PostHoc (YES) or just applying correction on results (NO)?')
-                    dlg = wx.MessageDialog(None, "".join(
-                        TextDataRecording), "Analyse Data", wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
+                    dlg = wx.MessageDialog(
+                        None,
+                        "".join(TextDataRecording),
+                        "Analyse Data",
+                        wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION)
                     dlg.SetSize((800, 800))
                     response = dlg.ShowModal()
                     if response == wx.ID_YES:
@@ -273,9 +280,9 @@ class principale(wx.Frame):
                     CalculPostHoc = True
 
                 file.close()
-            ###################################################################
-            # creation Result Folder named STEN, within estimator and Anova and POstHoc
-            ###################################################################
+
+            # creation Result Folder named STEN, within estimator and Anova and
+            # POstHoc
             ResultName = 'STEN'
             PathResult = [self.PathResult, ResultName]
             PathResult = os.path.abspath("/".join(PathResult))
@@ -285,13 +292,10 @@ class principale(wx.Frame):
                 os.chdir('c:/')
                 shutil.rmtree(PathResult)
                 os.mkdir(PathResult)
-            ################################
-            # Calcul NOVA et Post-hoc
-            ################################
 
-            #################################################
+            # Calcul NOVA et Post-hoc
+
             # calcul Anova sur wave et/ou GFP et inversement
-            #################################################
 
             if self.AnalyseType == 'ANOVA on Wave/GFP':
 
@@ -308,18 +312,24 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
                                 start = time.clock()
                                 self.Wave.Param(DataGFP=True)
                                 end = time.clock()
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.Wave.file.createArray(
-                                    '/Result/Anova/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
                             elif self.Type == "GFP Only":
                                 start = time.clock()
                                 self.Wave.Param(DataGFP=True,)
@@ -327,9 +337,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.Wave.file.createArray(
-                                    '/Result/Anova/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
                             elif self.Type == "All Electrodes":
                                 start = time.clock()
                                 self.Wave.Param()
@@ -337,9 +350,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                         else:  # Non param
                             if self.Type == "Both":
@@ -349,9 +365,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Non-Parametric Anova Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Non-Parametric Anova Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                                 start = time.clock()
                                 self.Wave.NonParam(
@@ -360,9 +379,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                             elif self.Type == "GFP Only":
                                 start = time.clock()
@@ -372,9 +394,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Non-Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Non-Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
                             elif self.Type == "All Electrodes":
                                 start = time.clock()
                                 self.Wave.NonParam(self.AnovaIteration)
@@ -382,18 +407,19 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Non-Parametric Anova Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Non-Parametric Anova Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.Wave.file.createArray(
-                                    '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/Anova/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                         self.Wave.file.close()
                         self.Cancel = self.Wave.Cancel
 
-                    ###########################################################
-                    # Post Stat (PostHoc) i.e Mathematical Morphology, write Data
-                    ###########################################################
-
-                    if self.Cancel == False:
+                    # Post Stat (PostHoc) i.e Mathematical Morphology,
+                    # write Data
+                    if not self.Cancel:
                         ResultName = 'Anova'
                         PathResultAnova = os.path.abspath(
                             "/".join([PathResult, ResultName]))
@@ -404,14 +430,22 @@ class principale(wx.Frame):
                         if self.Type == "Both":
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=True, DataGFP=False, Param=self.AnovaParam)
+                                self.H5,
+                                self,
+                                Anova=True,
+                                DataGFP=False,
+                                Param=self.AnovaParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=self.AnovaClust, SpaceFile=self.SpaceFile)
+                                self.AnovaAlpha,
+                                TF=self.AnovaPtsConsec,
+                                SpaceCriteria=self.AnovaClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time (All electrodes): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time (All electrodes): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultAnova)
@@ -419,7 +453,8 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteIntermediateResult(
@@ -428,19 +463,28 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing intermediater EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing intermediater EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
 
                             self.WavePostStat.file.close()
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=True, DataGFP=True, Param=self.AnovaParam)
+                                self.H5,
+                                self,
+                                Anova=True,
+                                DataGFP=True,
+                                Param=self.AnovaParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=1, SpaceFile=None)
+                                self.AnovaAlpha,
+                                TF=self.AnovaPtsConsec,
+                                SpaceCriteria=1,
+                                SpaceFile=None)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Multiple Test Correction Elapsed Time (GFP): ', self.TimeTxt]))
+                                "".join(['Multiple Test Correction Elapsed Time (GFP): ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultAnova)
@@ -448,7 +492,8 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteIntermediateResult(
@@ -457,20 +502,28 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing intermediater EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing intermediater EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
 
                         elif self.Type == "GFP Only":
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=True, DataGFP=True, Param=self.AnovaParam)
+                                self.H5, self,
+                                Anova=True,
+                                DataGFP=True,
+                                Param=self.AnovaParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=1, SpaceFile=None)
+                                self.AnovaAlpha,
+                                TF=self.AnovaPtsConsec,
+                                SpaceCriteria=1,
+                                SpaceFile=None)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Multiple Test Correction Elapsed Time (GFP): ', self.TimeTxt]))
+                                "".join(['Multiple Test Correction Elapsed Time (GFP): ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultAnova)
@@ -478,7 +531,8 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteIntermediateResult(
@@ -487,19 +541,27 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing intermediater EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing intermediater EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
                         elif self.Type == "All Electrodes":
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=True, DataGFP=False, Param=self.AnovaParam)
+                                self.H5, self,
+                                Anova=True,
+                                DataGFP=False,
+                                Param=self.AnovaParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=self.AnovaClust, SpaceFile=self.SpaceFile)
+                                self.AnovaAlpha,
+                                TF=self.AnovaPtsConsec,
+                                SpaceCriteria=self.AnovaClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time (All electrodes): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time (All electrodes): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultAnova)
@@ -507,7 +569,8 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteIntermediateResult(
@@ -516,12 +579,11 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing intermediater EPH Results Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Writing intermediater EPH Results Elapsed Time : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
 
-                ####################################
                 # calcul PostHoc on wave and/or GFP
-                ####################################
                 if self.PostHoc:
                     if CalculPostHoc:
                         self.WavePostHoc = Stat.PostHoc(self.H5, self)
@@ -533,9 +595,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                                 start = time.clock()
                                 self.WavePostHoc.Param(DataGFP=True)
@@ -543,9 +608,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                             elif self.Type == "GFP Only":
 
@@ -555,9 +623,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                             elif self.Type == "All Electrodes":
 
@@ -567,9 +638,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                         else:  # Non param
                             if self.Type == "Both":
@@ -580,9 +654,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                                 start = time.clock()
                                 self.WavePostHoc.NonParam(
@@ -591,9 +668,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                             elif self.Type == "GFP Only":
                                 start = time.clock()
@@ -603,9 +683,12 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric Anova Elapsed Time (GFP) : ', self.TimeTxt]))
+                                    "".join(['Parametric Anova Elapsed Time (GFP) : ',
+                                             self.TimeTxt]))
                                 GFPTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/GFP', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/GFP',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
 
                             elif self.Type == "All Electrodes":
                                 start = time.clock()
@@ -615,17 +698,18 @@ class principale(wx.Frame):
                                 elapsed = end - start
                                 self.ExtractTime(elapsed)
                                 ProgressTxt.append(
-                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                    "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ',
+                                             self.TimeTxt]))
                                 AllTime = self.WavePostHoc.file.createArray(
-                                    '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                    '/Result/PostHoc/All',
+                                    'ElapsedTime',
+                                    self.TimeTxt)
                         self.WavePostHoc.file.close()
                         self.Cancel = self.WavePostHoc.Cancel
 
-                    ###########################################################
-                    # Post Stat (PostHoc) i.e Mathematical Morphology, write Data
-                    ###########################################################
-
-                    if self.Cancel == False:
+                    # Post Stat (PostHoc) i.e Mathematical Morphology, write
+                    # Data
+                    if not self.Cancel:
                         ResultName = 'PostHoc'
                         PathResultPostHoc = os.path.abspath(
                             "/".join([PathResult, ResultName]))
@@ -637,14 +721,22 @@ class principale(wx.Frame):
 
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=False, DataGFP=False, Param=self.PostHocParam)
+                                self.H5,
+                                self,
+                                Anova=False,
+                                DataGFP=False,
+                                Param=self.PostHocParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
+                                self.PostHocAlpha,
+                                TF=self.PostHocPtsConsec,
+                                SpaceCriteria=self.PostHocClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time on PostHoc (All electrodes): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time on PostHoc (All electrodes): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultPostHoc)
@@ -652,19 +744,28 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Writing EPH Results Elapsed Time on PostHoc(All electrodes) : ', self.TimeTxt]))
+                                ['Writing EPH Results Elapsed Time on PostHoc(All electrodes) : ',
+                                 self.TimeTxt]))
                             self.WavePostStat.file.close()
 
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=False, DataGFP=True, Param=self.PostHocParam)
+                                self.H5,
+                                self,
+                                Anova=False,
+                                DataGFP=True,
+                                Param=self.PostHocParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
+                                self.PostHocAlpha,
+                                TF=self.PostHocPtsConsec,
+                                SpaceCriteria=self.PostHocClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time on PostHoc (GFP): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time on PostHoc (GFP): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultPostHoc)
@@ -672,21 +773,29 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time on PostHoc(GFP) : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time on PostHoc(GFP) : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
 
                         elif self.Type == "GFP Only":
 
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=False, DataGFP=True, Param=self.PostHocParam)
+                                self.H5, self,
+                                Anova=False,
+                                DataGFP=True,
+                                Param=self.PostHocParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
+                                self.PostHocAlpha,
+                                TF=self.PostHocPtsConsec,
+                                SpaceCriteria=self.PostHocClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time on PostHoc (GFP): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time on PostHoc (GFP): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultPostHoc)
@@ -694,21 +803,30 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time on PostHoc(GFP) : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time on PostHoc(GFP) : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
 
                         elif self.Type == "All Electrodes":
 
                             start = time.clock()
                             self.WavePostStat = PostStat.Data(
-                                self.H5, self, Anova=False, DataGFP=False, Param=self.PostHocParam)
+                                self.H5,
+                                self,
+                                Anova=False,
+                                DataGFP=False,
+                                Param=self.PostHocParam)
                             self.WavePostStat.MathematicalMorphology(
-                                self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
+                                self.PostHocAlpha,
+                                TF=self.PostHocPtsConsec,
+                                SpaceCriteria=self.PostHocClust,
+                                SpaceFile=self.SpaceFile)
                             end = time.clock()
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append("".join(
-                                ['Multiple Test Correction Elapsed Time on PostHoc (All electrodes): ', self.TimeTxt]))
+                                ['Multiple Test Correction Elapsed Time on PostHoc (All electrodes): ',
+                                 self.TimeTxt]))
 
                             start = time.clock()
                             self.WavePostStat.WriteData(PathResultPostHoc)
@@ -716,12 +834,11 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Writing EPH Results Elapsed Time on PostHoc : ', self.TimeTxt]))
+                                "".join(['Writing EPH Results Elapsed Time on PostHoc : ',
+                                         self.TimeTxt]))
                             self.WavePostStat.file.close()
 
-            ###################################################################
             # calcul Anova on Inverse space
-            ###################################################################
             elif self.AnalyseType == 'ANOVA  on Brain Space':
 
                 if self.AnovaCheck:
@@ -734,9 +851,12 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Parametric Anova Elapsed Time : ', self.TimeTxt]))
+                                "".join(['Parametric Anova Elapsed Time : ',
+                                         self.TimeTxt]))
                             AllTime = self.IS.file.createArray(
-                                '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                '/Result/Anova/All',
+                                'ElapsedTime',
+                                self.TimeTxt)
 
                         else:  # non param
                             start = time.clock()
@@ -745,30 +865,40 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Non-Parametric Anova Elapsed Time  : ', self.TimeTxt]))
+                                "".join(['Non-Parametric Anova Elapsed Time  : ',
+                                         self.TimeTxt]))
                             AllTime = self.IS.file.createArray(
-                                '/Result/Anova/All', 'ElapsedTime', self.TimeTxt)
+                                '/Result/Anova/All',
+                                'ElapsedTime',
+                                self.TimeTxt)
 
                         self.Cancel = self.IS.Cancel
                         self.IS.file.close()
-                    ###########################################################
+
                     # Post Stat (ANOVA) i.e Mathematical Morphology, write Data
-                    ###########################################################
-                    if self.Cancel == False:
+                    if not self.Cancel:
                         ResultName = 'Anova'
                         PathResultAnova = os.path.abspath(
                             "/".join([PathResult, ResultName]))
                         os.mkdir(PathResultAnova)
                         start = time.clock()
                         self.ISPostStat = PostStat.Data(
-                            self.H5, self, Anova=True, DataGFP=False, Param=self.AnovaParam)
+                            self.H5,
+                            self,
+                            Anova=True,
+                            DataGFP=False,
+                            Param=self.AnovaParam)
                         self.ISPostStat.MathematicalMorphology(
-                            self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=self.AnovaClust, SpaceFile=self.SpaceFile)
+                            self.AnovaAlpha,
+                            TF=self.AnovaPtsConsec,
+                            SpaceCriteria=self.AnovaClust,
+                            SpaceFile=self.SpaceFile)
                         end = time.clock()
                         elapsed = end - start
                         self.ExtractTime(elapsed)
                         ProgressTxt.append(
-                            "".join(['Multiple Test Correction Elapsed Time : ', self.TimeTxt]))
+                            "".join(['Multiple Test Correction Elapsed Time : ',
+                                     self.TimeTxt]))
 
                         start = time.clock()
                         self.ISPostStat.WriteData(PathResultAnova)
@@ -776,7 +906,8 @@ class principale(wx.Frame):
                         elapsed = end - start
                         self.ExtractTime(elapsed)
                         ProgressTxt.append(
-                            "".join(['Writing EPH Results Elapsed Time : ', self.TimeTxt]))
+                            "".join(['Writing EPH Results Elapsed Time : ',
+                                     self.TimeTxt]))
 
                         start = time.clock()
                         self.ISPostStat.WriteIntermediateResult(PathResult)
@@ -784,13 +915,12 @@ class principale(wx.Frame):
                         elapsed = end - start
                         self.ExtractTime(elapsed)
                         ProgressTxt.append(
-                            "".join(['Writing intermediater EPH Results Elapsed Time : ', self.TimeTxt]))
+                            "".join(['Writing intermediater EPH Results Elapsed Time : ',
+                                     self.TimeTxt]))
 
                         self.ISPostStat.file.close()
-                ##########################
-                # PostHoc on inverse space
-                ##########################
 
+                # PostHoc on inverse space
                 if self.PostHoc:
                     if CalculPostHoc:
                         self.ISPostHoc = Stat.PostHoc(self.H5, self)
@@ -801,9 +931,12 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Parametric PostHoc Elapsed Time  : ', self.TimeTxt]))
+                                "".join(['Parametric PostHoc Elapsed Time  : ',
+                                         self.TimeTxt]))
                             AllTime = self.ISPostHoc.file.createArray(
-                                '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                '/Result/PostHoc/All',
+                                'ElapsedTime',
+                                self.TimeTxt)
                         else:  # Non param
                             start = time.clock()
                             self.ISPostHoc.NonParam(self.PostHocIteration)
@@ -811,13 +944,16 @@ class principale(wx.Frame):
                             elapsed = end - start
                             self.ExtractTime(elapsed)
                             ProgressTxt.append(
-                                "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ', self.TimeTxt]))
+                                "".join(['Parametric PostHoc Elapsed Time (All Electrodes) : ',
+                                         self.TimeTxt]))
                             AllTime = self.ISPostHoc.file.createArray(
-                                '/Result/PostHoc/All', 'ElapsedTime', self.TimeTxt)
+                                '/Result/PostHoc/All',
+                                'ElapsedTime',
+                                self.TimeTxt)
                         self.Cancel = self.ISPostHoc.Cancel
                         self.ISPostStat.file.close()
 
-                    if self.Cancel == False:
+                    if not self.Cancel:
                         ResultName = 'PostHoc'
                         PathResultPostHoc = os.path.abspath(
                             "/".join([PathResult, ResultName]))
@@ -828,14 +964,21 @@ class principale(wx.Frame):
 
                         start = time.clock()
                         self.ISPostStat = PostStat.Data(
-                            self.H5, self, Anova=False, DataGFP=False, Param=self.PostHocParam)
+                            self.H5, self,
+                            Anova=False,
+                            DataGFP=False,
+                            Param=self.PostHocParam)
                         self.ISPostStat.MathematicalMorphology(
-                            self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
+                            self.PostHocAlpha,
+                            TF=self.PostHocPtsConsec,
+                            SpaceCriteria=self.PostHocClust,
+                            SpaceFile=self.SpaceFile)
                         end = time.clock()
                         elapsed = end - start
                         self.ExtractTime(elapsed)
                         ProgressTxt.append(
-                            "".join(['Multiple Test Correction Elapsed Time on PostHoc : ', self.TimeTxt]))
+                            "".join(['Multiple Test Correction Elapsed Time on PostHoc : ',
+                                     self.TimeTxt]))
 
                         start = time.clock()
                         self.ISPostStat.WriteData(PathResultPostHoc)
@@ -843,12 +986,11 @@ class principale(wx.Frame):
                         elapsed = end - start
                         self.ExtractTime(elapsed)
                         ProgressTxt.append(
-                            "".join(['Writing EPH Results Elapsed Time on PostHoc : ', self.TimeTxt]))
+                            "".join(['Writing EPH Results Elapsed Time on PostHoc : ',
+                                     self.TimeTxt]))
                         self.ISPostStat.file.close()
 
-            ##################
             # If cancel press
-            #################
             if self.Cancel:
                 file = tables.openFile(self.H5, 'r+')
                 GFPDataTest = file.listNodes('/Result/Anova/GFP')
@@ -866,18 +1008,20 @@ class principale(wx.Frame):
                 self.LeftPanel.ProgressTxt.SetLabel("\n".join(ProgressTxt))
                 self.WriteVrb(self.H5, PathResult)
                 dlg = wx.MessageDialog(
-                    self, 'Work is done enjoy your results !!!! ;-)', style=wx.ICON_INFORMATION)
+                    self, 'Work is done enjoy your results !!!! ;-)',
+                    style=wx.ICON_INFORMATION)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
             self.StartButton.Enable()
     # test les input
 
     def InputTest(self):
-        """ Read user inputs put everythink on the common format and verify that everything is present"""
+        """ Read user inputs put everythink on the common format
+        and verify that everything is present"""
         # test all variable type
         # we strat with mandatory variable (leftPanel)
         text = []
-        if self.LeftPanel.PathResult == None:
+        if self.LeftPanel.PathResult is None:
             error = "Result folder is not selected"
             text.append(error)
         else:
@@ -924,7 +1068,7 @@ class principale(wx.Frame):
                 else:
                     self.AnovaClust = self.AnovaWave.Clust
 
-                if self.AnovaParam == False:
+                if not self.AnovaParam:
                     if self.AnovaWave.Iter < 1:
                         error = "Iteraction Value for Anova  must be strictly positive"
                         text.append(error)
@@ -954,26 +1098,26 @@ class principale(wx.Frame):
                 else:
                     self.PostHocClust = self.AnovaWave.ClustPostHoc
 
-                if self.PostHocParam == False:
+                if not self.PostHocParam:
                     if self.AnovaIS.Iter < 1:
                         error = "Iteraction Value for Post-Hoc must be strictly positive"
                         text.append(error)
                     else:
                         self.PostHocIteration = self.AnovaWave.IterPostHoc
 
-            if self.AnovaWave.Analyse == None:
+            if self.AnovaWave.Analyse is None:
                 error = "Choose an Analyse (GFP, all electrodes or both)"
                 text.append(error)
                 self.Type = None
             else:
                 self.Type = self.AnovaWave.Analyse
 
-            if self.Type == "GFP Only" or self.Type == None:
+            if self.Type == "GFP Only" or self.Type is None:
                 self.SpaceFile = None
             else:
                 if self.AnovaCheck and self.PostHoc:
                     if self.AnovaClust > 1 or self.PostHocClust > 1:
-                        if self.AnovaWave.Spi == None:
+                        if self.AnovaWave.Spi is None:
                             error = "Xyz file is not selected"
                             text.append(error)
                         else:
@@ -982,7 +1126,7 @@ class principale(wx.Frame):
                         self.SpaceFile = None
                 elif self.AnovaCheck:
                     if self.AnovaClust > 1:
-                        if self.AnovaWave.Spi == None:
+                        if self.AnovaWave.Spi is None:
                             error = "Xyz file is not selected"
                             text.append(error)
                         else:
@@ -991,7 +1135,7 @@ class principale(wx.Frame):
                         self.SpaceFile = None
                 elif self.PostHoc:
                     if self.PostHocClust > 1:
-                        if self.AnovaWave.Spi == None:
+                        if self.AnovaWave.Spi is None:
                             error = "Xyz file is not selected"
                             text.append(error)
                         else:
@@ -1030,7 +1174,7 @@ class principale(wx.Frame):
                 else:
                     self.AnovaClust = self.AnovaIS.Clust
 
-                if self.AnovaParam == False:
+                if not self.AnovaParam:
                     if self.AnovaIS.Iter < 1:
                         error = "Iteraction Value for Anova must be strictly positive"
                         text.append(error)
@@ -1059,14 +1203,14 @@ class principale(wx.Frame):
                 else:
                     self.PostHocClust = self.AnovaIS.ClustPostHoc
 
-                if self.PostHocParam == False:
+                if not self.PostHocParam:
                     if self.AnovaIS.Iter < 1:
                         error = "Iteraction Value for Post-Hoc must be strictly positive"
                         text.append(error)
                     else:
                         self.PostHocIteration = self.AnovaIS.IterPostHoc
 
-            if self.AnovaIS.Spi == None:
+            if self.AnovaIS.Spi is None:
                 if self.PostHocClust > 1 or self.AnovaClust > 1:
                     error = "Spi file is not selected"
                     text.append(error)
@@ -1088,7 +1232,7 @@ class principale(wx.Frame):
             else:
                 self.Param = False
             self.PostHoc = self.ManovaWave.PostHoc
-            if self.ManovaWave.Analyse == None:
+            if self.ManovaWave.Analyse is None:
                 error = "Choose an Analyse (GFP, all electrodes or both)"
                 text.append(error)
             else:
@@ -1193,7 +1337,7 @@ class principale(wx.Frame):
                     Param.append('\tCluster Criteria (File) = ')
                     Param.append(str(self.SpaceFile))
                     Param.append('\n')
-                elif self.Type == None:
+                elif self.Type is None:
                     Title.append(
                         'All electrodes Waveform Parametric Repeated Measure ANOVA across')
                     shape = file.getNode('/Info/Shape')
@@ -1250,7 +1394,7 @@ class principale(wx.Frame):
                     Param.append('\tCluster Criteria (File) = ')
                     Param.append(str(self.SpaceFile))
                     Param.append('\n')
-                elif self.Type == None:
+                elif self.Type is None:
                     Title.append(
                         'All electrodes Waveform Non-Parametric Repeated Measure ANOVA across')
                     shape = file.getNode('/Info/Shape')
@@ -1321,7 +1465,7 @@ class principale(wx.Frame):
                     Param.append('\tCluster Criteria (File) = ')
                     Param.append(str(self.SpaceFile))
                     Param.append('\n')
-                elif self.Type == None:
+                elif self.Type is None:
                     Title.append(
                         'All electrodes Waveform Parametric POST-HOC across')
                     shape = file.getNode('/Info/Shape')
@@ -1376,7 +1520,7 @@ class principale(wx.Frame):
                         Param.append('\tCluster Criteria (File) = ')
                         Param.append(str(self.SpaceFile))
                         Param.append('\n')
-                    elif self.Type == None:
+                    elif self.Type is None:
                         Title.append(
                             'All electrodes Waveform Non-Parametric POST-HOC across')
                         shape = file.getNode('/Info/Shape')
@@ -1401,7 +1545,7 @@ class principale(wx.Frame):
         Value = StatData.file.getNode('/Sheet/Value').read()
         ColWithin = StatData.file.getNode('/Info/ColWithin').read()
         ColFactor = StatData.file.getNode('/Info/ColFactor').read()
-        if StatData.NameWithin != False:
+        if StatData.NameWithin:
             for i, w in enumerate(StatData.NameWithin):
                 Factor.append('Within Subject Factor Name (Levels) :')
                 InputFile.append('Within subject conditions :\n')
@@ -1445,7 +1589,7 @@ class principale(wx.Frame):
                     InputFile.append('\n')
                 InputFile.append('\n')
 
-        if StatData.NameBetween != False:
+        if StatData.NameBetween:
             Factor.append('Between Subject Factor Name (Levels) :')
             for i, b in enumerate(StatData.NameBetween):
                 if i == 0:
@@ -1498,7 +1642,7 @@ class principale(wx.Frame):
                         Condition.append('\n')
             InputFile.append("".join(Condition))
             InputFile.append('\n')
-        if StatData.NameCovariate != False:
+        if StatData.NameCovariate:
 
             Factor.append('Covariate Name :')
             for i, c in enumerate(StatData.NameCovariate):
@@ -1534,7 +1678,7 @@ class principale(wx.Frame):
         Mark.append('\n')
         Title = "\n\t\t".join(Title)
         Param = "".join(Param)
-        if StatData.NameCovariate != False:
+        if StatData.NameCovariate:
             Title.replace('ANOVA', 'ANCOVA')
             Param.replace('ANOVA', 'ANCOVA')
 

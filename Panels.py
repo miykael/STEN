@@ -22,7 +22,7 @@ class PanelAnovaWave(wx.Panel):
         self.IterPostHoc = 1000
         self.Spi = None
         # on cree les panels 1 a 1
-        ###
+
         FrameSizer.AddSpacer(10)
         # Panel Anova perormed
         PanelAnova = wx.Panel(self, -1)
@@ -33,10 +33,10 @@ class PanelAnovaWave(wx.Panel):
         FrameSizer.Add(PanelAnova, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
         self.AnovaCheckBox.SetValue(True)
-        ####
+
         self.PanelInfoAnova = wx.Panel(self, -1)
         SizerInfoAnova = wx.BoxSizer(wx.VERTICAL)
-        ############
+
         # panel pour les parma /non param
         PanelParamAll = wx.Panel(self.PanelInfoAnova, -1)
         SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
@@ -69,7 +69,7 @@ class PanelAnovaWave(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         SizerInfoAnova.Add(PanelParamAll, 0, wx.EXPAND)
         SizerInfoAnova.AddSpacer(10)
-        #############
+
         # panel avec les infos Statitstique (alpha,pts conseq)
         PanelInfo = wx.Panel(self.PanelInfoAnova, -1)
         SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -88,8 +88,9 @@ class PanelAnovaWave(wx.Panel):
 
         PanelPtsConseq = wx.Panel(PanelInfo, -1)
         SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, -1, label="Consecutive Time Frame", style=wx.ALIGN_CENTER)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
         SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
         self.PtsConsequInput = wx.TextCtrl(
             PanelPtsConseq, 2, value=str(self.PtsConseq), style=wx.TE_CENTRE)
@@ -100,8 +101,9 @@ class PanelAnovaWave(wx.Panel):
 
         self.PanelClust = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        ClustText = wx.StaticText(
-            self.PanelClust, -1, label="Cluster Size (Electrodes)", style=wx.ALIGN_CENTER)
+        ClustText = wx.StaticText(self.PanelClust, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
         SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
         self.ClustInput = wx.TextCtrl(
             self.PanelClust, 3, value=str(self.Clust), style=wx.TE_CENTRE)
@@ -118,12 +120,13 @@ class PanelAnovaWave(wx.Panel):
         SizerInfoAnova.AddSpacer(10)
         self.PanelInfoAnova.SetSizer(SizerInfoAnova)
         FrameSizer.Add(self.PanelInfoAnova, 0, wx.EXPAND)
-        #############
+
         # Panel Post-Hoc
         PanelPostHoc = wx.Panel(self, -1)
         SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
         self.PostHocCheckBox = wx.CheckBox(
-            PanelPostHoc, 13, "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
+            PanelPostHoc, 13,
+            "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
         SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
         SizerPostHoc.AddSpacer(10)
         # on mets le panel de fichier dans le sizer de la frame
@@ -131,11 +134,11 @@ class PanelAnovaWave(wx.Panel):
         # lie les sizer au panel
         PanelPostHoc.SetSizer(SizerPostHoc)
         # lie le sizer de la fenetre a la fenetre
-        #####
+
         # Panel Info Post-Hoc
         self.PanelInfoPostHoc = wx.Panel(self, -1)
         SizerInfoPostHoc = wx.BoxSizer(wx.VERTICAL)
-        ##########################
+
         # panel Param
         PanelParamAll = wx.Panel(self.PanelInfoPostHoc, -1)
         SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
@@ -153,8 +156,8 @@ class PanelAnovaWave(wx.Panel):
         SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
         self.PanelIterPostHoc = wx.Panel(PanelParamAll, -1)
         IterSizer = wx.BoxSizer(wx.VERTICAL)
-        IterText = wx.StaticText(
-            self.PanelIterPostHoc, -1, label="Iteration", style=wx.ALIGN_CENTER)
+        IterText = wx.StaticText(self.PanelIterPostHoc, -1,
+                                 label="Iteration", style=wx.ALIGN_CENTER)
         IterSizer.Add(IterText, 0, wx.EXPAND)
         IterSizer.AddSpacer(5)
         self.IterInputPostHoc = wx.TextCtrl(
@@ -166,7 +169,7 @@ class PanelAnovaWave(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         SizerInfoPostHoc.Add(PanelParamAll, 0, wx.EXPAND)
         SizerInfoPostHoc.AddSpacer(10)
-        #############
+
         # panel avec les infos Statitstique (alpha,pts conseq, Clust)
         PanelInfo = wx.Panel(self.PanelInfoPostHoc, -1)
         SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -185,8 +188,9 @@ class PanelAnovaWave(wx.Panel):
 
         PanelPtsConseq = wx.Panel(PanelInfo, -1)
         SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, -1, label="Consecutive Time Frame", style=wx.ALIGN_CENTER)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
         SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
         self.PtsConsequInputPostHoc = wx.TextCtrl(
             PanelPtsConseq, 6, value=str(self.PtsConseq), style=wx.TE_CENTRE)
@@ -197,11 +201,13 @@ class PanelAnovaWave(wx.Panel):
 
         self.PanelClustPostHoc = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        ClustText = wx.StaticText(
-            self.PanelClustPostHoc, -1, label="Cluster Size (Electrodes)", style=wx.ALIGN_CENTER)
+        ClustText = wx.StaticText(self.PanelClustPostHoc, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
         SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
-        self.ClustInputPostHoc = wx.TextCtrl(
-            self.PanelClustPostHoc, 7, value=str(self.Clust), style=wx.TE_CENTRE)
+        self.ClustInputPostHoc = wx.TextCtrl(self.PanelClustPostHoc, 7,
+                                             value=str(self.Clust),
+                                             style=wx.TE_CENTRE)
         SizerPtsClust.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
         self.PanelClustPostHoc.SetSizer(SizerPtsClust)
         SizerInfo.Add(self.PanelClustPostHoc)
@@ -217,7 +223,7 @@ class PanelAnovaWave(wx.Panel):
         FrameSizer.Add(self.PanelInfoPostHoc, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
         self.PanelInfoPostHoc.Disable()
-        ##################
+
         # panel analyse (gfp, all elelctordes ou both)
         PanelAnalyse = wx.Panel(self, -1)
         SizerAnalyse = wx.BoxSizer(wx.VERTICAL)
@@ -350,7 +356,9 @@ class PanelAnovaWave(wx.Panel):
                 self.PtsConseq = pts_consec
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Consecutive Time Frame", style=wx.OK)
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
         if self.PostHocCheckBox.GetValue():
@@ -364,7 +372,9 @@ class PanelAnovaWave(wx.Panel):
                 self.PtsConseqPostHoc = int(pts_consec)
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Consecutive Time Frame", style=wx.OK)
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
 
@@ -377,7 +387,7 @@ class PanelAnovaWave(wx.Panel):
             pts_consec = self.PtsConsequInput.GetValue()
             self.PtsConsequInputPostHoc.SetValue(str(pts_consec))
             self.AlphaInputPostHoc.SetValue(str(alpha))
-            if self.Analyse == 'GFP Only' or self.Analyse == None:
+            if self.Analyse == 'GFP Only' or self.Analyse is None:
                 self.PanelClustPostHoc.Disable()
             else:
                 self.PanelClustPostHoc.Enable()
@@ -424,7 +434,9 @@ class PanelAnovaWave(wx.Panel):
                 self.IterPostHoc = Iter
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Iteration in Post-Hoc Panel", style=wx.OK)
+                    self,
+                    "Integer number for Iteration in Post-Hoc Panel",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
 
@@ -439,8 +451,9 @@ class PanelAnovaWave(wx.Panel):
                 else:
                     self.PanelSpi.Enable()
             except:
-                dlg = wx.MessageDialog(
-                    self, "Integer number for Cluster size", style=wx.OK)
+                dlg = wx.MessageDialog(self,
+                                       "Integer number for Cluster size",
+                                       style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
         if self.PostHocCheckBox.GetValue():
@@ -457,8 +470,9 @@ class PanelAnovaWave(wx.Panel):
                 else:
                     self.PanelSpi.Enable()
             except:
-                dlg = wx.MessageDialog(
-                    self, "Integer number for Cluster size", style=wx.OK)
+                dlg = wx.MessageDialog(self,
+                                       "Integer number for Cluster size",
+                                       style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
 
@@ -505,10 +519,10 @@ class PanelAnovaIS(wx.Panel):
         FrameSizer.Add(PanelAnova, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
         self.AnovaCheckBox.SetValue(True)
-        ####
+
         self.PanelInfoAnova = wx.Panel(self, -1)
         SizerInfoAnova = wx.BoxSizer(wx.VERTICAL)
-        ############
+
         # panel pour les parma /non param
         PanelParamAll = wx.Panel(self.PanelInfoAnova, -1)
         SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
@@ -541,7 +555,7 @@ class PanelAnovaIS(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         SizerInfoAnova.Add(PanelParamAll, 0, wx.EXPAND)
         SizerInfoAnova.AddSpacer(10)
-        ############
+
         # panel avec les infos Statitstique (alpha,pts conseq, Clust)
         PanelInfo = wx.Panel(self.PanelInfoAnova, -1)
         SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
@@ -560,8 +574,9 @@ class PanelAnovaIS(wx.Panel):
 
         PanelPtsConseq = wx.Panel(PanelInfo, -1)
         SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, -1, label="Consecutive Time Frame", style=wx.ALIGN_CENTER)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
         SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
         self.PtsConsequInput = wx.TextCtrl(
             PanelPtsConseq, 2, value=str(self.PtsConseq), style=wx.TE_CENTRE)
@@ -572,8 +587,9 @@ class PanelAnovaIS(wx.Panel):
 
         self.PanelClust = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        ClustText = wx.StaticText(
-            self.PanelClust, -1, label="Cluster Size (Voxels)", style=wx.ALIGN_CENTER)
+        ClustText = wx.StaticText(self.PanelClust, -1,
+                                  label="Cluster Size (Voxels)",
+                                  style=wx.ALIGN_CENTER)
         SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
         self.ClustInput = wx.TextCtrl(
             self.PanelClust, 3, value=str(self.Clust), style=wx.TE_CENTRE)
@@ -589,21 +605,22 @@ class PanelAnovaIS(wx.Panel):
         self.PanelInfoAnova.SetSizer(SizerInfoAnova)
         FrameSizer.Add(self.PanelInfoAnova, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
-        #############
+
         # Panel Post-Hoc
         PanelPostHoc = wx.Panel(self, -1)
         SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
         self.PostHocCheckBox = wx.CheckBox(
-            PanelPostHoc, 2, "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
+            PanelPostHoc, 2,
+            "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
         SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
         SizerPostHoc.AddSpacer(10)
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelPostHoc, 0, wx.EXPAND)
         # lie les sizer au panel
         PanelPostHoc.SetSizer(SizerPostHoc)
-        #########
+
         # lie le sizer de la fenetre a la fenetre
-        #####
+
         # Panel Info Post-Hoc
         self.PanelInfoPostHoc = wx.Panel(self, -1)
         SizerInfoPostHoc = wx.BoxSizer(wx.VERTICAL)
@@ -624,8 +641,8 @@ class PanelAnovaIS(wx.Panel):
         SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
         self.PanelIterPostHoc = wx.Panel(PanelParamAll, -1)
         IterSizer = wx.BoxSizer(wx.VERTICAL)
-        IterText = wx.StaticText(
-            self.PanelIterPostHoc, -1, label="Iteration", style=wx.ALIGN_CENTER)
+        IterText = wx.StaticText(self.PanelIterPostHoc, -1,
+                                 label="Iteration", style=wx.ALIGN_CENTER)
         IterSizer.Add(IterText, 0, wx.EXPAND)
         IterSizer.AddSpacer(5)
         self.IterInputPostHoc = wx.TextCtrl(
@@ -638,7 +655,6 @@ class PanelAnovaIS(wx.Panel):
         SizerInfoPostHoc.Add(PanelParamAll, 0, wx.EXPAND)
         SizerInfoPostHoc.AddSpacer(10)
 
-        #############
         PanelInfo = wx.Panel(self.PanelInfoPostHoc, -1)
         SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -656,8 +672,9 @@ class PanelAnovaIS(wx.Panel):
 
         PanelPtsConseq = wx.Panel(PanelInfo, -1)
         SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, -1, label="Consecutive Time Frame", style=wx.ALIGN_CENTER)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
         SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
         self.PtsConsequInputPostHoc = wx.TextCtrl(
             PanelPtsConseq, 6, value=str(self.PtsConseq), style=wx.TE_CENTRE)
@@ -668,11 +685,13 @@ class PanelAnovaIS(wx.Panel):
 
         self.PanelClustPostHoc = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        ClustText = wx.StaticText(
-            self.PanelClustPostHoc, -1, label="Cluster Size (Electrodes)", style=wx.ALIGN_CENTER)
+        ClustText = wx.StaticText(self.PanelClustPostHoc, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
         SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
-        self.ClustInputPostHoc = wx.TextCtrl(
-            self.PanelClustPostHoc, 7, value=str(self.Clust), style=wx.TE_CENTRE)
+        self.ClustInputPostHoc = wx.TextCtrl(self.PanelClustPostHoc, 7,
+                                             value=str(self.Clust),
+                                             style=wx.TE_CENTRE)
         SizerPtsClust.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
         self.PanelClustPostHoc.SetSizer(SizerPtsClust)
         SizerInfo.Add(self.PanelClustPostHoc)
@@ -687,7 +706,7 @@ class PanelAnovaIS(wx.Panel):
         self.PanelInfoPostHoc.SetSizer(SizerInfoPostHoc)
         FrameSizer.Add(self.PanelInfoPostHoc, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
-        #######
+
         # panel SPI (donner le ficheir SPI pour le calcul des pts conseq)
         self.PanelSpi = wx.Panel(self, -1)
         SizerSpi = wx.GridBagSizer()
@@ -798,7 +817,9 @@ class PanelAnovaIS(wx.Panel):
                 self.PtsConseq = pts_consec
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Consecutive Time Frame", style=wx.OK)
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
         if self.PostHocCheckBox.GetValue():
@@ -812,7 +833,9 @@ class PanelAnovaIS(wx.Panel):
                 self.PtsConseqPostHoc = int(pts_consec)
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Consecutive Time Frame", style=wx.OK)
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
 
@@ -903,7 +926,9 @@ class PanelAnovaIS(wx.Panel):
                 self.IterPostHoc = Iter
             except:
                 dlg = wx.MessageDialog(
-                    self, "Integer number for Iteration in Post-Hoc Panel", style=wx.OK)
+                    self,
+                    "Integer number for Iteration in Post-Hoc Panel",
+                    style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
 
@@ -919,7 +944,7 @@ class PanelManovaWave(wx.Panel):
         self.Alpha = 0.05
         self.PostHoc = False
         # on cree les panels 1 a 1
-        ############
+
         # panel pour les parma /non param
         PanelParam = wx.Panel(self, -1)
         SizerParam = wx.BoxSizer(wx.VERTICAL)
@@ -936,7 +961,7 @@ class PanelManovaWave(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelParam, 0, wx.EXPAND)
         FrameSizer.AddStretchSpacer()
-        ################
+
         # panel analyse (gfp, all elelctordes ou both)
         PanelAnalyse = wx.Panel(self, -1)
         SizerAnalyse = wx.BoxSizer(wx.VERTICAL)
@@ -953,7 +978,7 @@ class PanelManovaWave(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelAnalyse, 0, wx.EXPAND)
         FrameSizer.AddStretchSpacer()
-        #############
+
         # panel avec les infos Statitstique (alpha)
         PanelInfo = wx.Panel(self, -1)
         SizerInfo = wx.GridBagSizer()
@@ -968,7 +993,7 @@ class PanelManovaWave(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelInfo, 0, wx.EXPAND)
         FrameSizer.AddStretchSpacer()
-        #############
+
         # Panel Post-Hoc
         PanelPostHoc = wx.Panel(self, -1)
         SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
@@ -1025,7 +1050,7 @@ class PanelManovaIS(wx.Panel):
         self.Alpha = 0.05
         self.PostHoc = False
         # on cree les panels 1 a 1
-        ############
+
         # panel pour les parma /non param
         PanelParam = wx.Panel(self, -1)
         SizerParam = wx.BoxSizer(wx.VERTICAL)
@@ -1042,7 +1067,7 @@ class PanelManovaIS(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelParam, 0, wx.EXPAND)
         FrameSizer.AddStretchSpacer()
-        #############
+
         # panel avec les infos Statitstique (alpha)
         PanelInfo = wx.Panel(self, -1)
         SizerInfo = wx.GridBagSizer()
@@ -1057,7 +1082,7 @@ class PanelManovaIS(wx.Panel):
         # on mets le panel de fichier dans le sizer de la frame
         FrameSizer.Add(PanelInfo, 0, wx.EXPAND)
         FrameSizer.AddStretchSpacer()
-        #############
+
         # Panel Post-Hoc
         PanelPostHoc = wx.Panel(self, -1)
         SizerPostHoc = wx.BoxSizer(wx.VERTICAL)

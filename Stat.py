@@ -84,8 +84,8 @@ class Anova:
                 text = [
                     NameVariable, '=robjects.FloatVector(', NameVariable, ')']
                 exec("".join(text))
-                text = [
-                    'robjects.globalenv["', NameVariable, '"] = ', NameVariable]
+                text = ['robjects.globalenv["',
+                        NameVariable, '"] = ', NameVariable]
                 exec("".join(text))
                 self.Formule.append(NameVariable)
                 self.Formule.append('*')
@@ -147,7 +147,7 @@ class Anova:
             tmp = list(tmp)
             del(tmp[len(tmp) - 1])
             if i == 0:
-                if self.NameWithin != False:
+                if self.NameWithin:
                     for t in tmp:
                         if t.find(self.NameWithin[0]) != -1:
                             ConfundTerm = True
@@ -213,7 +213,6 @@ class Anova:
         self.CoefTerms = CoefTerms
         NbCoefTerms = len(CoefTerms)
 
-        ###
         if DataGFP:  # c'est sur le GFP
             ResultP = self.file.createEArray(
                 '/Result/Anova/GFP', 'P', tables.Float64Atom(), (0, NbTerms))
@@ -221,8 +220,10 @@ class Anova:
                 '/Result/Anova/GFP', 'F', tables.Float64Atom(), (0, NbTerms))
             self.file.createArray('/Result/Anova/GFP', 'Terms', self.Terms)
             self.file.createArray('/Result/Anova/GFP', 'CoefTerms', CoefTerms)
-            CoefValue = self.file.createEArray(
-                '/Result/Anova/GFP', 'CoefValue', tables.Float64Atom(), (0, NbCoefTerms))
+            CoefValue = self.file.createEArray('/Result/Anova/GFP',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
         else:  # c'est sur toutes les electrodes
             ResultP = self.file.createEArray(
                 '/Result/Anova/All', 'P', tables.Float64Atom(), (0, NbTerms))
@@ -231,14 +232,20 @@ class Anova:
             self.file.createArray('/Result/Anova/All', 'Terms', self.Terms)
 
             self.file.createArray('/Result/Anova/All', 'CoefTerms', CoefTerms)
-            CoefValue = self.file.createEArray(
-                '/Result/Anova/All', 'CoefValue', tables.Float64Atom(), (0, NbCoefTerms))
+            CoefValue = self.file.createEArray('/Result/Anova/All',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
 
         Df = []
         # Anova caculation using R
         Maximum = NbAnova
-        dlg = wx.ProgressDialog('Parametric Anova', 'Calculation in progress : 0 %', maximum=Maximum,
-                                parent=self.parent, style=wx.PD_CAN_ABORT | wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+        dlg = wx.ProgressDialog('Parametric Anova',
+                                'Calculation in progress : 0 %',
+                                maximum=Maximum,
+                                parent=self.parent,
+                                style=wx.PD_CAN_ABORT |
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
         n = 0
         fin1 = 0
@@ -352,7 +359,10 @@ class Anova:
                 fin1, " ".join(['Progression  :', pourcent, ' %']))
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(
-                    None, "Do you really want to cancel ?", "Confirm Cancel", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                    None,
+                    "Do you really want to cancel?",
+                    "Confirm Cancel",
+                    wx.OK | wx.CANCEL | wx.ICON_QUESTION)
                 result = dlgQuest.ShowModal()
                 dlgQuest.Destroy()
                 if result == wx.ID_OK:
@@ -406,7 +416,7 @@ class Anova:
             tmp = list(tmp)
             del(tmp[len(tmp) - 1])
             if i == 0:
-                if self.NameWithin != False:
+                if self.NameWithin:
                     for t in tmp:
                         if t.find(self.NameWithin[0]) != -1:
                             ConfundTerm = True
@@ -478,8 +488,10 @@ class Anova:
                 '/Result/Anova/GFP', 'F', tables.Float64Atom(), (0, NbTerms))
             self.file.createArray('/Result/Anova/GFP', 'Terms', self.Terms)
             self.file.createArray('/Result/Anova/GFP', 'CoefTerms', CoefTerms)
-            CoefValue = self.file.createEArray(
-                '/Result/Anova/GFP', 'CoefValue', tables.Float64Atom(), (0, NbCoefTerms))
+            CoefValue = self.file.createEArray('/Result/Anova/GFP',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
         else:  # c'est sur toutes les electrodes
             ResultP = self.file.createEArray(
                 '/Result/Anova/All', 'P', tables.Float64Atom(), (0, NbTerms))
@@ -488,16 +500,21 @@ class Anova:
             self.file.createArray('/Result/Anova/All', 'Terms', self.Terms)
             self.file.createArray('/Result/Anova/All', 'CoefTerms', CoefTerms)
 
-            CoefValue = self.file.createEArray(
-                '/Result/Anova/All', 'CoefValue', tables.Float64Atom(), (0, NbCoefTerms))
-        Df = []
+            CoefValue = self.file.createEArray('/Result/Anova/All',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
         # fiting
         if NbAnova % NbAnovaCycle == 0:
             Maximum = ((NbAnova / NbAnovaCycle)) * iter
         else:
             Maximum = ((NbAnova / NbAnovaCycle) + 1) * iter
-        dlg = wx.ProgressDialog('Non Parametric Anova', 'Progression : 0 %', Maximum,
-                                parent=self.parent, style=wx.PD_CAN_ABORT | wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+        dlg = wx.ProgressDialog('Non Parametric Anova',
+                                'Progression : 0 %',
+                                Maximum,
+                                parent=self.parent,
+                                style=wx.PD_CAN_ABORT |
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
         n = 0
         fin1 = 0
@@ -594,13 +611,17 @@ class Anova:
                 if fin1 > NbAnova:
                     fin1 = NbAnova
                     NbAnovaCycle = Data.extract.shape[0]
-                    Data = ExtractDataNonParam(
-                        self.file, debut1, fin1, DataGFP, self.OrderSubject[i], self.OrderCond[i])
+                    Data = ExtractDataNonParam(self.file, debut1, fin1,
+                                               DataGFP,
+                                               self.OrderSubject[i],
+                                               self.OrderCond[i])
                     Data = Data.extract.reshape(
                         (NbAnovaCycle, NbSujet * NbCond))
                 else:
-                    Data = ExtractDataNonParam(
-                        self.file, debut1, fin1, DataGFP, self.OrderSubject[i], self.OrderCond[i])
+                    Data = ExtractDataNonParam(self.file, debut1, fin1,
+                                               DataGFP,
+                                               self.OrderSubject[i],
+                                               self.OrderCond[i])
                     Data = Data.extract.reshape(
                         (Data.extract.shape[0], NbSujet * NbCond))
                 DataSize = Data.shape
@@ -653,7 +674,10 @@ class Anova:
                     step, " ".join(['Progression  :', pourcent, ' %']))
                 if Cancel[0] == False:
                     dlgQuest = wx.MessageDialog(
-                        None, "Do you really want to cancel ?", "Confirm Cancel", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                        None,
+                        "Do you really want to cancel?",
+                        "Confirm Cancel",
+                        wx.OK | wx.CANCEL | wx.ICON_QUESTION)
                     result = dlgQuest.ShowModal()
                     dlgQuest.Destroy()
                     if result == wx.ID_OK:
@@ -778,8 +802,8 @@ class PostHoc:
         else:
             # il n'y a pas de facteur Within
             ConditionNumber = np.ones((NbSubject))
-         # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
-         # deuxième dimention existe
+        # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
+        # deuxième dimention existe
         if self.Between.any():
             if len(self.Between.shape) == 1:
                 self.Between = self.Between.reshape((self.Between.shape[0], 1))
@@ -809,7 +833,6 @@ class PostHoc:
                     NbLevel = int(self.Between[:, i].max())
                 except:
                     NbLevel = int(self.Between.max())
-                Cond = []
                 Level.append(NbLevel)
                 for j in range(NbLevel):
                     text = [w, str(j + 1), '=0']
@@ -837,6 +860,7 @@ class PostHoc:
                     debut = n * repet
                     fin = (n + 1) * repet
                     Combinaison[debut:fin, k] = fact[:, 0]
+
         # creation de la matrice condition avec les veteurs/matrice within et/ou between.
         # Ces matrice sont composer de valeur 1,2, nb niveau par niveau matrice utiliser pour le model dans R
         # facteur within et Between
@@ -850,8 +874,13 @@ class PostHoc:
             Condition = self.Between
 
         NbTest = np.array(range(len(Combinaison))).sum()
-        dlg = wx.ProgressDialog('Parametric T-test', "/".join(['PostHoc T-Test : 0', str(
-            NbTest)]), NbTest, parent=self.Parent, style=wx.PD_CAN_ABORT | wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+        dlg = wx.ProgressDialog('Parametric T-test',
+                                "/".join(['PostHoc T-Test : 0',
+                                          str(NbTest)]),
+                                NbTest,
+                                parent=self.Parent,
+                                style=wx.PD_CAN_ABORT |
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
         # lecture des données dans le H5 pour crée les matrices permettant le
         # calcul des t-test
@@ -859,15 +888,26 @@ class PostHoc:
         Name = []
         n = 0
         if DataGFP:  # c'est sur le GFP
-            ResultP = self.file.createEArray(
-                '/Result/PostHoc/GFP', 'P', tables.Float64Atom(), (shape[0] * shape[1], 0))
+            ResultP = self.file.createEArray('/Result/PostHoc/GFP',
+                                             'P',
+                                             tables.Float64Atom(),
+                                             (shape[0] * shape[1], 0))
             ResultT = self.file.createEArray(
-                '/Result/PostHoc/GFP', 'T', tables.Float64Atom(), (shape[0] * shape[1], 0))
+                '/Result/PostHoc/GFP',
+                'T',
+                tables.Float64Atom(),
+                (shape[0] * shape[1], 0))
         else:  # c'est sur toutes les electrodes
             ResultP = self.file.createEArray(
-                '/Result/PostHoc/All', 'P', tables.Float64Atom(), (shape[0] * shape[1], 0))
+                '/Result/PostHoc/All',
+                'P',
+                tables.Float64Atom(),
+                (shape[0] * shape[1], 0))
             ResultT = self.file.createEArray(
-                '/Result/PostHoc/All', 'T', tables.Float64Atom(), (shape[0] * shape[1], 0))
+                '/Result/PostHoc/All',
+                'T',
+                tables.Float64Atom(),
+                (shape[0] * shape[1], 0))
         for Nbc, c1 in enumerate(Combinaison):
             tmp = (Condition == c1).sum(axis=1) == len(c1)
             SubjectTmp = self.Subject[tmp]
@@ -875,14 +915,18 @@ class PostHoc:
             Data1 = []
             for i, s in enumerate(SubjectTmp):
                 if DataGFP:
-                    text = [
-                        '/DataGFP/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    text = ['/DataGFP/Subject',
+                            str(int(s - 1)),
+                            '/Condition',
+                            str(int(ConditionTmp[i] - 1))]
                     DataTmp = self.file.getNode("".join(text))
                     DataTmp = DataTmp.read()
                     Data1.append(DataTmp)
                 else:
-                    text = [
-                        '/Data/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    text = ['/Data/Subject',
+                            str(int(s - 1)),
+                            '/Condition',
+                            str(int(ConditionTmp[i] - 1))]
                     DataTmp = self.file.getNode("".join(text))
                     DataTmp = DataTmp.read()
                     Data1.append(DataTmp)
@@ -900,14 +944,18 @@ class PostHoc:
                 Data2 = []
                 for i, s in enumerate(SubjectTmp):
                     if DataGFP:
-                        text = [
-                            '/DataGFP/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                        text = ['/DataGFP/Subject',
+                                str(int(s - 1)),
+                                '/Condition',
+                                str(int(ConditionTmp[i] - 1))]
                         DataTmp = self.file.getNode("".join(text))
                         DataTmp = DataTmp.read()
                         Data2.append(DataTmp)
                     else:
-                        text = [
-                            '/Data/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                        text = ['/Data/Subject',
+                                str(int(s - 1)),
+                                '/Condition',
+                                str(int(ConditionTmp[i] - 1))]
                         DataTmp = self.file.getNode("".join(text))
                         DataTmp = DataTmp.read()
                         Data2.append(DataTmp)
@@ -965,8 +1013,10 @@ class PostHoc:
                 prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
                 Cancel = dlg.Update(n, prog)
                 if Cancel[0] == False:
-                    dlgQuest = wx.MessageDialog(
-                        None, "Do you really want to cancel ?", "Confirm Cancel", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                    dlgQuest = wx.MessageDialog(None,
+                                                "Do you really want to cancel?",
+                                                "Confirm Cancel",
+                                                wx.OK | wx.CANCEL | wx.ICON_QUESTION)
                     result = dlgQuest.ShowModal()
                     dlgQuest.Destroy()
                     if result == wx.ID_OK:
@@ -1008,8 +1058,8 @@ class PostHoc:
         else:
             # il n'y a pas de facteur Within
             ConditionNumber = np.ones((NbSubject))
-         # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
-         # deuxième dimention existe
+        # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
+        # deuxième dimention existe
         if self.Between.any():
             if len(self.Between.shape) == 1:
                 self.Between = self.Between.reshape((self.Between.shape[0], 1))
@@ -1039,7 +1089,6 @@ class PostHoc:
                     NbLevel = int(self.Between[:, i].max())
                 except:
                     NbLevel = int(self.Between.max())
-                Cond = []
                 Level.append(NbLevel)
                 for j in range(NbLevel):
                     text = [w, str(j + 1), '=0']
@@ -1067,6 +1116,7 @@ class PostHoc:
                     debut = n * repet
                     fin = (n + 1) * repet
                     Combinaison[debut:fin, k] = fact[:, 0]
+
         # creation de la matrice condition avec les veteurs/matrice within et/ou between.
         # Ces matrice sont composer de valeur 1,2, nb niveau par niveau matrice utiliser pour le model dans R
         # facteur within et Between
@@ -1080,8 +1130,13 @@ class PostHoc:
             Condition = self.Between
 
         NbTest = np.array(range(len(Combinaison))).sum()
-        dlg = wx.ProgressDialog('Non-Parametric T-test', "/".join(['PostHoc T-Test : 0', str(
-            NbTest)]), NbTest, parent=self.Parent, style=wx.PD_CAN_ABORT | wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+        dlg = wx.ProgressDialog('Non-Parametric T-test',
+                                "/".join(['PostHoc T-Test : 0',
+                                          str(NbTest)]),
+                                NbTest,
+                                parent=self.Parent,
+                                style=wx.PD_CAN_ABORT |
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
         # lecture des données dans le H5 pour crée les matrices permettant le
         # calcul des t-test
@@ -1089,15 +1144,23 @@ class PostHoc:
         Name = []
         n = 0
         if DataGFP:  # c'est sur le GFP
-            ResultP = self.file.createEArray(
-                '/Result/PostHoc/GFP', 'P', tables.Float64Atom(), (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray(
-                '/Result/PostHoc/GFP', 'T', tables.Float64Atom(), (shape[0] * shape[1], 0))
+            ResultP = self.file.createEArray('/Result/PostHoc/GFP',
+                                             'P',
+                                             tables.Float64Atom(),
+                                             (shape[0] * shape[1], 0))
+            ResultT = self.file.createEArray('/Result/PostHoc/GFP',
+                                             'T',
+                                             tables.Float64Atom(),
+                                             (shape[0] * shape[1], 0))
         else:  # c'est sur toutes les electrodes
-            ResultP = self.file.createEArray(
-                '/Result/PostHoc/All', 'P', tables.Float64Atom(), (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray(
-                '/Result/PostHoc/All', 'T', tables.Float64Atom(), (shape[0] * shape[1], 0))
+            ResultP = self.file.createEArray('/Result/PostHoc/All',
+                                             'P',
+                                             tables.Float64Atom(),
+                                             (shape[0] * shape[1], 0))
+            ResultT = self.file.createEArray('/Result/PostHoc/All',
+                                             'T',
+                                             tables.Float64Atom(),
+                                             (shape[0] * shape[1], 0))
         for Nbc, c1 in enumerate(Combinaison):
             tmp = (Condition == c1).sum(axis=1) == len(c1)
             SubjectTmp = self.Subject[tmp]
@@ -1106,14 +1169,18 @@ class PostHoc:
             text1 = []
             for i, s in enumerate(SubjectTmp):
                 if DataGFP:
-                    text = [
-                        '/DataGFP/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    text = ['/DataGFP/Subject',
+                            str(int(s - 1)),
+                            '/Condition',
+                            str(int(ConditionTmp[i] - 1))]
                     DataTmp = self.file.getNode("".join(text))
                     DataTmp = DataTmp.read()
                     Data1.append(DataTmp)
                 else:
-                    text = [
-                        '/Data/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                    text = ['/Data/Subject',
+                            str(int(s - 1)),
+                            '/Condition',
+                            str(int(ConditionTmp[i] - 1))]
                     DataTmp = self.file.getNode("".join(text))
                     DataTmp = DataTmp.read()
                     Data1.append(DataTmp)
@@ -1133,14 +1200,18 @@ class PostHoc:
                 Data2 = []
                 for i, s in enumerate(SubjectTmp):
                     if DataGFP:
-                        text = [
-                            '/DataGFP/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                        text = ['/DataGFP/Subject',
+                                str(int(s - 1)),
+                                '/Condition',
+                                str(int(ConditionTmp[i] - 1))]
                         DataTmp = self.file.getNode("".join(text))
                         DataTmp = DataTmp.read()
                         Data2.append(DataTmp)
                     else:
-                        text = [
-                            '/Data/Subject', str(int(s - 1)), '/Condition', str(int(ConditionTmp[i] - 1))]
+                        text = ['/Data/Subject',
+                                str(int(s - 1)),
+                                '/Condition',
+                                str(int(ConditionTmp[i] - 1))]
                         DataTmp = self.file.getNode("".join(text))
                         DataTmp = DataTmp.read()
                         Data2.append(DataTmp)
@@ -1306,8 +1377,10 @@ class PostHoc:
                 prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
                 Cancel = dlg.Update(n, prog)
                 if Cancel[0] == False:
-                    dlgQuest = wx.MessageDialog(
-                        None, "Do you really want to cancel ?", "Confirm Cancel", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                    dlgQuest = wx.MessageDialog(None,
+                                                "Do you really want to cancel?",
+                                                "Confirm Cancel",
+                                                wx.OK | wx.CANCEL | wx.ICON_QUESTION)
                     result = dlgQuest.ShowModal()
                     dlgQuest.Destroy()
                     if result == wx.ID_OK:

@@ -5,6 +5,9 @@ import os
 import tables
 from Actions import GridFileDropTarget
 from ReadFiles import ReadSheet
+from FactorWithin import FactorWithin
+from DataProcessing import DataProcessing
+from Information import ReturnInfomation
 
 
 class DataEntry(wx.Frame):
@@ -279,9 +282,9 @@ class DataEntry(wx.Frame):
         wx.EVT_BUTTON(self, 16, self.CopySelection)
         wx.EVT_BUTTON(self, 17, self.ExportToXls)
         wx.EVT_TEXT_ENTER(self, 3, self.Filter)
-        ######################
-        # SORT BUTTON !!!!!
-        ######################
+
+        # TODO: SORT BUTTON !!!!!
+
         # self.ListCol.GetSelections()
         wx.EVT_LISTBOX(self, 1, self.ColSelected)
         wx.EVT_LISTBOX(self, 2, self.EphSelected)
@@ -567,8 +570,10 @@ class DataEntry(wx.Frame):
             self.Destroy()
             self.ExportData.Show(True)
         else:
-            dlg = wx.MessageDialog(
-                self, "Do you really want to close this application?", "Confirm Exit", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+            dlg = wx.MessageDialog(self,
+                                   "Do you really want to close this application?",
+                                   "Confirm Exit",
+                                   wx.OK | wx.CANCEL | wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_OK:
@@ -587,8 +592,8 @@ class DataEntry(wx.Frame):
     def SaveData(self, event):
         self.Show(False)
         wx.InitAllImageHandlers()
-        dlg = wx.FileDialog(
-            None, "Save Model to", wildcard="*.h5", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        dlg = wx.FileDialog(None, "Save Model to", wildcard="*.h5",
+                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         retour = dlg.ShowModal()
         chemin = dlg.GetPath()
         fichier = dlg.GetFilename()

@@ -1,11 +1,4 @@
 import wx
-import wx.lib.sheet as sheet
-import numpy as np
-import os
-import tables
-import Stat
-from EntryPanel import DataEntry
-from FactorDefinition import FactorDef
 
 
 class GridFileDropTarget(wx.FileDropTarget):

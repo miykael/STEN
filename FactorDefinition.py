@@ -1,6 +1,7 @@
 import wx
 import numpy as np
 import os
+from DefineModel import DefineModel
 
 
 class FactorDef(wx.Frame):
@@ -56,8 +57,9 @@ class FactorDef(wx.Frame):
 
         PanelSubjectVariable = wx.Panel(PanelSubject, -1)
         SizerSubjectVariable = wx.BoxSizer(wx.VERTICAL)
-        SubjectText = wx.StaticText(
-            PanelSubjectVariable, -1, label="Subject Variable", style=wx.ALIGN_CENTER)
+        SubjectText = wx.StaticText(PanelSubjectVariable, -1,
+                                    label="Subject Variable",
+                                    style=wx.ALIGN_CENTER)
         SizerSubjectVariable.Add(SubjectText, 0, wx.EXPAND)
         self.SubjectVariable = wx.TextCtrl(
             PanelSubjectVariable, 1, value="", style=wx.TE_READONLY)
@@ -86,8 +88,9 @@ class FactorDef(wx.Frame):
 
         PanelWithinVariable = wx.Panel(PanelWithin, -1)
         SizerWithinVariable = wx.BoxSizer(wx.VERTICAL)
-        WithinText = wx.StaticText(
-            PanelWithinVariable, -1, label="Within Subject Variable(s)", style=wx.ALIGN_CENTER)
+        WithinText = wx.StaticText(PanelWithinVariable, -1,
+                                   label="Within Subject Variable(s)",
+                                   style=wx.ALIGN_CENTER)
         SizerWithinVariable.Add(WithinText, 0, wx.EXPAND)
         Model = DefineModel(Parent.Level, [1], [1], [1])
         if Model.Within.any():
@@ -113,8 +116,9 @@ class FactorDef(wx.Frame):
                 tmp.append(FactNumber)
                 tmp.append(')')
                 Fact.append("".join(tmp))
-        self.WithinVariable = wx.ListBox(
-            PanelWithinVariable, 2, choices=Fact, size=(100, 100), style=wx.LB_EXTENDED)
+        self.WithinVariable = wx.ListBox(PanelWithinVariable, 2,
+                                         choices=Fact, size=(100, 100),
+                                         style=wx.LB_EXTENDED)
         SizerWithinVariable.Add(self.WithinVariable, 0, wx.EXPAND)
         PanelWithinVariable.SetSizer(SizerWithinVariable)
 
@@ -140,8 +144,9 @@ class FactorDef(wx.Frame):
 
         PanelBetweenVariable = wx.Panel(PanelBetween, -1)
         SizerBetweenVariable = wx.BoxSizer(wx.VERTICAL)
-        BetweenText = wx.StaticText(
-            PanelBetweenVariable, -1, label="Between Subject Variable(s)", style=wx.ALIGN_CENTER)
+        BetweenText = wx.StaticText(PanelBetweenVariable, -1,
+                                    label="Between Subject Variable(s)",
+                                    style=wx.ALIGN_CENTER)
         SizerBetweenVariable.Add(BetweenText, 0, wx.EXPAND)
         self.BetweenVariable = wx.ListBox(
             PanelBetweenVariable, 3, size=(100, 100), style=wx.LB_EXTENDED)
@@ -170,8 +175,9 @@ class FactorDef(wx.Frame):
 
         PanelCovariateVariable = wx.Panel(PanelCovariate, -1)
         SizerCovariateVariable = wx.BoxSizer(wx.VERTICAL)
-        CovariateText = wx.StaticText(
-            PanelCovariateVariable, -1, label="Covariate(s)", style=wx.ALIGN_CENTER)
+        CovariateText = wx.StaticText(PanelCovariateVariable, -1,
+                                      label="Covariate(s)",
+                                      style=wx.ALIGN_CENTER)
         SizerCovariateVariable.Add(CovariateText, 0, wx.EXPAND)
         self.CovariateVariable = wx.ListBox(
             PanelCovariateVariable, 4, size=(100, 100), style=wx.LB_EXTENDED)
@@ -389,8 +395,9 @@ class FactorDef(wx.Frame):
             dlg.Destroy()
         else:
             if len(ColNumber) > NbFactor:
-                dlg = wx.MessageDialog(
-                    self, 'Number of selected Variable exceed number of Factor', style=wx.OK)
+                dlg = wx.MessageDialog(self,
+                                       'Number of selected Variable exceed number of Factor',
+                                       style=wx.OK)
                 retour = dlg.ShowModal()
                 dlg.Destroy()
             else:
@@ -539,7 +546,6 @@ class FactorDef(wx.Frame):
             name[i] = ''
 
         tmp = []
-        nametmp = []
         for i in self.CovariateIndex:
             if i != '':
                 tmp.append(i)
