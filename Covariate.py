@@ -1,6 +1,6 @@
 import wx
 import numpy as np
-from LeftPanel import CalculSheetCov
+from CalculSheet import CalculSheetCov
 
 
 class CovariateDefinition(wx.Dialog):
