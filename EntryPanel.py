@@ -262,7 +262,7 @@ class DataEntry(wx.Frame):
         PanelButton2.SetSizerAndFit(ButtonSizer2)
         FrameSizer.Add(PanelButton, 0, wx.EXPAND)
         FrameSizer.Add(PanelButton2, 0, wx.EXPAND)
-        # lié tout au sizer
+        # lie tout au sizer
         self.SetSizerAndFit(FrameSizer)
 
         # evemement
@@ -606,7 +606,7 @@ class DataEntry(wx.Frame):
         except:
             pass
         self.info.DataFile.SetLabel(chemin)
-        # création du fichier H5 pour les donée importante
+        # creation du fichier H5 pour les donee importante
         self.file = tables.openFile(chemin, mode='w')
         self.DataGroup = self.file.createGroup('/', 'Data')
         self.DataGFPGroup = self.file.createGroup('/', 'DataGFP')
@@ -644,7 +644,7 @@ class DataEntry(wx.Frame):
 
     def RenameCol(self, event):
         NewName = self.NewName.GetLabel()
-        # -1 car il y a un espace vide au début
+        # -1 car il y a un espace vide au debut
         col = self.BoxFactor.GetCurrentSelection() - 1
         self.Sheet.SetColLabelValue(col, NewName)
         self.text[col + 1] = NewName

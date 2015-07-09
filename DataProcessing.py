@@ -35,11 +35,11 @@ class DataProcessing:
         else:
             NameCovariate = False
 
-        # demande si le Covariate est différentes pour les facteur within
+        # demande si le Covariate est differentes pour les facteur within
         Model = DefineModel(Level.tolist(), Subject.tolist(),
                             Between.tolist(), Covariate.tolist())
 
-        # ecriture dans la table des donnée lié aux stat et autres info utilse
+        # ecriture dans la table des donnee lie aux stat et autres info utilse
         # nom, ...
         info.FactorName = [str(f) for f in info.FactorName]
 
@@ -76,8 +76,8 @@ class DataProcessing:
         ColCovariate = info.file.createArray(
             info.InfoGroup, 'ColCovariate',
             info.ModelDef.ModelFull.CovariateIndex)
-        # info général, les niveau des facteur Within (pour modification des
-        # entrées)
+        # info general, les niveau des facteur Within (pour modification des
+        # entrees)
         if Level.any() == False:
             Level = False
         Level = info.file.createArray(info.InfoGroup, 'Level', Level)
@@ -104,8 +104,8 @@ class DataProcessing:
             info.NamesGroup, 'Covariate', NameCovariate)
 
         if Covariate.any():
-            # demander si il y a des valeurs différentes de covariate pour les
-            # différents niveau des facteurs within
+            # demander si il y a des valeurs differentes de covariate pour les
+            # differents niveau des facteurs within
             dlg = wx.MessageDialog(None,
                                    'Do you have different Covariate Value for each Within Subject Factor?',
                                    "Covariate Data", wx.YES_NO |

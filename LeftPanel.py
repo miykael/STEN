@@ -41,7 +41,7 @@ class info(wx.Panel):
 
     """ TODO: translate to english
     Panle de gauche de l'application demande les dossier
-    EPH, résultats, les facteurs, ...."""
+    EPH, resultats, les facteurs, ...."""
 
     def __init__(self, Conteneur, Main):
         # wx.Frame.__init__(self, None, -1, title = "test", size = (500,300))
@@ -57,7 +57,7 @@ class info(wx.Panel):
         self.ExportData.H5 = []
         # panel 1 = folders
 
-        # définition panel 1
+        # definition panel 1
         self.PanelFichier = wx.Panel(self, -1)
         PanelFichierSizer = wx.BoxSizer(wx.VERTICAL)
         PanelFichierSizer.AddSpacer(20)
@@ -109,7 +109,7 @@ class info(wx.Panel):
             PanelData, -1, label="Data selection ", style=wx.CENTRE)
         DataSizer.Add(DataTxt, 0, wx.EXPAND)
         DataSizer.AddSpacer(5)
-        # panel 3 avec les boutton création
+        # panel 3 avec les boutton creation
         ButtonDataCreate = wx.Button(
             PanelData, 3, label="Create Data File / Modifiy data")
         DataSizer.Add(ButtonDataCreate, 0, wx.EXPAND)

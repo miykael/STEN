@@ -40,7 +40,7 @@ class Anova:
         robjects.globalenv["Subject"] = SubjectR
         Error = [" + Error(Subject/("]
 
-        # on crée les facteurs Within
+        # on cree les facteurs Within
         if Within.any():
             for i, NameVariable in enumerate(NameWithin):
                 if len(Within.shape) == 1:
@@ -58,7 +58,7 @@ class Anova:
                 Error.append(NameVariable)
                 Error.append('*')
 
-        # on crée les factr Between
+        # on cree les factr Between
         if Between.any():  # Between existe
             for i, NameVariable in enumerate(NameBetween):
                 if len(Between.shape) == 1:
@@ -73,7 +73,7 @@ class Anova:
                 exec("".join(text))
                 self.Formule.append(NameVariable)
                 self.Formule.append('*')
-        # on crée les factor covariate
+        # on cree les factor covariate
         if Covariate.any():
             for i, NameVariable in enumerate(NameCovariate):
                 if len(Covariate.shape) == 1:
@@ -811,8 +811,8 @@ class PostHoc:
         fs = self.file.getNode('/Info/FS')
         fs = fs.read()
 
-        # crée la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
-        # création de la liste level contenant le niveau de chaque facteur
+        # cree la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
+        # creation de la liste level contenant le niveau de chaque facteur
         # d'abord within puis between
         ConditionTxt = []
         Level = []
@@ -882,7 +882,7 @@ class PostHoc:
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
-        # lecture des données dans le H5 pour crée les matrices permettant le
+        # lecture des donnees dans le H5 pour cree les matrices permettant le
         # calcul des t-test
         NbFactorWithin = self.Within.shape[1]
         Name = []
@@ -976,7 +976,7 @@ class PostHoc:
                     res = stats.ttest_ind(Data1, Data2, axis=0)
                     Name.append(".".join(EphFile))
                     EphFile.remove('UnPaired-Ttest')
-                # parend et un paired dépendant du facteur between
+                # parend et un paired dependant du facteur between
                 else:
                     # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
                     # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale
@@ -1067,8 +1067,8 @@ class PostHoc:
         fs = self.file.getNode('/Info/FS')
         fs = fs.read()
 
-        # crée la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
-        # création de la liste level contenant le niveau de chaque facteur
+        # cree la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
+        # creation de la liste level contenant le niveau de chaque facteur
         # d'abord within puis between
         ConditionTxt = []
         Level = []
@@ -1138,7 +1138,7 @@ class PostHoc:
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
-        # lecture des données dans le H5 pour crée les matrices permettant le
+        # lecture des donnees dans le H5 pour cree les matrices permettant le
         # calcul des t-test
         NbFactorWithin = self.Within.shape[1]
         Name = []
@@ -1234,7 +1234,7 @@ class PostHoc:
                     res = stats.ttest_ind(Data1, Data2, axis=0)
                     Name.append(".".join(EphFile))
                     EphFile.remove('UnPaired-Ttest')
-                # parend et un paired dépendant du facteur between
+                # parend et un paired dependant du facteur between
                 else:
                     # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
                     # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale
@@ -1303,7 +1303,7 @@ class PostHoc:
                         Data1 = np.array(Data1)
                         Data2 = np.array(Data2)
                         res = stats.ttest_ind(Data1, Data2, axis=0)
-                    # paired and un paired dépendant du facteur between
+                    # paired and un paired dependant du facteur between
                     else:
                         # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
                         # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale

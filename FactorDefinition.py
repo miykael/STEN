@@ -37,7 +37,7 @@ class FactorDef(wx.Frame):
             PanelInit, 1, choices=self.ColName, style=wx.LB_EXTENDED)
         SizerInit.Add(self.ListCol, 0, wx.EXPAND)
 
-        # panels des case pour la définition
+        # panels des case pour la definition
         PanelDef = wx.Panel(PanelInit, -1)
         SizerDef = wx.BoxSizer(wx.VERTICAL)
 

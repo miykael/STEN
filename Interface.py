@@ -11,9 +11,9 @@ import shutil
 """ TODO: translate to english
 Fonction principale lançant STEN composer de 4 Modules
 1) LeftPanel information de gauche dans la fenetre principale de sten (entree des donnes, H5,...)
-2) Right Panle information de droite dans léa fenetre principale (Entree des aparmetre anova oui/non, alpha, ...
+2) Right Panle information de droite dans lea fenetre principale (Entree des aparmetre anova oui/non, alpha, ...
 3) Stat module de calcul des statistiques (ANOVA Ttest) parametric ou non
-4)PostStat module de correction pour les test multiple (morphologie mathematique), ecriture des résultats
+4)PostStat module de correction pour les test multiple (morphologie mathematique), ecriture des resultats
 """
 
 
@@ -30,7 +30,7 @@ class principale(wx.Frame):
         DataSizer = wx.BoxSizer(wx.HORIZONTAL)
         # Left Panel
         self.LeftPanel = LeftPanel.info(PanelData, self)
-        # self.H5 = file contenant toutes les données
+        # self.H5 = file contenant toutes les donnees
         DataSizer.Add(self.LeftPanel, 0, wx.EXPAND)
         # Right panel
         self.Tab = wx.Notebook(PanelData, 1, style=wx.NB_TOP)
@@ -77,7 +77,7 @@ class principale(wx.Frame):
     1) Test si toute les parametres sont ok
     2) Test si dans le H5 il y a deja des resultats si oui on demande si faut faire 3 ou on passe directement a 4
     3) Calcul de l'ANOVA
-    4) Post Traitement correction test multiple (mathematiical morphologie) + ecriture des résultats"""
+    4) Post Traitement correction test multiple (mathematiical morphologie) + ecriture des resultats"""
 
     def Start(self, event):
         """ TODO: translate to english

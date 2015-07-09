@@ -5,7 +5,7 @@ from FactorDefinition import FactorDef
 class FactorWithin(wx.Frame):
 
     """ TODO: translate to english
-    définition des facteur Within stype SPSS"""
+    definition des facteur Within stype SPSS"""
 
     def __init__(self, NoEmptyCol, Sheet, Parent, Level, Factor):
         wx.Frame.__init__(
