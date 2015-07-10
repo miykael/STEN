@@ -1,7 +1,10 @@
 import numpy as np
 
 
-class Eph:  # lire les Eph, puis faire les claluls dessus (GFP, ST, ..:)
+# TODO - translate to english:
+# lire les Eph, puis faire les claluls dessus (GFP, ST, ..:)
+
+class Eph:
 
     """ TODO: translate to english
     lecture: path eph/eph name"""
