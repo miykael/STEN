@@ -9,7 +9,7 @@ class FactorWithin(wx.Frame):
 
     def __init__(self, NoEmptyCol, Sheet, Parent, Level, Factor):
         wx.Frame.__init__(
-            self, None, -1, title="Within subject definition", size=(200, 250))
+            self, None, wx.ID_ANY, title="Within subject definition", size=(200, 250))
         FrameSizer = wx.BoxSizer(wx.VERTICAL)
         self.Level = Level
         self.Factor = Factor
@@ -23,16 +23,16 @@ class FactorWithin(wx.Frame):
         self.DataEntry = Parent
 
         # panel Factor
-        PanelFactor = wx.Panel(self, -1)
+        PanelFactor = wx.Panel(self, wx.ID_ANY)
         FactorSizer = wx.BoxSizer(wx.VERTICAL)
         TextNameFactor = wx.StaticText(
-            PanelFactor, -1, label="   Within Subject Factor Name : ")
+            PanelFactor, wx.ID_ANY, label="   Within Subject Factor Name : ")
         FactorSizer.Add(TextNameFactor, 0, wx.ALIGN_LEFT)
         self.FactorName = wx.TextCtrl(PanelFactor, 1, value="")
         FactorSizer.Add(self.FactorName, 0, wx.ALIGN_RIGHT)
 
         TextNbLevel = wx.StaticText(
-            PanelFactor, -1, label="   Number of Levels : ")
+            PanelFactor, wx.ID_ANY, label="   Number of Levels : ")
         FactorSizer.Add(TextNbLevel, 0, wx.ALIGN_LEFT)
         self.LevelNb = wx.TextCtrl(PanelFactor, 1, value="")
         FactorSizer.Add(self.LevelNb, 0, wx.ALIGN_RIGHT)
@@ -41,11 +41,11 @@ class FactorWithin(wx.Frame):
         FrameSizer.AddStretchSpacer()
 
         # Panel button et def
-        PanelDef = wx.Panel(self, -1)
+        PanelDef = wx.Panel(self, wx.ID_ANY)
         DefSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Panel avec les button
-        PanelButton = wx.Panel(PanelDef, -1)
+        PanelButton = wx.Panel(PanelDef, wx.ID_ANY)
         ButtonSizer = wx.BoxSizer(wx.VERTICAL)
         self.ButtonAdd = wx.Button(PanelButton, 1, label="Add")
         ButtonSizer.Add(self.ButtonAdd, 0, wx.EXPAND)
@@ -58,7 +58,7 @@ class FactorWithin(wx.Frame):
         PanelButton.SetSizerAndFit(ButtonSizer)
         DefSizer.Add(PanelButton, 0, wx.EXPAND)
         # panel avec la liste non modifiable
-        PanelList = wx.Panel(PanelDef, -1)
+        PanelList = wx.Panel(PanelDef, wx.ID_ANY)
         self.ListFactor = wx.ListBox(
             PanelList, 1, size=(100, 100), style=wx.LB_SINGLE)
         DefSizer.Add(PanelList, wx.EXPAND)
@@ -67,7 +67,7 @@ class FactorWithin(wx.Frame):
         FrameSizer.AddStretchSpacer()
 
         # Panel Continue
-        PanelContinue = wx.Panel(self, -1)
+        PanelContinue = wx.Panel(self, wx.ID_ANY)
         ContinueSizer = wx.BoxSizer(wx.VERTICAL)
         ContinueButton = wx.Button(PanelContinue, 4, label="Continue")
         ContinueSizer.Add(ContinueButton, 0, wx.ALIGN_RIGHT)

@@ -23,7 +23,7 @@ def startCalculation(self):
     4) ecriture vrb, reuslt """
 
     self.Cancel = False
-    self.StartButton.Disable()
+    self.ButtonStart.Disable()
     ProgressTxt = ['Calculation Step :']
     self.mark = 0
     inputTest(self)
@@ -34,7 +34,7 @@ def startCalculation(self):
             self, "\n".join(self.InputError), style=wx.OK)
         retour = dlg.ShowModal()
         dlg.Destroy()
-        self.StartButton.Enable()
+        self.ButtonStart.Enable()
     else:
 
         # si Anova est coche on regarde si il y a des resultats Anova dans
@@ -937,17 +937,17 @@ def startCalculation(self):
                 file.removeNode('/Result/Anova/All', recursive=True)
                 file.createGroup('/Result/Anova', 'All')
             file.close()
-            self.DataPanel.ProgressTxt.SetLabel(
+            self.PanelData.ProgressTxt.SetLabel(
                 "Calculation Cancel by user")
         else:
-            self.DataPanel.ProgressTxt.SetLabel("\n".join(ProgressTxt))
+            self.PanelData.ProgressTxt.SetLabel("\n".join(ProgressTxt))
             writeVrb(self, self.H5, PathResult)
             dlg = wx.MessageDialog(
                 self, 'Work is done enjoy your results !!!! ;-)',
                 style=wx.ICON_INFORMATION)
             retour = dlg.ShowModal()
             dlg.Destroy()
-        self.StartButton.Enable()
+        self.ButtonStart.Enable()
 # test les input
 
 
@@ -955,20 +955,20 @@ def inputTest(self):
     """ Read user inputs put everythink on the common format
     and verify that everything is present"""
     # test all variable type
-    # we strat with mandatory variable (DataPanel)
+    # we strat with mandatory variable (PanelData)
     text = []
-    if self.DataPanel.PathResult is None:
+    if self.PanelData.PathResult is None:
         error = "Result folder is not selected"
         text.append(error)
     else:
-        self.PathResult = self.DataPanel.PathResult
+        self.PathResult = self.PanelData.PathResult
     # test si le filchier data est present
     if self.H5 == []:
         error = "Model not define or H5 not present"
         text.append(error)
     # on recuper le Panel de droite
-    page = self.OptionPanel.GetSelection()
-    self.AnalyseType = self.OptionPanel.GetPageText(page)
+    page = self.PanelOption.GetSelection()
+    self.AnalyseType = self.PanelOption.GetPageText(page)
     # Anova wave GFP
     if self.AnalyseType == 'ANOVA on Wave/GFP':
         # self.AnovaParam =Anova  parmetric oui non / bool

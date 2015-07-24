@@ -10,6 +10,40 @@ from DataProcessing import DataProcessing
 from Information import ReturnInfomation
 
 
+# tables:
+# /Data/*subject/*condition # array
+# /DataGFP/*subject/*condition # array
+# /Model/Within # array
+# /Model/Between # array
+# /Model/Covariate # array
+# /Model/Subject # array
+# /Names/Within # List
+# /Names/Between
+# /Names/Covariate
+# /Info/Shape
+# /Info/FS # frequncy sampling
+# /Info/level # array
+# /Info/ColFactor
+# /Info/ColWithin
+# /Info/ColBetween
+# /Info/ColCovaraite
+# /Info/Param # info si parametric ou non
+# /Sheet/Value # list
+# /Sheet/NoEmptyCol # array
+# /Sheet/ColName # list
+# /Sheet/Dim # array
+# /Error/EPH
+# /Result/Anova/All/P # P value for All electrodes and IS
+# /Result/Anova/All/F # F value only in parametric
+# /Result/Anova/GFP/P # P value for GFP
+# /Result/Anova/GFP/F # F value
+# /Result/PostHoc/All/P # P value for All electrodes and IS
+# /Result/PostHoc/All/T # T value
+# /Result/PostHoc/GFP/P # P value for GFP
+# /Result/PostHoc/GFP/T # T value
+# /Result/IntermediateResult # place for storing intermediate results
+
+
 class DataEntry(wx.Frame):
 
     """ TODO: translate to english

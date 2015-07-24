@@ -1,13 +1,13 @@
 ﻿import wx
-import AnalysisPanels
-import DataPanel
+import PanelAnalysis
+import PanelData
 from Calculation import startCalculation
 
 
 class MainFrame(wx.Frame):
 
     """
-    Initiation of the MainFrame with DataPanel, OptionPanel and the StartButton
+    Initiation of MainFrame with PanelData, PanelOption and ButtonStart
     """
 
     def __init__(self):
@@ -23,30 +23,30 @@ class MainFrame(wx.Frame):
         startSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Data Panel
-        self.DataPanel = DataPanel.info(self.panel, self)
-        mainSizerH.Add(self.DataPanel, 1, wx.EXPAND)
+        self.PanelData = PanelData.OnOpen(self.panel, self)
+        mainSizerH.Add(self.PanelData, 1, wx.EXPAND)
 
         # Option Panel
-        self.OptionPanel = wx.Notebook(self.panel, 1, style=wx.NB_TOP)
-        self.AnovaWave = AnalysisPanels.PanelAnovaWave(self.OptionPanel)
-        self.AnovaIS = AnalysisPanels.PanelAnovaIS(self.OptionPanel)
-        self.OptionPanel.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
-        self.OptionPanel.AddPage(self.AnovaIS, 'ANOVA on Brain Space')
+        self.PanelOption = wx.Notebook(self.panel, 1, style=wx.NB_TOP)
+        self.AnovaWave = PanelAnalysis.PanelAnovaWave(self.PanelOption)
+        self.AnovaIS = PanelAnalysis.PanelAnovaIS(self.PanelOption)
+        self.PanelOption.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
+        self.PanelOption.AddPage(self.AnovaIS, 'ANOVA on Brain Space')
         self.AnovaWave.SetFocus()
-        mainSizerH.Add(self.OptionPanel, 1, wx.EXPAND)
+        mainSizerH.Add(self.PanelOption, 1, wx.EXPAND)
         self.panel.SetSizer(mainSizerH)
         mainSizerV.Add(self.panel, 1, wx.EXPAND)
 
         # Start button
-        StartPanel = wx.Panel(self, wx.ID_ANY)
-        self.StartButton = wx.Button(StartPanel, wx.ID_ANY,
+        PanelStart = wx.Panel(self, wx.ID_ANY)
+        self.ButtonStart = wx.Button(PanelStart, wx.ID_ANY,
                                      label="Start Calculation")
-        startSizer.Add(self.StartButton, wx.ID_ANY, wx.EXPAND)
-        StartPanel.SetSizer(startSizer)
-        mainSizerV.Add(StartPanel, 0, wx.EXPAND)
+        startSizer.Add(self.ButtonStart, wx.ID_ANY, wx.EXPAND)
+        PanelStart.SetSizer(startSizer)
+        mainSizerV.Add(PanelStart, 0, wx.EXPAND)
         self.SetSizerAndFit(mainSizerV)
         self.Show(True)
-        wx.EVT_BUTTON(self, self.StartButton.Id, self.startAction)
+        wx.EVT_BUTTON(self, self.ButtonStart.Id, self.startAction)
 
         # Execute when STEN gets closed
         self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -79,9 +79,9 @@ class MainFrame(wx.Frame):
         dlg = wx.MessageDialog(
             self, "Do you really want to close STEN?", "Exit STEN",
             wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-        result = dlg.ShowModal()
+        answer = dlg.ShowModal()
         dlg.Destroy()
-        if result == wx.ID_OK:
+        if answer == wx.ID_OK:
             self.Destroy()
 
     def startAction(self, event):

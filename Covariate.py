@@ -8,12 +8,12 @@ class CovariateDefinition(wx.Dialog):
     def __init__(self, Within, Between, Subject, Covariate,
                  NameWithin, NameBetween, NameCovariate):
         wx.Dialog.__init__(
-            self, None, -1, title="Covariate Definition", size=(1000, 500))
+            self, None, wx.ID_ANY, title="Covariate Definition", size=(1000, 500))
         self.MakeModal(True)
         FrameSizer = wx.BoxSizer(wx.VERTICAL)
         # load panel
         self.Correction = []
-        PanelSheet = wx.Panel(self, -1)
+        PanelSheet = wx.Panel(self, wx.ID_ANY)
         SheetSizer = wx.BoxSizer(wx.VERTICAL)
         self.Sheet = CalculSheetCov(PanelSheet)
         SheetSizer.Add(self.Sheet, 0, wx.EXPAND)
@@ -21,7 +21,7 @@ class CovariateDefinition(wx.Dialog):
         FrameSizer.Add(PanelSheet, 0, wx.EXPAND)
         FrameSizer.AddSpacer(10)
 
-        ModifPanel = wx.Panel(self, -1)
+        ModifPanel = wx.Panel(self, wx.ID_ANY)
         ModifiySizer = wx.BoxSizer(wx.HORIZONTAL)
         ButtonCancel = wx.Button(ModifPanel, 1, label="Cancel", size=(108, 23))
         ModifiySizer.Add(ButtonCancel, 0, wx.EXPAND)
