@@ -16,76 +16,76 @@ class OnOpen(wx.Panel):
         # Create Data Frame window
         wx.Panel.__init__(self, parent=PanelData, style=wx.SUNKEN_BORDER)
 
-        # Data Handler Panel
+        # Panel: Data Handler
         self.PanelDataHandler = wx.Panel(self, wx.ID_ANY)
-        PanelDataHandlerSizer = wx.BoxSizer(wx.VERTICAL)
+        sizerPanelDataHandler = wx.BoxSizer(wx.VERTICAL)
 
         # Text: Load Dataset
         TxtLoad = wx.StaticText(
             self.PanelDataHandler, wx.ID_ANY, style=wx.CENTRE,
             label="Load existing Dataset")
-        PanelDataHandlerSizer.Add(TxtLoad, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(3)
+        sizerPanelDataHandler.Add(TxtLoad, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(3)
 
         # Panel: Load Dataset
         PanelLoadFile = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
-        PanelLoadFileSizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizerPanelLoadFile = wx.BoxSizer(wx.HORIZONTAL)
         self.DataFile = wx.TextCtrl(
-            PanelLoadFile, wx.ID_ANY, size=(500, 21),value=os.getcwd())
+            PanelLoadFile, wx.ID_ANY, size=(500, 21), value=os.getcwd())
         self.DataFile.SetBackgroundColour(wx.WHITE)
-        PanelLoadFileSizer.Add(self.DataFile, 0, wx.EXPAND)
+        sizerPanelLoadFile.Add(self.DataFile, 0, wx.EXPAND)
         ButtonDataLoad = wx.Button(
             PanelLoadFile, wx.ID_ANY, label="Load File", size=(110, 28))
-        PanelLoadFileSizer.Add(ButtonDataLoad, 0, wx.EXPAND)
-        PanelLoadFile.SetSizer(PanelLoadFileSizer)
-        PanelDataHandlerSizer.Add(PanelLoadFile, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(18)
+        sizerPanelLoadFile.Add(ButtonDataLoad, 0, wx.EXPAND)
+        PanelLoadFile.SetSizer(sizerPanelLoadFile)
+        sizerPanelDataHandler.Add(PanelLoadFile, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(18)
 
         # Text: Select Result Folder
         TxtSelect = wx.StaticText(
             self.PanelDataHandler, wx.ID_ANY, style=wx.CENTRE,
             label="Select Result Folder")
-        PanelDataHandlerSizer.Add(TxtSelect, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(3)
+        sizerPanelDataHandler.Add(TxtSelect, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(3)
 
         # Panel: Select Result Folder
         PanelResult = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
         PanelResultSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.TextResult = wx.TextCtrl(
             PanelResult, wx.ID_ANY, size=(500, 21),
-            value=os.path.join(os.getcwd(),'STEN'))
+            value=os.path.join(os.getcwd(), 'STEN'))
         self.TextResult.SetBackgroundColour(wx.WHITE)
         PanelResultSizer.Add(self.TextResult, 0, wx.EXPAND)
         ButtonResult = wx.Button(
             PanelResult, wx.ID_ANY, label="Select Folder", size=(110, 28))
         PanelResultSizer.Add(ButtonResult, 0, wx.EXPAND)
         PanelResult.SetSizer(PanelResultSizer)
-        PanelDataHandlerSizer.Add(PanelResult, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(18)
+        sizerPanelDataHandler.Add(PanelResult, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(18)
 
         # Text: Create or Modify Dataset
         TxtDataset = wx.StaticText(
             self.PanelDataHandler, wx.ID_ANY, style=wx.CENTRE,
             label="Data Selection")
-        PanelDataHandlerSizer.Add(TxtDataset, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(3)
+        sizerPanelDataHandler.Add(TxtDataset, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(3)
 
         # Panel: Create or Modify Dataset
         PanelDataset = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
-        PanelDatasetSizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizerPanelDataset = wx.BoxSizer(wx.HORIZONTAL)
         ButtonDataCreate = wx.Button(
             PanelDataset, wx.ID_ANY, size=(350, 28), style=wx.CENTRE,
             label="Create new Dataset / Modify loaded Dataset")
-        PanelDatasetSizer.Add(ButtonDataCreate, 0, wx.EXPAND)
-        PanelDataset.SetSizer(PanelDatasetSizer)
-        PanelDataHandlerSizer.Add(PanelDataset, 0, wx.EXPAND)
-        PanelDataHandlerSizer.AddSpacer(18)
+        sizerPanelDataset.Add(ButtonDataCreate, 0, wx.EXPAND)
+        PanelDataset.SetSizer(sizerPanelDataset)
+        sizerPanelDataHandler.Add(PanelDataset, 0, wx.EXPAND)
+        sizerPanelDataHandler.AddSpacer(18)
 
         # Create vertical structure of Data Handler Frame
-        FrameSizer = wx.BoxSizer(wx.VERTICAL)
-        FrameSizer.Add(self.PanelDataHandler, 0, wx.EXPAND)
-        self.SetSizer(FrameSizer)
-        self.PanelDataHandler.SetSizer(PanelDataHandlerSizer)
+        sizerFrame = wx.BoxSizer(wx.VERTICAL)
+        sizerFrame.Add(self.PanelDataHandler, 0, wx.EXPAND)
+        self.SetSizer(sizerFrame)
+        self.PanelDataHandler.SetSizer(sizerPanelDataHandler)
 
         # Button Events
         wx.EVT_BUTTON(self, ButtonDataLoad.Id, self.loadData)
@@ -98,10 +98,9 @@ class OnOpen(wx.Panel):
         self.NbFactor = 0
         self.Level = {}
         self.Analyse = None
-        # TODO: unclear why MainFrame is added here?
+        # TODO: unclear why MainFrame is added here? Change name of ExportData?
         self.ExportData = MainFrame
         self.ExportData.H5 = []
-
 
     def loadData(self, event):
         """Opens the DataLoad Panel"""
@@ -132,8 +131,8 @@ class OnOpen(wx.Panel):
     def resultAction(self, event):
         """Opens the DataResult Panel"""
         dlg = wx.DirDialog(None, "Select Result Folder",
-                           defaultPath=self.TextResult.Value, 
-                           tyle=wx.DD_DEFAULT_STYLE)
+                           defaultPath=self.TextResult.Value,
+                           style=wx.DD_DEFAULT_STYLE)
         dlg.ShowModal()
         self.PathResult = dlg.GetPath()
         self.TextResult.SetValue(self.PathResult)

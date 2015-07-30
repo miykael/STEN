@@ -14,37 +14,37 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, None, wx.ID_ANY, title="STEN 1.0",
                           size=(1000, 500))
 
-        # MainFrame panel
+        # Panel: MainFrame
         self.panel = wx.Panel(self, wx.ID_ANY)
 
         # Specify BoxSizer
-        mainSizerV = wx.BoxSizer(wx.VERTICAL)
-        mainSizerH = wx.BoxSizer(wx.HORIZONTAL)
-        startSizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizerMainV = wx.BoxSizer(wx.VERTICAL)
+        sizerMainH = wx.BoxSizer(wx.HORIZONTAL)
+        sizerStart = wx.BoxSizer(wx.HORIZONTAL)
 
-        # Data Panel
+        # Panel: Data
         self.PanelData = PanelData.OnOpen(self.panel, self)
-        mainSizerH.Add(self.PanelData, 1, wx.EXPAND)
+        sizerMainH.Add(self.PanelData, 1, wx.EXPAND)
 
-        # Option Panel
+        # Panel: Option
         self.PanelOption = wx.Notebook(self.panel, 1, style=wx.NB_TOP)
         self.AnovaWave = PanelAnalysis.PanelAnovaWave(self.PanelOption)
         self.AnovaIS = PanelAnalysis.PanelAnovaIS(self.PanelOption)
         self.PanelOption.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
         self.PanelOption.AddPage(self.AnovaIS, 'ANOVA on Brain Space')
         self.AnovaWave.SetFocus()
-        mainSizerH.Add(self.PanelOption, 1, wx.EXPAND)
-        self.panel.SetSizer(mainSizerH)
-        mainSizerV.Add(self.panel, 1, wx.EXPAND)
+        sizerMainH.Add(self.PanelOption, 1, wx.EXPAND)
+        self.panel.SetSizer(sizerMainH)
+        sizerMainV.Add(self.panel, 1, wx.EXPAND)
 
-        # Start button
+        # Button: Start
         PanelStart = wx.Panel(self, wx.ID_ANY)
         self.ButtonStart = wx.Button(PanelStart, wx.ID_ANY,
                                      label="Start Calculation")
-        startSizer.Add(self.ButtonStart, wx.ID_ANY, wx.EXPAND)
-        PanelStart.SetSizer(startSizer)
-        mainSizerV.Add(PanelStart, 0, wx.EXPAND)
-        self.SetSizerAndFit(mainSizerV)
+        sizerStart.Add(self.ButtonStart, wx.ID_ANY, wx.EXPAND)
+        PanelStart.SetSizer(sizerStart)
+        sizerMainV.Add(PanelStart, 0, wx.EXPAND)
+        self.SetSizerAndFit(sizerMainV)
         self.Show(True)
         wx.EVT_BUTTON(self, self.ButtonStart.Id, self.startAction)
 
