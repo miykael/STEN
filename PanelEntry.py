@@ -1,26 +1,20 @@
 import wx
-import numpy as np
-import glob as ls
 import os
-import tables
-from Actions import GridFileDropTarget
-from ReadFiles import ReadSheet
 from FactorWithin import FactorWithin
-from DataProcessing import DataProcessing
-from Information import ReturnInfomation
 
 
 class DataEntry(wx.Frame):
 
-    """ TODO: translate to english
-    feuille de clacul sytle SPSS
+    """
+    Window to create the dataset and specify the factors in SPSS style
     """
 
-    def __init__(self, Parent):
+    def __init__(self, Parent, MainFrame):
 
         # Create data table window
         wx.Frame.__init__(self, None, wx.ID_ANY, title="Data Entry",
                           style=wx.DEFAULT_FRAME_STYLE | wx.RESIZE_BORDER)
+        self.MainFrame = MainFrame
 
         # Panel: Data Entry
         PanelDataEntry = wx.Panel(self, wx.ID_ANY)
@@ -29,31 +23,32 @@ class DataEntry(wx.Frame):
         # Panel: Data Sheet (XLS-style)
         PanelSheet = wx.Panel(PanelDataEntry, wx.ID_ANY)
         sizerPanelSheet = wx.BoxSizer(wx.VERTICAL)
-        sizerPanelSheet.AddSpacer(10)
+        sizerPanelSheet.AddSpacer(5)
 
         # Panel: Cell content field at top of data sheet
         PanelCellContent = wx.Panel(PanelSheet, wx.ID_ANY)
         sizerPanelCellContent = wx.BoxSizer(wx.HORIZONTAL)
         sizerPanelCellContent.AddSpacer(10)
         CellTxt = wx.StaticText(
-            PanelCellContent, wx.ID_ANY, label='Cell Content: ',
+            PanelCellContent, wx.ID_ANY, label='Cell Content:',
             style=wx.ALIGN_LEFT)
         sizerPanelCellContent.Add(CellTxt, 0, wx.EXPAND)
         sizerPanelCellContent.AddSpacer(3)
-        self.CellContentTxt = wx.TextCtrl(
-            PanelCellContent, wx.ID_ANY, value="", size=(600, 23))
+        self.CellContentTxt = wx.TextCtrl(PanelCellContent, wx.ID_ANY,
+                                          value="", size=(861, 23),
+                                          style=wx.TE_READONLY)
         self.CellContentTxt.SetBackgroundColour(wx.WHITE)
         sizerPanelCellContent.Add(self.CellContentTxt, 0, wx.EXPAND)
         PanelCellContent.SetSizer(sizerPanelCellContent)
         sizerPanelSheet.Add(PanelCellContent)
-        sizerPanelSheet.AddSpacer(10)
+        sizerPanelSheet.AddSpacer(5)
 
         # Grid: XLS (XLS-style)
         self.Sheet = wx.grid.Grid(PanelSheet)
 
         # Default values of grid
         self.Sheet.nRow = 30
-        self.Sheet.nCol = 8
+        self.Sheet.nCol = 11
         self.Sheet.content4undo = [0, 0, '']
         self.Sheet.filePath = ''
 
@@ -65,16 +60,9 @@ class DataEntry(wx.Frame):
 
         # Specify grid events
         self.Sheet.Bind(wx.EVT_KEY_DOWN, self.onControlKey)
-        self.Sheet.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, self.onCellEdit)
         self.Sheet.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK,
                         self.onLabelRightClick)
         self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.onCellRightClick)
-
-        "TODO: OLD CODE - check what's needed"
-        # dropTarget = GridFileDropTarget(self.Sheet)
-        # self.Sheet.SetDropTarget(dropTarget)
-        # self.Sheet.EnableDragRowSize()
-        # self.Sheet.EnableDragColSize()
 
         # Create the grid object
         sizerPanelSheet.Add(self.Sheet)
@@ -82,132 +70,70 @@ class DataEntry(wx.Frame):
         sizerPanelDataEntry.Add(PanelSheet, 0, wx.EXPAND)
         sizerPanelDataEntry.AddSpacer(10)
 
-        """
-        # Panel Buttons
-        PanelButton = wx.Panel(self, wx.ID_ANY)
-        sizerButton = wx.BoxSizer(wx.HORIZONTAL)
-        sizerButton.AddSpacer(10)
-        # sous panel avec le bouton des data
-        PanelButtonData = wx.Panel(PanelButton, wx.ID_ANY)
-        sizerButtonData = wx.BoxSizer(wx.HORIZONTAL)
-        ButtonDefFactor = wx.Button(PanelButtonData, 1, label="Define Factor")
-        sizerButtonData.Add(ButtonDefFactor, 0, wx.EXPAND)
-        sizerButtonData.AddSpacer(5)
-
-        self.Buttonsave = wx.Button(
-            PanelButtonData, 4, label="Save Data and continue")
-        sizerButtonData.Add(self.Buttonsave, 0, wx.EXPAND)
-        sizerButtonData.AddSpacer(5)
-        PanelButtonData.SetSizer(sizerButtonData)
-        sizerButton.Add(PanelButtonData, 0, wx.EXPAND)
-        sizerButton.AddSpacer(20)
-        """
-
         # Panel: Button field below table
         PanelButton = wx.Panel(self, wx.ID_ANY)
         sizerButton = wx.BoxSizer(wx.HORIZONTAL)
         sizerButton.AddSpacer(10)
-        PanelInsert = wx.Panel(PanelButton, wx.ID_ANY)
-        sizerInsert = wx.BoxSizer(wx.HORIZONTAL)
+        # Number of Rows Field
         TextInserRow = wx.StaticText(
-            PanelInsert, wx.ID_ANY, label="Number of Rows :")
-        sizerInsert.Add(TextInserRow, 0, wx.ALIGN_CENTRE)
-        sizerInsert.AddSpacer(5)
+            PanelButton, wx.ID_ANY, label="Number of Rows: ")
+        sizerButton.Add(TextInserRow, 0, wx.ALIGN_CENTRE)
         self.Sheet.nRow = self.Sheet.GetNumberRows()
-        self.Row = wx.SpinCtrl(PanelInsert, 1, str(self.Sheet.nRow),
-                               min=1, max=1000, style=wx.SP_ARROW_KEYS)
-        sizerInsert.Add(self.Row, 0, wx.EXPAND)
-        sizerInsert.AddSpacer(20)
+        self.Row = wx.SpinCtrl(PanelButton, 1, str(self.Sheet.nRow),
+                               size=(75, 25), min=1, max=1000,
+                               style=wx.SP_ARROW_KEYS)
+        sizerButton.Add(self.Row, 0, wx.EXPAND)
+        sizerButton.AddSpacer(20)
+        # Number of Columns Field
         TextInserCol = wx.StaticText(
-            PanelInsert, wx.ID_ANY, label="Number of Cols :")
-        sizerInsert.Add(TextInserCol, 0, wx.ALIGN_CENTRE)
-        sizerInsert.AddSpacer(5)
+            PanelButton, wx.ID_ANY, label="Number of Columns: ")
+        sizerButton.Add(TextInserCol, 0, wx.ALIGN_CENTRE)
         self.Sheet.nCol = self.Sheet.GetNumberCols()
-        self.Col = wx.SpinCtrl(PanelInsert, 2, str(self.Sheet.nCol),
-                               min=1, max=100, style=wx.SP_ARROW_KEYS)
-        sizerInsert.Add(self.Col, 0, wx.EXPAND)
-        sizerInsert.AddSpacer(5)
-        PanelInsert.SetSizerAndFit(sizerInsert)
-        sizerButton.Add(PanelInsert, 0, wx.EXPAND)
-        sizerButton.AddSpacer(10)
+        self.Col = wx.SpinCtrl(PanelButton, 2, str(self.Sheet.nCol),
+                               size=(75, 25), min=1, max=1000,
+                               style=wx.SP_ARROW_KEYS)
+        sizerButton.Add(self.Col, 0, wx.EXPAND)
+        sizerButton.AddSpacer(20)
+        # Define Import Button
+        ButtonImport = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
+                                 label="Import Data")
+        sizerButton.Add(ButtonImport, 0, wx.EXPAND)
+        sizerButton.AddSpacer(20)
+        # Define Export Button
+        ButtonExport = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
+                                 label="Export Data")
+        sizerButton.Add(ButtonExport, 0, wx.EXPAND)
+        sizerButton.AddSpacer(20)
+        # Define Factor Button
+        ButtonDefineFactor = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
+                                       label="Define Factor")
+        sizerButton.Add(ButtonDefineFactor, 0, wx.EXPAND)
+        sizerButton.AddSpacer(20)
 
-
-
-        wx.EVT_SPINCTRL(self,1,self.ModifRow)
-        wx.EVT_SPINCTRL(self,2,self.ModifCol)
-
-       
-
-        """
-        # Panel clear + copy + paste + export
-        PanelClear = wx.Panel(PanelButton, wx.ID_ANY)
-        sizerClear = wx.BoxSizer(wx.HORIZONTAL)
-        sizerClear.AddSpacer(5)
-        ButtonExport = wx.Button(
-            PanelClear, 17, label="Export Table to CSV file")
-        sizerClear.Add(ButtonExport, 0, wx.EXPAND)
-        sizerClear.AddSpacer(5)
-
-        PanelClear.SetSizerAndFit(sizerClear)
-        sizerClear.AddSpacer(5)
-
-        sizerButton.Add(PanelClear, 0, wx.EXPAND)
-
+        # Resize everything to create the window
         PanelButton.SetSizerAndFit(sizerButton)
-        PanelButton.SetSizerAndFit(sizerButton)
-        """
-
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
         sizerFrame.Add(PanelDataEntry, 0, wx.EXPAND)
-        #sizerFrame.Add(PanelButton, 0, wx.EXPAND)
+        sizerFrame.AddSpacer(5)
         sizerFrame.Add(PanelButton, 0, wx.EXPAND)
-        # lie tout au sizer
+        sizerFrame.AddSpacer(5)
         PanelDataEntry.SetSizer(sizerPanelDataEntry)
         self.SetSizerAndFit(sizerFrame)
 
-        """
-        # evemement
-        wx.EVT_BUTTON(self, 1, self.DefFactor)
-        wx.EVT_BUTTON(self, 4, self.SaveData)
-        wx.EVT_BUTTON(self, 11, self.Drag)
-        wx.EVT_BUTTON(self, 17, self.ExportToXls)
-
-        # TODO: SORT BUTTON !!!!!
-
-        """
-        # Default variables
-        self.save = False
-        """
-        self.info = Parent
-        self.ExportData = Parent.ExportData
-        """
+        # Specification of events
+        wx.EVT_SPINCTRL(self, self.Row.Id, self.modifyRow)
+        wx.EVT_SPINCTRL(self, self.Col.Id, self.modifyCol)
+        wx.EVT_BUTTON(self, ButtonDefineFactor.Id, self.defineFactor)
+        wx.EVT_BUTTON(self, ButtonExport.Id, self.exportData)
+        wx.EVT_BUTTON(self, ButtonImport.Id, self.importData)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onCellSelected)
-        """
-        if self.ExportData.H5 == []:
-            self.Buttonsave.Disable()
-            self.Show(True)
-        else:
-            self.ReadH5()
 
-        """
-
-    def onCellEdit(self, event):
-        """Get control during cell editing"""
-        editor = event.GetControl()
-        editor.Bind(wx.EVT_KEY_DOWN, self.onEditorKey)
-        event.Skip()
-
-    def onEditorKey(self, event):
-        """Key event handler during cell editing (only UP or DOWN)"""
-        keycode = event.GetKeyCode()
-        if keycode == wx.WXK_UP:
-            self.Sheet.MoveCursorUp(False)
-        elif keycode == wx.WXK_DOWN:
-            self.Sheet.MoveCursorDown(False)
-        else:
-            pass
-        event.Skip()
+        # Drag and Drop Function
+        dropTarget = GridFileDropTarget(self.Sheet)
+        self.Sheet.SetDropTarget(dropTarget)
+        self.Sheet.EnableDragRowSize()
+        self.Sheet.EnableDragColSize()
 
     def onControlKey(self, event):
         """Key event handler if Ctrl is pressed"""
@@ -223,6 +149,10 @@ class DataEntry(wx.Frame):
                     self.onCtrlPaste('undo')
             elif keycode == 65:  # If Ctrl+A is pressed
                 self.Sheet.SelectAll()
+            elif keycode == 83:  # If Ctrl+S is pressed
+                self.exportData(event)
+            elif keycode == 79:  # If Ctrl+O is pressed
+                self.importData(event)
         if keycode == 127:   # If del is pressed
             self.onDelete()
         else:
@@ -324,7 +254,6 @@ class DataEntry(wx.Frame):
                 - self.Sheet.GetSelectionBlockTopLeft()[0][0] + 1
             cols = self.Sheet.GetSelectionBlockBottomRight()[0][1] \
                 - self.Sheet.GetSelectionBlockTopLeft()[0][1] + 1
-
         # Clear cells contents
         for r in range(rows):
             for c in range(cols):
@@ -350,9 +279,9 @@ class DataEntry(wx.Frame):
                                            wx.Colour(192, 192, 192))
 
         # File Selection Popup
-        wildcard = "EPH files (*.eph) | *.eph | " \
+        wildcard = "EPH files (*.eph)|*.eph|" \
             "Python source (*.txt; *.rst; *.dat)|*.txt;*.rst;*.dat|" \
-            "All files (*.*) | *.*"
+            "All files (*.*)|*.*"
         dlg = wx.FileDialog(
             None, defaultDir=self.Sheet.filePath, wildcard=wildcard,
             style=wx.FD_MULTIPLE, message="Add files to the table")
@@ -388,186 +317,281 @@ class DataEntry(wx.Frame):
 
     def onClose(self, event):
         """Show exit message when Data Panel gets closed"""
-        # TODO: when is save true? should I add CTRL+S function?
-        if self.save:
+        dlg = wx.MessageDialog(
+            self, "Do you really want to close the data entry window?",
+            "Exit Data Entry Window",
+            wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+        answer = dlg.ShowModal()
+        dlg.Destroy()
+        if answer == wx.ID_OK:
             self.Destroy()
-        else:
-            dlg = wx.MessageDialog(
-                self, "Do you really want to close the data entry window?",
-                "Exit Data Entry Window",
-                wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-            answer = dlg.ShowModal()
-            dlg.Destroy()
-            if answer == wx.ID_OK:
-                self.Destroy()
+            self.MainFrame.Show(True)
 
-
-
-
-
-    def ModifRow(self, event):
+    def modifyRow(self, event):
+        "Adds or deletes number of rows"
         ActualRow = self.Row.GetValue()
         SheetRow = self.Sheet.GetNumberRows()
         while SheetRow != ActualRow:
+            # Add Row
             if SheetRow < ActualRow:
                 self.Sheet.AppendRows()
-            # Add Row
+            # Delete Row
             elif SheetRow > ActualRow:
                 self.Sheet.DeleteRows(ActualRow)
             SheetRow = self.Sheet.GetNumberRows()
-        self.NbRow = self.Row.GetValue()
 
-    def ModifCol(self, event):
+    def modifyCol(self, event):
+        "Adds or deletes number of columns"
         ActualCol = self.Col.GetValue()
         SheetCol = self.Sheet.GetNumberCols()
         while SheetCol != ActualCol:
-            # Add Row
+            # Add Column
             if SheetCol < ActualCol:
                 self.Sheet.AppendCols()
-                ####self.Sheet.SetColLabelValue(ActualCol, "F%d" % ActualCol)
-                txt = []
-                for c in range(ActualCol):
-                    txt.append(self.Sheet.GetColLabelValue(c))
-                self.text = txt
-
+                self.Sheet.SetColLabelValue(SheetCol, "F%d" % SheetCol)
+            # Delete Column
             elif SheetCol > ActualCol:
                 self.Sheet.DeleteCols(ActualCol)
-                txt = []
-                for c in range(ActualCol):
-                    txt.append(self.Sheet.GetColLabelValue(c))
-                self.text = txt
             SheetCol = self.Sheet.GetNumberCols()
-        self.text.insert(0, '')
-        self.NbCol = self.Col.GetValue()
-
-
-
-    def ReadH5(self):
-        self.Show(True)
-        self.Buttonsave.Disable()
-        file = tables.openFile(self.ExportData.H5, mode='r')
-        FactorName = file.getNode('/Names/Within')
-        self.FactorName = FactorName.read()
-        Level = file.getNode('/Info/Level')
-        self.Level = Level.read()
-        NoEpmtyCol = file.getNode('/Sheet/NoEmptyCol')
-        NoEpmtyCol = NoEpmtyCol.read()
-        SheetColName = file.getNode('/Sheet/ColName')
-        SheetColName = SheetColName.read()
-        SheetValue = file.getNode('/Sheet/Value')
-        SheetValue = SheetValue.read()
-        MaxColNumber = np.array(NoEpmtyCol).max() + 1
-        if MaxColNumber > 9:
-            self.Sheet.SetNumberCols(MaxColNumber)
-            self.Sheet.nCol = MaxColNumber
-        else:
-            self.Sheet.nCol = 9
-        self.Col.SetValue(self.Sheet.nCol)
-        self.text = ['']
-        for i, col in enumerate(NoEpmtyCol):
-
-            ColName = SheetColName[i]
-            self.Sheet.SetColLabelValue(col, ColName)
-            self.text.append(ColName)
-            self.BoxFactor.SetItems(self.text)
-            ColValue = SheetValue[i]
-            if len(ColValue) > 35:
-                self.Sheet.SetNumberRows(len(ColValue))
-                self.Sheet.nRow = len(ColValue)
-            else:
-                self.Sheet.nRow = 30
-            self.Row.SetValue(self.Sheet.nRow)
-            for row, value in enumerate(ColValue):
-                self.Sheet.SetCellValue(row, col, value)
-            file.close()
-
-
-    def ExportToXls(self, event):
-        wx.InitAllImageHandlers()
-        dlg = wx.FileDialog(None, "Save Table to", wildcard="*.csv",
-                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        retour = dlg.ShowModal()
-        chemin = dlg.GetPath()
-        fichier = dlg.GetFilename()
-        dlg.Destroy()
-        dlg.Show(True)
-        CsvFile = open(chemin, "w")
-        Data = ReadSheet(self.Sheet, self.Sheet.nRow, self.Sheet.nCol)
-        row = np.array(Data.NoEmptyRow).max() + 1
-        col = np.array(Data.NoEmptyCol).max() + 1
-        for r in range(row):
-            tmp = []
-            for c in range(col):
-                cell = self.Sheet.GetCellValue(r, c)
-                tmp.append(';')
-                tmp.append(cell)
-            tmp.remove(';')
-            CsvFile.write("".join(tmp))
-            CsvFile.write('\n')
 
     def onCellSelected(self, event):
         """Show content of select cell in content field"""
-        row = event.GetRow()
-        col = event.GetCol()
-        CellValue = self.Sheet.GetCellValue(row, col)
-        self.CellContentTxt.SetValue(CellValue)   
+        cellRow = event.GetRow()
+        cellCol = event.GetCol()
+        CellValue = self.Sheet.GetCellValue(cellRow, cellCol)
+        self.CellContentTxt.SetValue(CellValue)
         event.Skip()
 
-    def DefFactor(self, event):
-        self.Data = ReadSheet(self.Sheet, self.Sheet.nRow, self.Sheet.nCol)
-        self.ModelDef = FactorWithin(
-            self.Data.NoEmptyCol, self.Sheet, self, Level=[], Factor=[])
-        self.ModelDef.Show(True)
+    def readTable(self):
+        """Reads the label and content of the current table
+        and checks if table is empty or rectangular"""
 
-    def SaveData(self, event):
-        self.Show(False)
-        wx.InitAllImageHandlers()
-        dlg = wx.FileDialog(None, "Save Model to", wildcard="*.h5",
-                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        retour = dlg.ShowModal()
-        chemin = dlg.GetPath()
-        fichier = dlg.GetFilename()
-        dlg.Destroy()
-        dlg.Show(True)
+        dataTable = {}
 
-        try:
-            self.ModelDef.Close()
-            self.ModelDef.ModelFull.Close()
-        except:
-            pass
-        self.info.DataFile.SetLabel(chemin)
-        # creation du fichier H5 pour les donee importante
-        self.file = tables.openFile(chemin, mode='w')
-        self.DataGroup = self.file.createGroup('/', 'Data')
-        self.DataGFPGroup = self.file.createGroup('/', 'DataGFP')
-        self.ModelGroup = self.file.createGroup('/', 'Model')
-        self.InfoGroup = self.file.createGroup('/', 'Info')
-        self.SheetGroup = self.file.createGroup('/', 'Sheet')
-        self.NamesGroup = self.file.createGroup('/', 'Names')
-        self.ErrorGroup = self.file.createGroup('/', 'Error')
-        ResultGroup = self.file.createGroup('/', 'Result')
-        IntermediateResults = self.file.createGroup(
-            ResultGroup, 'IntermediateResult')
-        Aov = self.file.createGroup(ResultGroup, 'Anova')
-        PH = self.file.createGroup(ResultGroup, 'PostHoc')
-        self.file.createGroup(Aov, 'All')
-        self.file.createGroup(Aov, 'GFP')
-        self.file.createGroup(PH, 'All')
-        self.file.createGroup(PH, 'GFP')
-        SavingObj = DataProcessing(self)
-        self.file.close()
+        # Get Label Values
+        dataTable['labels'] = [self.Sheet.GetColLabelValue(i)
+                               for i in range(self.Sheet.GetNumberCols())]
 
-        # export fichier H5
-        self.ExportData.H5 = chemin
-        info = ReturnInfomation(chemin)
-        self.info.TxtInfo.SetLabel("".join(info.text))
-        if info.CovariatePresent:
-            self.info.ExportData.AnovaWave.PostHocCheckBox.Disable()
-            self.info.ExportData.AnovaIS.PostHocCheckBox.Disable()
-            self.info.ExportData.AnovaWave.PostHocCheckBox.SetValue(False)
-            self.info.ExportData.AnovaIS.PostHocCheckBox.SetValue(False)
+        # Get Table Content
+        dataTable['content'] = []
+        for j in range(self.Sheet.GetNumberCols()):
+            currentRow = [self.Sheet.GetCellValue(i, j)
+                          for i in range(self.Sheet.GetNumberRows())]
+            if filter(None, currentRow) != []:
+                dataTable['content'].append(filter(None, currentRow))
+
+        # make sure that table is not empty
+        if dataTable['content'] == []:
+            errorMessage = 'tableIsEmpty'
         else:
-            self.info.ExportData.AnovaWave.PostHocCheckBox.Enable()
-            self.info.ExportData.AnovaIS.PostHocCheckBox.Enable()
-        self.save = True
-        self.Close()
+            # make sure that column have the same length
+            rowsFirstColumn = len(dataTable['content'][0])
+            errorMessage = ''
+            for i in range(1, len(dataTable['content'])):
+                # make sure that font color of column is black
+                for c in range(len(dataTable['content'][i])):
+                    self.Sheet.SetCellTextColour(c, i,
+                                                 wx.Colour(76, 76, 76, 255))
+                # check length of column
+                if rowsFirstColumn != len(dataTable['content'][i]):
+                    errorMessage = 'tableIsRectangular'
+                    # change color of unequal columns
+                    for c in range(len(dataTable['content'][i])):
+                        self.Sheet.SetCellTextColour(c, i, wx.RED)
+
+            dataTable['nRows'] = rowsFirstColumn
+            dataTable['nCols'] = len(dataTable['content'])
+
+            # Drop the unspecified labels
+            dataTable['labels'] = dataTable['labels'][:dataTable['nCols']]
+
+        return dataTable, errorMessage
+
+    def checkTableContent(self, dataTable):
+        errorNotAFile = ''
+        # Go through table
+        for i in range(dataTable['nCols']):
+            for j in range(dataTable['nRows']):
+
+                cellcontent = dataTable['content'][i][j]
+
+                # Check if content could be a file
+                if os.path.dirname(cellcontent) != '':
+                    # Check if file is exists or not
+                    if not os.path.exists(cellcontent):
+                        self.Sheet.SetCellTextColour(j, i, wx.RED)
+                        errorNotAFile = 'errorNotAFile'
+
+        return errorNotAFile
+
+    def getTableInfo(self):
+        """Gets table information and ok if possible to proceed"""
+
+        # Read Table and handle error messages
+        dataTable, errorMessage = self.readTable()
+        proceed = False
+
+        # Error message if table is not rectangular
+        if errorMessage == 'tableIsRectangular':
+            dlg = wx.MessageDialog(
+                self, style=wx.OK | wx.ICON_WARNING,
+                caption="Warning: Column length is unequal",
+                message="Not all columns have the same length!" +
+                        "\nPlease correct that.")
+            dlg.ShowModal()
+            dlg.Destroy()
+        # Error message if table is empty
+        elif errorMessage == 'tableIsEmpty':
+            dlg = wx.MessageDialog(
+                self, style=wx.OK | wx.ICON_WARNING,
+                caption="Warning: Table is empty",
+                message="Table is empty.\nFill it with content first!")
+            dlg.ShowModal()
+            dlg.Destroy()
+        else:
+            # Check if table content contains existing files
+            errorNotAFile = self.checkTableContent(dataTable)
+            if errorNotAFile == 'errorNotAFile':
+                dlg = wx.MessageDialog(
+                    self, style=wx.OK | wx.ICON_WARNING,
+                    caption="Warning: File doesn't exist",
+                    message="Some files don't exist." +
+                            "\nPlease specify only existing file names!")
+                dlg.ShowModal()
+                dlg.Destroy()
+            else:
+                proceed = True
+
+        return dataTable, proceed
+
+    def defineFactor(self, event):
+        """Opens Factor Definition Window if everything is ok"""
+        # Get Table info
+        self.dataTable, proceed = self.getTableInfo()
+        if proceed:
+            self.ModelDef = FactorWithin(
+                self.dataTable['nCols'], self.Sheet, self, Level=[], Factor=[])
+            self.ModelDef.Show(True)
+
+    def exportData(self, event):
+        """Saves Table content into a csv-file"""
+        # Get Table info
+        self.dataTable, proceed = self.getTableInfo()
+        if proceed:
+            # Ask for csv filename
+            dlg = wx.FileDialog(None, "Save Table to", wildcard="*.csv",
+                                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+            answer = dlg.ShowModal()
+            dlg.Destroy()
+
+            # If file name has been specified
+            if answer == wx.ID_OK:
+                path2csv = dlg.GetPath()
+
+                # Add ".csv" if not specified
+                filename, file_extension = os.path.splitext(path2csv)
+                if file_extension != '.csv':
+                    path2csv += '.csv'
+
+                # Structure output together
+                output = [[self.dataTable['content'][j][i]
+                           for j in range(self.dataTable['nCols'])]
+                          for i in range(self.dataTable['nRows'])]
+
+                # Write output to csv file
+                import csv
+                with open(path2csv, 'w') as fcsv:
+                    a = csv.writer(fcsv, delimiter=',')
+                    a.writerow(self.dataTable['labels'])
+                    a.writerows(output)
+
+    def importData(self, event):
+        """Get content from a csv-file and write it into the table"""
+
+        # Ask for csv filename to load
+        dlg = wx.FileDialog(None, "Load CSV file", wildcard="*.csv",
+                            style=wx.FD_OPEN)
+        answer = dlg.ShowModal()
+        dlg.Destroy()
+
+        # If file name has been specified
+        if answer == wx.ID_OK:
+            path2csv = dlg.GetPath()
+
+            # If file exists
+            if os.path.exists(path2csv):
+
+                dataTable = {}
+                inputdata = []
+
+                # Get CSV content and store it in dataTable variable
+                import csv
+                with open(path2csv, 'rb') as fcsv:
+                    reader = csv.reader(fcsv)
+                    for row in reader:
+
+                        row = [unicode(cell, 'utf-8') for cell in row]
+
+                        # Save Labels and number of columns
+                        if dataTable == {}:
+                            dataTable['labels'] = row
+                            dataTable['nCols'] = len(row)
+
+                        else:
+                            inputdata.append(row)
+
+                dataTable['content'] = map(list, zip(*inputdata))
+                dataTable['nRows'] = len(dataTable['content'][0])
+
+                # Change name of labels
+                for i, l in enumerate(dataTable['labels']):
+                    self.Sheet.SetColLabelValue(i, l)
+
+                # Write content to table
+                self.Sheet.ClearGrid()
+                for r in range(dataTable['nRows']):
+                    for c in range(dataTable['nCols']):
+                        value = dataTable['content'][c][r]
+                        self.Sheet.SetCellValue(r, c, value)
+
+            # If file doesn't exists
+            else:
+                dlg = wx.MessageDialog(
+                    self, style=wx.OK | wx.ICON_WARNING,
+                    caption="Warning: File doesn't exist",
+                    message="Can't load CSV-file:\n%s" % (path2csv) +
+                            "\nFile doesn't exist!")
+                dlg.ShowModal()
+                dlg.Destroy()
+
+
+class GridFileDropTarget(wx.FileDropTarget):
+
+    """File Drop Target"""
+
+    def __init__(self, grid):
+        wx.FileDropTarget.__init__(self)
+        self.grid = grid
+
+    def OnDropFiles(self, x, y, filenames):
+        # the x,y coordinates are Unscrolled coordinates.
+        # They must be changed to scrolled coordinates.
+        x, y = self.grid.CalcUnscrolledPosition(x, y)
+
+        # now we need to get the row and column from the grid
+        col = self.grid.XToCol(x)
+        row = self.grid.YToRow(y)
+
+        # if drop objects are files, add them to the column
+        if not os.path.isdir(filenames[0]):
+            for i, f in enumerate(filenames):
+                if row > -1 and col > -1:
+                    self.grid.SetCellValue(row + i, col, f)
+        # if drop objects are folders add them successively to columns
+        else:
+            for j, f in enumerate(filenames):
+                listOfFiles = sorted(os.listdir(filenames[j]))
+                for i, f in enumerate(listOfFiles):
+                    if row > -1 and col > -1:
+                        self.grid.SetCellValue(row + i, col + j,
+                                               os.path.join(filenames[j], f))

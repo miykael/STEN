@@ -2,6 +2,7 @@
 import os
 from PanelEntry import DataEntry
 from Information import ReturnInfomation
+import wx.lib.sheet
 
 
 class OnOpen(wx.Panel):
@@ -99,8 +100,9 @@ class OnOpen(wx.Panel):
         self.Level = {}
         self.Analyse = None
         # TODO: unclear why MainFrame is added here? Change name of ExportData?
-        self.ExportData = MainFrame
-        self.ExportData.H5 = []
+        # MainFrame is needed for hide and show main frame, but why was it called ExportData
+        self.MainFrame = MainFrame
+        self.MainFrame.H5 = []
 
     def loadData(self, event):
         """Opens the DataLoad Panel"""
@@ -112,20 +114,20 @@ class OnOpen(wx.Panel):
         if answer == wx.ID_OK:
             self.PathFile = dlg.GetPath()
             self.DataFile.SetLabel(self.PathFile)
-            self.ExportData.H5 = self.PathFile
+            self.MainFrame.H5 = self.PathFile
             info = ReturnInfomation(self.PathFile)
             self.TxtInfo.SetLabel("".join(info.text))
             if info.CovariatePresent:
-                self.ExportData.AnovaWave.PostHocCheckBox.Disable()
-                self.ExportData.AnovaIS.PostHocCheckBox.Disable()
-                self.ExportData.AnovaWave.PostHocCheckBox.SetValue(False)
-                self.ExportData.AnovaIS.PostHocCheckBox.SetValue(False)
+                self.MainFrame.AnovaWave.PostHocCheckBox.Disable()
+                self.MainFrame.AnovaIS.PostHocCheckBox.Disable()
+                self.MainFrame.AnovaWave.PostHocCheckBox.SetValue(False)
+                self.MainFrame.AnovaIS.PostHocCheckBox.SetValue(False)
             else:
-                self.ExportData.AnovaWave.PostHocCheckBox.Enable()
-                self.ExportData.AnovaIS.PostHocCheckBox.Enable()
+                self.MainFrame.AnovaWave.PostHocCheckBox.Enable()
+                self.MainFrame.AnovaIS.PostHocCheckBox.Enable()
 
         else:
-            self.ExportData.H5 = []
+            self.MainFrame.H5 = []
             self.DataFile.SetLabel('')
 
     def resultAction(self, event):
@@ -139,8 +141,9 @@ class OnOpen(wx.Panel):
 
     def createData(self, event):
         """Opens the DataEntry Panel"""
-        DataWindow = DataEntry(self)
+        DataWindow = DataEntry(self, self.MainFrame)
         DataWindow.Show(True)
+        self.MainFrame.Show(False)
 
 
 # TODO: this class is never used

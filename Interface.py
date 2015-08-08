@@ -12,7 +12,7 @@ class MainFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, title="STEN 1.0",
-                          size=(1000, 500))
+                          pos=(0, 0), size=(1000, 500))
 
         # Panel: MainFrame
         self.panel = wx.Panel(self, wx.ID_ANY)

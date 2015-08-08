@@ -7,19 +7,19 @@ class FactorWithin(wx.Frame):
     """ TODO: translate to english
     definition des facteur Within stype SPSS"""
 
-    def __init__(self, NoEmptyCol, Sheet, Parent, Level, Factor):
+    def __init__(self, NumberOfColumns, Sheet, Parent, Level, Factor):
         wx.Frame.__init__(
             self, None, wx.ID_ANY, title="Within subject definition", size=(200, 250))
         FrameSizer = wx.BoxSizer(wx.VERTICAL)
         self.Level = Level
         self.Factor = Factor
-        self.NoEmptyCol = NoEmptyCol
+        self.NoneEmptyCol = range(NumberOfColumns)
         self.Sheet = Sheet
         self.ColWithin = []
         self.ColBetween = []
         self.ColSubject = []
         self.ColCovariate = []
-        self.TabValue = Parent.Data.Value
+        self.TabValue = Parent.dataTable['content']
         self.DataEntry = Parent
 
         # panel Factor
@@ -181,7 +181,7 @@ class FactorWithin(wx.Frame):
             self.LevelNb.SetValue(str(self.Level[idx]))
 
     def Continue(self, event):
-        self.ModelFull = FactorDef(self.NoEmptyCol, self.Sheet, self)
+        self.ModelFull = FactorDef(self.NoneEmptyCol, self.Sheet, self)
         self.ModelFull.Show(True)
         self.Show(False)
         self.DataEntry.FactorName = self.Factor
