@@ -144,35 +144,3 @@ class OnOpen(wx.Panel):
         DataWindow = DataEntry(self, self.MainFrame)
         DataWindow.Show(True)
         self.MainFrame.Show(False)
-
-
-# TODO: this class is never used
-class Summary:
-
-    def __init__(self, ColWithin, ColBetween,
-                 ColSubject, ColCovariate, PanelTxt):
-        txt = ['SUMMARY\n']
-        txt.append('SUBJECT FACTOR COL :\n')
-        txt.append(ColSubject)
-        txt.append('\n')
-        tmp = ['Within SUBJECT FACTOR COL :\n']
-        for i in ColWithin:
-            tmp.append(', ')
-            tmp.append(i)
-        tmp.remove(', ')
-        txt.append("".join(tmp))
-        txt.append('\n')
-        tmp = ['BETWEEN SUBJECT FACTOR COL :\n']
-        for i in ColBetween:
-            tmp.append(', ')
-            tmp.append(i)
-        tmp.remove(', ')
-        txt.append("".join(tmp))
-        txt.append('\n')
-        tmp = ['COVARIATE SUBJECT FACTOR COL :\n']
-        for i in ColCovariate:
-            tmp.append(', ')
-            tmp.append(i)
-        tmp.remove(', ')
-        txt.append("".join(tmp))
-        PanelTxt.SetLabel("".join(txt))
