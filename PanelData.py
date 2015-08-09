@@ -94,11 +94,6 @@ class OnOpen(wx.Panel):
         wx.EVT_BUTTON(self, ButtonDataCreate.Id, self.createData)
 
         # Specify Outputs
-        # TODO: those variables are not needed here
-        self.PathResult = None
-        self.NbFactor = 0
-        self.Level = {}
-        self.Analyse = None
         # TODO: unclear why MainFrame is added here? Change name of ExportData?
         # MainFrame is needed for hide and show main frame, but why was it called ExportData
         self.MainFrame = MainFrame
@@ -141,6 +136,6 @@ class OnOpen(wx.Panel):
 
     def createData(self, event):
         """Opens the DataEntry Panel"""
-        DataWindow = DataEntry(self, self.MainFrame)
+        DataWindow = DataEntry(self.MainFrame)
         DataWindow.Show(True)
         self.MainFrame.Show(False)

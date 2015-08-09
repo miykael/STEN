@@ -1,15 +1,15 @@
 import wx
 import os
-from FactorWithin import FactorWithin
+from Factors import FactorWithin
 
 
 class DataEntry(wx.Frame):
 
     """
-    Window to create the dataset and specify the factors in SPSS style
+    Window to create the dataset and specify the factors
     """
 
-    def __init__(self, Parent, MainFrame):
+    def __init__(self, MainFrame):
 
         # Create data table window
         wx.Frame.__init__(self, None, wx.ID_ANY, title="Data Entry",
@@ -29,15 +29,14 @@ class DataEntry(wx.Frame):
         PanelCellContent = wx.Panel(PanelSheet, wx.ID_ANY)
         sizerPanelCellContent = wx.BoxSizer(wx.HORIZONTAL)
         sizerPanelCellContent.AddSpacer(10)
-        CellTxt = wx.StaticText(
+        TextContentCell = wx.StaticText(
             PanelCellContent, wx.ID_ANY, label='Cell Content:',
             style=wx.ALIGN_LEFT)
-        sizerPanelCellContent.Add(CellTxt, 0, wx.EXPAND)
+        sizerPanelCellContent.Add(TextContentCell, 0, wx.EXPAND)
         sizerPanelCellContent.AddSpacer(3)
         self.CellContentTxt = wx.TextCtrl(PanelCellContent, wx.ID_ANY,
                                           value="", size=(861, 23),
                                           style=wx.TE_READONLY)
-        self.CellContentTxt.SetBackgroundColour(wx.WHITE)
         sizerPanelCellContent.Add(self.CellContentTxt, 0, wx.EXPAND)
         PanelCellContent.SetSizer(sizerPanelCellContent)
         sizerPanelSheet.Add(PanelCellContent)
@@ -46,7 +45,9 @@ class DataEntry(wx.Frame):
         # Grid: XLS (XLS-style)
         self.Sheet = wx.grid.Grid(PanelSheet)
 
-        # Default values of grid
+        # Specify relevant variables
+        self.factorNames = []
+        self.factorLevels = []
         self.Sheet.nRow = 30
         self.Sheet.nCol = 11
         self.Sheet.content4undo = [0, 0, '']
@@ -110,7 +111,7 @@ class DataEntry(wx.Frame):
         sizerButton.Add(ButtonDefineFactor, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
 
-        # Resize everything to create the window
+        # Resize everything and create the window
         PanelButton.SetSizerAndFit(sizerButton)
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
         sizerFrame.Add(PanelDataEntry, 0, wx.EXPAND)
@@ -153,6 +154,8 @@ class DataEntry(wx.Frame):
                 self.exportData(event)
             elif keycode == 79:  # If Ctrl+O is pressed
                 self.importData(event)
+            elif keycode == 68:  # If Ctrl+D is pressed
+                self.defineFactor(event)
         if keycode == 127:   # If del is pressed
             self.onDelete()
         else:
@@ -429,7 +432,7 @@ class DataEntry(wx.Frame):
 
         # Read Table and handle error messages
         dataTable, errorMessage = self.readTable()
-        proceed = False
+        ok2proceed = False
 
         # Error message if table is not rectangular
         if errorMessage == 'tableIsRectangular':
@@ -460,24 +463,25 @@ class DataEntry(wx.Frame):
                 dlg.ShowModal()
                 dlg.Destroy()
             else:
-                proceed = True
+                ok2proceed = True
 
-        return dataTable, proceed
+        return dataTable, ok2proceed
 
     def defineFactor(self, event):
         """Opens Factor Definition Window if everything is ok"""
         # Get Table info
-        self.dataTable, proceed = self.getTableInfo()
-        if proceed:
-            self.ModelDef = FactorWithin(
-                self.dataTable['nCols'], self.Sheet, self, Level=[], Factor=[])
+        self.dataTable, ok2proceed = self.getTableInfo()
+        # Open Factor definition dialog
+        if ok2proceed:
+            self.ModelDef = FactorWithin(self, self.factorNames,
+                                         self.factorLevels)
             self.ModelDef.Show(True)
 
     def exportData(self, event):
         """Saves Table content into a csv-file"""
         # Get Table info
-        self.dataTable, proceed = self.getTableInfo()
-        if proceed:
+        self.dataTable, ok2proceed = self.getTableInfo()
+        if ok2proceed:
             # Ask for csv filename
             dlg = wx.FileDialog(None, "Save Table to", wildcard="*.csv",
                                 style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
