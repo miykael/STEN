@@ -177,9 +177,9 @@ class FactorWithin(wx.Frame):
             self.NumLevel.SetValue(unicode(self.Level[idx]))
             self.ListFactor.SetSelection(idx)
         elif listLength == idx:
-            self.FactorName.SetValue(self.Factor[idx-1])
-            self.NumLevel.SetValue(unicode(self.Level[idx-1]))
-            self.ListFactor.SetSelection(idx-1)
+            self.FactorName.SetValue(self.Factor[idx - 1])
+            self.NumLevel.SetValue(unicode(self.Level[idx - 1]))
+            self.ListFactor.SetSelection(idx - 1)
 
     def changeFactor(self, event):
         """Changes the name and level of a selected factor"""
@@ -237,40 +237,30 @@ class FactorWithin(wx.Frame):
 
     def defineFactor(self, event):
 
-        self.ModelFull = FactorDef(self.Sheet, self)
+        self.ModelFull = FactorDefinition(self.Sheet, self)
         self.ModelFull.Show(True)
         self.Show(False)
 
 
-class FactorDef(wx.Frame):
+class FactorDefinition(wx.Frame):
 
-    """ TODO: translate to english
-    attribution des facteurs"""
+    """TODO: Better description, perhaps also another name for window?
+    Window to specify the factors"""
 
     def __init__(self, Sheet, FactorWithin):
         wx.Frame.__init__(self, None, wx.ID_ANY, size=(200, 250),
                           title="Factor definition")
 
         # Specify relevant variables
-        self.ColName = FactorWithin.dataTable['labels']
-        self.Subject = ''
-        #TODO: which variables are needed?
-        self.Within = []
-        self.WithinIndex = []
-        self.Between = []
-        self.BetweenIndex = []
-        self.Covariate = []
-        self.CovariateIndex = []
-        self.Level = FactorWithin.Level
-        self.Sheet = Sheet
-        self.TabValue = FactorWithin.dataTable['content']
         self.FactorWithin = FactorWithin
+        self.LabelNames = FactorWithin.dataTable['labels']
+        self.Subject = ''
 
         # Panel: Left Input Area
         PanelInput = wx.Panel(self, wx.ID_ANY)
         sizerInput = wx.BoxSizer(wx.HORIZONTAL)
         self.ListInput = wx.ListBox(PanelInput, wx.ID_ANY,
-                                    choices=self.ColName,
+                                    choices=self.LabelNames,
                                     style=wx.LB_EXTENDED)
         sizerInput.Add(self.ListInput, 0, wx.EXPAND)
         self.ListInput.SetSelection(0)
@@ -332,7 +322,7 @@ class FactorDef(wx.Frame):
         TextSupport = wx.StaticText(PanelWithinVariable, wx.ID_ANY,
                                     label=supportext, style=wx.ALIGN_CENTER)
         sizerWithinVariable.Add(TextSupport, 0, wx.EXPAND)
-        iterationFactor = [range(1, e+1) for e in FactorWithin.Level]
+        iterationFactor = [range(1, e + 1) for e in FactorWithin.Level]
         iterList = list(itertools.product(*iterationFactor))
         factorLabels = ['_?_%s' % str(e).replace(' ', '') if len(e) > 1
                         else '_?_(%s)' % str(e[0]) for e in iterList]
@@ -435,6 +425,7 @@ class FactorDef(wx.Frame):
         self.SetSizerAndFit(FrameSizer)
 
         # Specification of events
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         wx.EVT_BUTTON(self, self.ButtonSubjectAdd.Id, self.addSubject)
         wx.EVT_BUTTON(self, self.ButtonSubjectRm.Id, self.rmSubject)
         wx.EVT_BUTTON(self, self.ButtonWithinAdd.Id, self.addWithin)
@@ -443,13 +434,12 @@ class FactorDef(wx.Frame):
         wx.EVT_BUTTON(self, self.ButtonBetweenRm.Id, self.rmBetween)
         wx.EVT_BUTTON(self, self.ButtonCovariateAdd.Id, self.addCovariate)
         wx.EVT_BUTTON(self, self.ButtonCovariateRm.Id, self.rmCovariate)
-        wx.EVT_BUTTON(self, ButtonOK.Id, self.Ok)
         wx.EVT_BUTTON(self, ButtonPrevious.Id, self.onClose)
-        self.Bind(wx.EVT_CLOSE, self.onClose)
-        wx.EVT_LISTBOX(self, self.ListInput.Id, self.ColSelected)
-        wx.EVT_LISTBOX(self, self.ListWithin.Id, self.WithinSelected)
-        wx.EVT_LISTBOX(self, self.ListBetween.Id, self.BetweenSelected)
-        wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.CovariateSelected)
+        wx.EVT_BUTTON(self, ButtonOK.Id, self.finishFactors)
+        wx.EVT_LISTBOX(self, self.ListInput.Id, self.inputListSelected)
+        wx.EVT_LISTBOX(self, self.ListWithin.Id, self.withinListSelected)
+        wx.EVT_LISTBOX(self, self.ListBetween.Id, self.betweenListSelected)
+        wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.covariateListSelected)
 
     def onClose(self, event):
         """Show previous window and close current one"""
@@ -504,34 +494,34 @@ class FactorDef(wx.Frame):
         items = self.ListInput.GetItems()
         factors = self.ListWithin.GetItems()
         numberOfFactors = len(factors)
+        emptyFactorsLeft = sum([1 for e in factors if '_?_' in e])
 
+        # Make sure that something is selected
+        if len(idx) == 0:
+            self.showMessage(
+                title='No Within Factor Selected',
+                message='Please select a Within Factor to add to the list.')
         # Make sure that not too many elements were selected
-        if len(idx) > numberOfFactors:
+        elif len(idx) > numberOfFactors:
             self.showMessage(
                 title='To many factors selected',
                 message='The number of selected elements exceeds ' +
                         'the number of possible within subject factors.')
         # Make sure that the list is not already to full
-        elif len(self.Within) + len(idx) > numberOfFactors:
+        elif emptyFactorsLeft < len(idx):
             self.showMessage(
                 title='Within Subject Factor Full',
                 message='Within subject factor is full.')
         else:
+            # Go through the list of '_?_' and fill in a slected factor
             for j, f in enumerate(factors):
                 if '_?_' in f:
-
                     i = idx[0]
                     idx = idx[1:len(idx)]
-
                     factors[j] = f.replace('_?_', items[i])
-                    self.Within.append(items[i])
-                    self.WithinIndex.append(i)
-
                     items[i] = ''
-
                     if idx == ():
                         break
-
             while '' in items:
                 items.remove('')
 
@@ -550,290 +540,337 @@ class FactorDef(wx.Frame):
                 factorName = factors[i][0:splitterId]
                 factorLevel = factors[i][splitterId:]
 
-                popId = self.Within.index(factorName)
-                self.Within.pop(popId)
-                oldId = self.WithinIndex.pop(popId)
-
-                # Update ListInput
-                items.insert(oldId, factorName)
-
-                # Update ListWithin
+                # Reset the Within List
                 factors[i] = '_?_%s' % factorLevel
+
+                # Reset the Input List
+                items.append(factorName)
+
+        items = [e for e in self.LabelNames if e in items]
 
         self.ListInput.SetItems(items)
         self.ListWithin.SetItems(factors)
 
     def addBetween(self, event):
-        ColNumber = self.ListInput.GetSelections()
-        ColName = self.ListInput.GetItems()
-        name = self.ListBetween.GetItems()
-        for i in ColNumber:
-            name.append(ColName[i])
-            index = self.ColName.index(ColName[i])
-            self.BetweenIndex.append(index)
-            self.Between.append(self.TabValue[index])
-            ColName[i] = ''
-        ColNameNew = []
-        for i in ColName:
-            if i != '':
-                ColNameNew.append(i)
-        self.ListInput.SetItems(ColNameNew)
-        self.ListBetween.SetItems(name)
+        """Add selected factor to between subject factors"""
+        idx = self.ListInput.GetSelections()
+        items = self.ListInput.GetItems()
+        factors = self.ListBetween.GetItems()
+
+        # Make sure that something is selected
+        if len(idx) == 0:
+            self.showMessage(
+                title='No Between Factor Selected',
+                message='Please select a Between Factor to add to the list.')
+        else:
+            # Add selected factors to the list
+            for i in idx:
+                factors.append(items[i])
+                items[i] = ''
+            while '' in items:
+                items.remove('')
+            self.ListInput.SetItems(items)
+            self.ListBetween.SetItems(factors)
 
     def rmBetween(self, event):
-        Selections = self.ListBetween.GetSelections()
-        name = self.ListBetween.GetItems()
-        ColName = self.ListInput.GetItems()
-        for i in Selections:
-            ColName.insert(self.BetweenIndex[i], name[i])
-            self.Between[i] = []
-            self.BetweenIndex = ''
-            name[i] = ''
+        """Remove selected factor from the between subject factors"""
+        idx = self.ListBetween.GetSelections()
+        factors = self.ListBetween.GetItems()
+        items = self.ListInput.GetItems()
 
-        tmp = []
+        for i in idx:
+            factorName = factors[i]
+            items.append(factorName)
+            factors[i] = ''
+        while '' in factors:
+            factors.remove('')
 
-        for i in self.BetweenIndex:
-            if i != '':
-                tmp.append(i)
-        NameNew = []
-        for i in name:
-            if i != '':
-                NameNew.append(i)
-        self.BetweenIndex = tmp
-        tmpvalue = []
-        for i in self.Between:
-            if i != []:
-                tmpvalue.append(i)
-        ColNameNew = []
-        for i in ColName:
-            if i != '':
-                ColNameNew.append(i)
-        for i in ColName:
-            if i == '':
-                ColNameNew.append('')
-        self.Between = tmpvalue
-        self.ListInput.SetItems(ColNameNew)
-        self.ListBetween.SetItems(NameNew)
+        items = [e for e in self.LabelNames if e in items]
+
+        self.ListInput.SetItems(items)
+        self.ListBetween.SetItems(factors)
 
     def addCovariate(self, event):
-        ColNumber = self.ListInput.GetSelections()
-        ColName = self.ListInput.GetItems()
-        name = self.ListCovariate.GetItems()
-        for i in ColNumber:
-            name.append(ColName[i])
-            index = self.ColName.index(ColName[i])
-            self.CovariateIndex.append(index)
-            self.Covariate.append(self.TabValue[index])
-            ColName[i] = ''
-        ColNameNew = []
-        for i in ColName:
-            if i != '':
-                ColNameNew.append(i)
+        """Add selected factor to covariate subject factors"""
+        idx = self.ListInput.GetSelections()
+        items = self.ListInput.GetItems()
+        factors = self.ListCovariate.GetItems()
 
-        self.ListInput.SetItems(ColNameNew)
-        self.ListCovariate.SetItems(name)
+        # Make sure that something is selected
+        if len(idx) == 0:
+            self.showMessage(
+                title='No Covariate Factor Selected',
+                message='Please select a Covariate Factor to add to the list.')
+        else:
+            # Add selected factors to the list
+            for i in idx:
+                factors.append(items[i])
+                items[i] = ''
+            while '' in items:
+                items.remove('')
+            self.ListInput.SetItems(items)
+            self.ListCovariate.SetItems(factors)
 
     def rmCovariate(self, event):
-        Selections = self.ListCovariate.GetSelections()
-        name = self.ListCovariate.GetItems()
-        ColName = self.ListInput.GetItems()
-        for i in Selections:
-            ColName.insert(self.CovariateIndex[i], name[i])
-            self.CovariateIndex[i] = ''
-            self.Covariate[i] = []
-            name[i] = ''
+        """Remove selected factor from the covariate subject factors"""
+        idx = self.ListCovariate.GetSelections()
+        factors = self.ListCovariate.GetItems()
+        items = self.ListInput.GetItems()
 
-        tmp = []
-        for i in self.CovariateIndex:
-            if i != '':
-                tmp.append(i)
-        NameNew = []
-        for i in name:
-            if i != '':
-                NameNew.append(i)
-        tmpvalue = []
-        for i in self.Covariate:
-            if i != []:
-                tmpvalue.append(i)
-        ColNameNew = []
-        for i in ColName:
-            if i != '':
-                ColNameNew.append(i)
-        for i in ColName:
-            if i == '':
-                ColNameNew.append('')
-        self.Covariate = tmpvalue
-        self.CovariateIndex = tmp
-        self.ListInput.SetItems(ColNameNew)
-        self.ListCovariate.SetItems(NameNew)
+        for i in idx:
+            factorName = factors[i]
+            items.append(factorName)
+            factors[i] = ''
+        while '' in factors:
+            factors.remove('')
 
-    def ColSelected(self, event):
-        self.ButtonWithinAdd.Enable()
+        items = [e for e in self.LabelNames if e in items]
+
+        self.ListInput.SetItems(items)
+        self.ListCovariate.SetItems(factors)
+
+    def inputListSelected(self, event):
+        """GUI reconfiguration if Input list is selected"""
         self.ButtonBetweenAdd.Enable()
+        self.ButtonBetweenRm.Disable()
         self.ButtonCovariateAdd.Enable()
-        self.ButtonWithinRm.Disable()
-        self.ButtonBetweenRm.Disable()
         self.ButtonCovariateRm.Disable()
+        self.ButtonWithinAdd.Enable()
+        self.ButtonWithinRm.Disable()
         if self.SubjectVariable.GetValue() == '':
-            self.ButtonSubjectRm.Disable()
             self.ButtonSubjectAdd.Enable()
+            self.ButtonSubjectRm.Disable()
         else:
-            self.ButtonSubjectRm.Enable()
             self.ButtonSubjectAdd.Disable()
+            self.ButtonSubjectRm.Enable()
 
-    def WithinSelected(self, event):
-        self.ButtonSubjectAdd.Disable()
-        self.ButtonWithinAdd.Disable()
+    def withinListSelected(self, event):
+        """GUI reconfiguration if Within list is selected"""
         self.ButtonBetweenAdd.Disable()
+        self.ButtonBetweenRm.Disable()
         self.ButtonCovariateAdd.Disable()
-        self.ButtonSubjectRm.Disable()
+        self.ButtonCovariateRm.Disable()
+        self.ButtonWithinAdd.Disable()
         self.ButtonWithinRm.Enable()
-        self.ButtonBetweenRm.Disable()
-        self.ButtonCovariateRm.Disable()
 
-    def BetweenSelected(self, event):
-        self.ButtonSubjectAdd.Disable()
-        self.ButtonWithinAdd.Disable()
+    def betweenListSelected(self, event):
+        """GUI reconfiguration if Between list is selected"""
         self.ButtonBetweenAdd.Disable()
-        self.ButtonCovariateAdd.Disable()
-        self.ButtonSubjectRm.Disable()
-        self.ButtonWithinRm.Disable()
         self.ButtonBetweenRm.Enable()
-        self.ButtonCovariateRm.Disable()
-
-    def CovariateSelected(self, event):
-        self.ButtonSubjectAdd.Disable()
-        self.ButtonWithinAdd.Disable()
-        self.ButtonBetweenAdd.Disable()
         self.ButtonCovariateAdd.Disable()
-        self.ButtonSubjectRm.Disable()
+        self.ButtonCovariateRm.Disable()
+        self.ButtonWithinAdd.Disable()
         self.ButtonWithinRm.Disable()
+
+    def covariateListSelected(self, event):
+        """GUI reconfiguration if Input Covariate is selected"""
+        self.ButtonBetweenAdd.Disable()
         self.ButtonBetweenRm.Disable()
+        self.ButtonCovariateAdd.Disable()
         self.ButtonCovariateRm.Enable()
+        self.ButtonWithinAdd.Disable()
+        self.ButtonWithinRm.Disable()
 
+    def checkInput(self):
+        """Checks if a factor input is valid or not"""
+        subjectVariable = self.SubjectVariable.GetValue()
+        withinList = self.ListWithin.GetItems()
+        betweenList = self.ListBetween.GetItems()
+        covariates = self.ListCovariate.GetItems()
+        dataTable = self.FactorWithin.dataTable
 
+        # Check Subject Variable
+        if subjectVariable == u'':
+            self.showMessage(
+                title='Subject Variable not specified',
+                message='Please specify Subject Variable to continue.')
+            return False
+        subjectId = dataTable['labels'].index(subjectVariable)
+        subjectList = dataTable['content'][subjectId]
+        for e in subjectList:
+            if not e.isdigit():
+                self.showMessage(
+                    title='Subject List not valid',
+                    message='Not all values in the Subject List are integers.')
+                return False
 
+        # Check Within Subject Factors
+        notSpecified = sum([1 for e in withinList if '_?_' in e])
+        if notSpecified != 0:
+            self.showMessage(
+                title='Within Subject Factor not filled out',
+                message='Not all Within Subject Factors are specified.')
+            return False
+        for factor in withinList:
+            splitterId = factor.find('(')
+            factorName = factor[0:splitterId]
+            listId = dataTable['labels'].index(factorName)
+            factorList = dataTable['content'][listId]
+            for f in factorList:
+                if not os.path.isfile(f):
+                    self.showMessage(
+                        title='Within Subject Factor not valid',
+                        message='Each Within Subject Factor has to consist ' +
+                                'of valid file paths.\n ' +
+                                'Factor "%s" is not valid.' % factorName)
+                    return False
 
+        # Check Between Factors
+        if betweenList != []:
+            for factor in betweenList:
+                betweenId = dataTable['labels'].index(factor)
+                betweenList = dataTable['content'][betweenId]
+                for e in betweenList:
+                    if not e.isdigit():
+                        self.showMessage(
+                            title='Between Factor not valid',
+                            message='Not all values in the Between ' +
+                                    'Factor "%s" are integers.' % factor)
+                        return False
 
-    def Ok(self, event):
-        self.DataEntry.ColFactor = self.ListWithin.GetItems()
-        level = np.array(self.Level)
-        self.DataEntry.Level = level
-        NbLevel = level.prod()
-        error = []
-        subject = []
-        errortmp = []
-        if self.Subject == []:
-            error.append('Subject colone not define')
-        for i in self.Subject:
-            if type(i) == list:
-                for s in i:
+        # Check Covariate
+        if covariates != []:
+            for factor in covariates:
+                covariateId = dataTable['labels'].index(factor)
+                covariateList = dataTable['content'][covariateId]
+                for e in covariateList:
+                    try:
+                        float(e)
+                    except:
+                        self.showMessage(
+                            title='Covariate not valid',
+                            message='Not all values in the Covariate ' +
+                                    '"%s" are float numbers.' % factor)
+                        return False
+
+        # If all inputs are valid, return True
+        return True
+
+    def finishFactors(self, event):
+
+        inputIsValid = self.checkInput()
+
+        self.Dataset = {}
+        if inputIsValid:
+
+            self.Dataset['ColFactor'] = self.ListWithin.GetItems()
+            level = np.array(self.FactorWithin.Level)
+            self.Dataset['Level'] = level
+            NbLevel = level.prod()
+            error = []
+            subject = []
+            errortmp = []
+            if self.Subject == []:
+                error.append('Subject colone not define')
+            for i in self.Subject:
+                if type(i) == list:
+                    for s in i:
+                        try:
+                            subject.append(int(s))
+                        except:
+                            errortmp = 1
+                else:
                     try:
                         subject.append(int(s))
                     except:
                         errortmp = 1
-            else:
-                try:
-                    subject.append(int(s))
-                except:
-                    errortmp = 1
 
-        if errortmp == 1:
-            error.append('Subject colone must be an integer')
-        else:
-            subject = np.array(subject)
-            if subject.max() > len(subject):
-                error.append('Subject number bigger than length')
+            if errortmp == 1:
+                error.append('Subject colone must be an integer')
             else:
-                self.Subject = subject.squeeze()
-                self.DataEntry.Subject = subject.squeeze()
-
-        Within = []
-        errortmp = []
-        for f in self.Within:
-            if type(f) == list:
-                tmp = []
-                for e in f:
-                    if e[len(e) - 4:len(e)] == '.eph':
-
-                        tmp.append(os.path.abspath(str(e)))
-                    else:
-                        errortmp = 1
-                Within.append(tmp)
-            else:
-                if f[len(f) - 4:len(f)] == '.eph':
-                    Within.append(str(f))
+                subject = np.array(subject)
+                if subject.max() > len(subject):
+                    error.append('Subject number bigger than length')
                 else:
-                    errortmp = 2
+                    self.Subject = subject.squeeze()
+                    self.Dataset['Subject'] = subject.squeeze()
 
-        if errortmp == 1:
-            error.append('Within colones must contain *.eph file')
-        elif errortmp == 2:
-            error.append('Within colone must contain *.eph file')
-        else:
-            self.DataEntry.Within = Within
-        if NbLevel != len(self.Within):
-            error.append('Fill all Within subject factor')
+            Within = []
+            errortmp = []
+            for f in self.Within:
+                if type(f) == list:
+                    tmp = []
+                    for e in f:
+                        if e[len(e) - 4:len(e)] == '.eph':
 
-        errortmp = []
-        between = []
-        for f in self.Between:
-            if type(f) == list:
-                tmp = []
-                for e in f:
-                    try:
-                        tmp.append(int(e))
-                    except:
-                        errortmp = 1
-                between.append(tmp)
+                            tmp.append(os.path.abspath(str(e)))
+                        else:
+                            errortmp = 1
+                    Within.append(tmp)
+                else:
+                    if f[len(f) - 4:len(f)] == '.eph':
+                        Within.append(str(f))
+                    else:
+                        errortmp = 2
+
+            if errortmp == 1:
+                error.append('Within colones must contain *.eph file')
+            elif errortmp == 2:
+                error.append('Within colone must contain *.eph file')
             else:
-                try:
-                    between.append(int(e))
-                except:
-                    errortmp = 2
-        if errortmp == 1:
-            error.append('Between colones must be an integer')
-        elif errortmp == 2:
-            error.append('Between colone must be an integer')
-        else:
-            between = np.array(between)
-            self.DataEntry.Between = between.squeeze()
-            self.DataEntry.BetweenIndex = self.BetweenIndex
+                self.Dataset['Within'] = Within
+            if NbLevel != len(self.Within):
+                error.append('Fill all Within subject factor')
 
-        covariate = []
-        errortmp = []
-        for f in self.Covariate:
-            if type(f) == list:
-                tmp = []
-                for e in f:
+            errortmp = []
+            between = []
+            for f in self.Between:
+                if type(f) == list:
+                    tmp = []
+                    for e in f:
+                        try:
+                            tmp.append(int(e))
+                        except:
+                            errortmp = 1
+                    between.append(tmp)
+                else:
                     try:
-                        tmp.append(float(e))
+                        between.append(int(e))
                     except:
-                        errortmp = 1
-                covariate.append(tmp)
+                        errortmp = 2
+            if errortmp == 1:
+                error.append('Between colones must be an integer')
+            elif errortmp == 2:
+                error.append('Between colone must be an integer')
             else:
-                try:
-                    covariate.append(float(e))
-                except:
-                    errortmp = 2
-        if errortmp == 1:
-            error.append('Covariate colones must be a float')
-        elif errortmp == 2:
-            error.append('Covariate colone must be a float')
-        else:
-            covariate = np.array(covariate)
-            self.DataEntry.Covariate = covariate.squeeze()
-            self.DataEntry.CovariateIndex = self.CovariateIndex
+                between = np.array(between)
+                self.Dataset['Between'] = between.squeeze()
+                self.Dataset['BetweenIndex'] = self.BetweenIndex
 
-        if error != []:
-            self.Show(False)
-            self.DataEntry.Buttonsave.Disable()
-            # self.DataEntry.ButtonModify.Disable()
-            dlg = wx.MessageDialog(self, " \n ".join(error), style=wx.OK)
-            retour = dlg.ShowModal()
-            dlg.Destroy()
+            covariate = []
+            errortmp = []
+            for f in self.Covariate:
+                if type(f) == list:
+                    tmp = []
+                    for e in f:
+                        try:
+                            tmp.append(float(e))
+                        except:
+                            errortmp = 1
+                    covariate.append(tmp)
+                else:
+                    try:
+                        covariate.append(float(e))
+                    except:
+                        errortmp = 2
+            if errortmp == 1:
+                error.append('Covariate colones must be a float')
+            elif errortmp == 2:
+                error.append('Covariate colone must be a float')
+            else:
+                covariate = np.array(covariate)
+                self.Dataset['Covariate'] = covariate.squeeze()
+                self.Dataset['CovariateIndex'] = self.CovariateIndex
 
-        else:
-            self.DataEntry.Buttonsave.Enable()
-            # self.DataEntry.ButtonModify.Enable()
-            self.Show(False)
+            if error != []:
+                self.Show(False)
+                self.Dataset['Buttonsave'].Disable()
+                # self.Dataset['ButtonModify'].Disable()
+                dlg = wx.MessageDialog(self, " \n ".join(error), style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+            else:
+                self.Dataset['Buttonsave'].Enable()
+                # self.Dataset['ButtonModify'].Enable()
+                self.Show(False)
