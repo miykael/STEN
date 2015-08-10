@@ -10,122 +10,66 @@ import wx
 class Anova:
 
     """ TODO: translate to english
-    faire une Anova avec en entree Data, le/les vecteur Between,Covariate,
-    Within et Subject ainsi que leur nom respectif"""
+    Calculation of Anovas across time and/or Space using formating H5 files (See H5 format for information)
+    Anovas is caculating unsing aov R function linked with python using Rpy2
+    """
 
     def __init__(self, H5, parent):
+        """ Reading H5 Files to extract Factor infrmations and creating R formula"""
+        # Reading H5 File
         rpy2.robjects.numpy2ri.activate()
         self.Cancel = False
         self.parent = parent
-        self.file = tables.openFile(H5, mode='r+')
-        # models
-        Between = self.file.getNode('/Model/Between')
-        Between = np.array(Between.read())
-        Covariate = self.file.getNode('/Model/Covariate')
-        Covariate = np.array(Covariate.read())
-        Within = self.file.getNode('/Model/Within')
-        Within = Within.read()
-        Subject = self.file.getNode('/Model/Subject')
-        Subject = Subject.read()
-        # Names
-        NameBetween = self.file.getNode('/Names/Between')
-        NameBetween = NameBetween.read()
-        NameCovariate = self.file.getNode('/Names/Covariate')
-        NameCovariate = NameCovariate.read()
-        NameWithin = self.file.getNode('/Names/Within')
-        NameWithin = NameWithin.read()
-        # les data sont (tf, electrodes, cond, sujet) !!!!!
-        self.Formule = ["DataR~("]
-        SubjectR = robjects.r.factor(Subject)
-        robjects.globalenv["Subject"] = SubjectR
-        Error = [" + Error(Subject/("]
+        self.file = tables.openFile(H5, mode='a')
+        # TableFactor is a vector with n dimenssion wher n = number of Terms incuding Subject
+        TableFactor=self.file.getNode('/Model').read()
+        #exporting information (name of Factor, type of factor, create the Formula)
+        FormulaModel=[]
+        FormulaErrorTerm =[]
+        for t in TableFactor:
+            FactorName=t[0]
+            FactorType=t[1]
+            FactorData=t[2]
+            # sending Data to Glbal variable in R (Factor definition for Subject, Within or Between Type and FloatVector for Covariate
+            if FactorType=='Covariate':
+                tmp=robjects.FloatVector(FactorData)
+                robjects.globalenv[FactorName]=tmp
+            else:
+                tmp=robjects.r.factor(FactorData)
+                robjects.globalenv[FactorName]=tmp
+            # Creating Fromula for R Defferent treatement for Within and between subject Factor
+            if FactorType=='Subject':
+                SubjectName=FactorName
+            elif FactorType=='Within':
+                FormulaModel.append(FactorName)
+                FormulaErrorTerm.append(FactorName)
+            else:
+                FormulaModel.append(FactorName)
+        # Wrting Formula
+        self.Formule="".join(["DataR~","*".join(FormulaModel),'+ Error(',SubjectName,'/(',"*".join(FormulaErrorTerm),'))'])
 
-        # on cree les facteurs Within
-        if Within.any():
-            for i, NameVariable in enumerate(NameWithin):
-                if len(Within.shape) == 1:
-                    text = [NameVariable, '=Within']
-                else:
-                    text = [NameVariable, '=Within[:,', str(i), ']']
-                exec("".join(text))
-                text = [NameVariable, '=robjects.r.factor(', NameVariable, ')']
-                exec("".join(text))
-                text = ['robjects.globalenv["', NameVariable, '"] = ',
-                        NameVariable]
-                exec("".join(text))
-                self.Formule.append(NameVariable)
-                self.Formule.append('*')
-                Error.append(NameVariable)
-                Error.append('*')
-
-        # on cree les factr Between
-        if Between.any():  # Between existe
-            for i, NameVariable in enumerate(NameBetween):
-                if len(Between.shape) == 1:
-                    text = [NameVariable, '=Between']
-                else:
-                    text = [NameVariable, '=Between[:,', str(i), ']']
-                exec("".join(text))
-                text = [NameVariable, '=robjects.r.factor(', NameVariable, ')']
-                exec("".join(text))
-                text = ['robjects.globalenv["', NameVariable, '"] = ',
-                        NameVariable]
-                exec("".join(text))
-                self.Formule.append(NameVariable)
-                self.Formule.append('*')
-        # on cree les factor covariate
-        if Covariate.any():
-            for i, NameVariable in enumerate(NameCovariate):
-                if len(Covariate.shape) == 1:
-                    text = [NameVariable, '=Covariate']
-                else:
-                    text = [NameVariable, '=Covariate[:,', str(i), ']']
-                exec("".join(text))
-                text = [
-                    NameVariable, '=robjects.FloatVector(', NameVariable, ')']
-                exec("".join(text))
-                text = ['robjects.globalenv["',
-                        NameVariable, '"] = ', NameVariable]
-                exec("".join(text))
-                self.Formule.append(NameVariable)
-                self.Formule.append('*')
-        if Within.any():
-            Error[len(Error) - 1] = '))'
-        else:
-            Error = ["+Error(Subject)"]
-        del self.Formule[len(self.Formule) - 1]
-        self.Formule.append(')')
-        self.Formule.append("".join(Error))
-        self.Formule = "".join(self.Formule)
-        self.Between = Between
-        self.Covariate = Covariate
-        self.Within = Within
-        self.Subject = Subject
-        self.NameBetween = NameBetween
-        self.NameCovariate = NameCovariate
-        self.NameWithin = NameWithin
-        print(SubjectR)
-        print(Subject)
-        print(Within)
 
     def Param(self, DataGFP=False):
-        # mise en forme de Data
+        
+        # Extracting GFP or All Data
         if DataGFP:
-            shape = self.file.getNode('/Info/ShapeGFP')
+            Data=H5.getNode('/Data/GFP')
         else:
-            shape = self.file.getNode('/Info/Shape')
-        shape = shape.read()
-        NbSujet = shape[3]
-        NbCond = shape[2]
-        # GFP bool dit on cacul le GFP dans la stat
-        NbAnova = int(shape[0] * shape[1])
-        Byte = shape.prod()
+            Data=H5.getNode('/Data/All')
+        # Calculating the number of Annova percycle to avoid Memory problem
+        NbAnova = int(Data.shape[0] * Data.shape[1])
+        Byte = np.array(Data.shape).prod()
         Cycle = int(Byte / 10000)
         try:
             NbAnovaCycle = NbAnova / Cycle
         except:
             NbAnovaCycle = NbAnova
-        # On fait 1 anova pour les terms
+        DataR = robjects.r.matrix(Data.T)
+        robjects.globalenv["DataR"] = DataR
+        # I am here
+
+            
+        # Performed one Anova to Extract 
         DataAnova = ExtractData(self.file, 0, 1, DataGFP)
         DataAnova = DataAnova.extract.reshape((NbSujet * NbCond))
         DataR = robjects.r.matrix(DataAnova.T)
