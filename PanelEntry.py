@@ -301,7 +301,7 @@ class DataEntry(wx.Frame):
             for i in range(len(content)):
                 if self.Sheet.GetCellValue(row_id + i, 0) == '':
                     self.Sheet.SetCellValue(row_id + i, 0,
-                                           unicode(row_id + i + 1))
+                                            unicode(row_id + i + 1))
 
         # Get current folder path and store it for next time
         self.Sheet.filePath = os.path.dirname(dlg.GetPath())
