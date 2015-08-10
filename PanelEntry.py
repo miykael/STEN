@@ -296,6 +296,13 @@ class DataEntry(wx.Frame):
                 if row_id + i < nRow:
                     self.Sheet.SetCellValue(row_id + i, col_id, e)
 
+        # If first column is called 'Subject' fill out all none empty cells
+        if self.Sheet.GetColLabelValue(0) == 'Subject':
+            for i in range(len(content)):
+                if self.Sheet.GetCellValue(row_id + i, 0) == '':
+                    self.Sheet.SetCellValue(row_id + i, 0,
+                                           unicode(row_id + i + 1))
+
         # Get current folder path and store it for next time
         self.Sheet.filePath = os.path.dirname(dlg.GetPath())
 
@@ -591,6 +598,8 @@ class GridFileDropTarget(wx.FileDropTarget):
             for i, f in enumerate(filenames):
                 if row > -1 and col > -1:
                     self.grid.SetCellValue(row + i, col, f)
+            linesAdded = len(filenames)
+
         # if drop objects are folders add them successively to columns
         else:
             for j, f in enumerate(filenames):
@@ -599,3 +608,11 @@ class GridFileDropTarget(wx.FileDropTarget):
                     if row > -1 and col > -1:
                         self.grid.SetCellValue(row + i, col + j,
                                                os.path.join(filenames[j], f))
+            linesAdded = len(listOfFiles)
+
+        # If first column is called 'Subject' fill out all none empty cells
+        if self.grid.GetColLabelValue(0) == 'Subject':
+            for i in range(linesAdded):
+                if self.grid.GetCellValue(row + i, 0) == '':
+                    self.grid.SetCellValue(row + i, 0,
+                                           unicode(row + i + 1))
