@@ -10,10 +10,10 @@ class ReturnInfomation:
         info = Stat.Anova(chemin, self)
         info.file.close()
         file = tables.openFile(chemin, mode='r')
-        formule = ['R-FORMULA : aov(']
-        formule.append(info.Formule)
-        formule.append(')\n\n')
-        text.append("".join(formule))
+        formula = ['R-FORMULA : aov(']
+        formula.append(info.Formula)
+        formula.append(')\n\n')
+        text.append("".join(formula))
         Within = ['Within FACTOR(S) NAME(S)[LEVELS] : ']
         Factor = file.getNode('/Names/Within')
         Factor = Factor.read()
