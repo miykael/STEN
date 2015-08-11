@@ -93,9 +93,10 @@ class OnOpen(wx.Panel):
         wx.EVT_BUTTON(self, ButtonResult.Id, self.resultAction)
         wx.EVT_BUTTON(self, ButtonDataCreate.Id, self.createData)
 
-        # Specify Outputs
-        # TODO: unclear why MainFrame is added here? Change name of ExportData?
-        # MainFrame is needed for hide and show main frame, but why was it called ExportData
+        # Specify relevant variables
+        self.MainFrame = MainFrame
+        self.MainFrame.Dataset = {}
+        # TODO: What about this H5?
         self.MainFrame = MainFrame
         self.MainFrame.H5 = []
 
@@ -136,6 +137,6 @@ class OnOpen(wx.Panel):
 
     def createData(self, event):
         """Opens the DataEntry Panel"""
-        DataWindow = DataEntry(self.MainFrame)
-        DataWindow.Show(True)
+        self.DataWindow = DataEntry(self.MainFrame)
+        self.DataWindow.Show(True)
         self.MainFrame.Show(False)

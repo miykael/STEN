@@ -96,17 +96,17 @@ class DataEntry(wx.Frame):
         sizerButton.Add(self.Col, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
         # Define Import Button
-        ButtonImport = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
-                                 label="Import Data")
+        ButtonImport = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
+                                 label="Import CSV Data")
         sizerButton.Add(ButtonImport, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
         # Define Export Button
-        ButtonExport = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
-                                 label="Export Data")
+        ButtonExport = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
+                                 label="Export CSV Data")
         sizerButton.Add(ButtonExport, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
         # Define Factor Button
-        ButtonDefineFactor = wx.Button(PanelButton, wx.ID_ANY, size=(110, 25),
+        ButtonDefineFactor = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
                                        label="Define Factor")
         sizerButton.Add(ButtonDefineFactor, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
@@ -135,6 +135,10 @@ class DataEntry(wx.Frame):
         self.Sheet.SetDropTarget(dropTarget)
         self.Sheet.EnableDragRowSize()
         self.Sheet.EnableDragColSize()
+
+        # Fill in table if dataset already exists
+        if self.MainFrame.Dataset != {}:
+            self.loadDataset()
 
     def onControlKey(self, event):
         """Key event handler if Ctrl is pressed"""
@@ -296,12 +300,12 @@ class DataEntry(wx.Frame):
                 if row_id + i < nRow:
                     self.Sheet.SetCellValue(row_id + i, col_id, e)
 
-        # If first column is called 'Subject' fill out all none empty cells
-        if self.Sheet.GetColLabelValue(0) == 'Subject':
-            for i in range(len(content)):
-                if self.Sheet.GetCellValue(row_id + i, 0) == '':
-                    self.Sheet.SetCellValue(row_id + i, 0,
-                                            unicode(row_id + i + 1))
+            # If first column is called 'Subject' fill out all none empty cells
+            if self.Sheet.GetColLabelValue(0) == 'Subject':
+                for i in range(len(content)):
+                    if self.Sheet.GetCellValue(row_id + i, 0) == '':
+                        self.Sheet.SetCellValue(row_id + i, 0,
+                                                unicode(row_id + i + 1))
 
         # Get current folder path and store it for next time
         self.Sheet.filePath = os.path.dirname(dlg.GetPath())
@@ -574,6 +578,20 @@ class DataEntry(wx.Frame):
                             "\nFile doesn't exist!")
                 dlg.ShowModal()
                 dlg.Destroy()
+
+    def loadDataset(self):
+        """Loads the dataset under Mainframe.Dataset if it already exists"""
+        dataTable = self.MainFrame.Dataset['Table']
+
+        # Change name of labels
+        for i, l in enumerate(dataTable['labels']):
+            self.Sheet.SetColLabelValue(i, l)
+
+        # Write content to table
+        for r in range(dataTable['nRows']):
+            for c in range(dataTable['nCols']):
+                value = dataTable['content'][c][r]
+                self.Sheet.SetCellValue(r, c, value)
 
 
 class GridFileDropTarget(wx.FileDropTarget):
