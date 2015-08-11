@@ -1,5 +1,4 @@
 import wx
-import numpy as np
 import os
 import itertools
 
@@ -102,6 +101,10 @@ class FactorWithin(wx.Frame):
         # Update List with previous elements if window was already opened
         if self.Factor != []:
             self.updateList()
+
+        # Fill in table if dataset already exists
+        if self.DataPanel.MainFrame.Dataset != {}:
+            self.loadDataset()
 
     def updateList(self):
         """Adds previous factors to list if Factor Window was already open"""
@@ -235,11 +238,31 @@ class FactorWithin(wx.Frame):
 
         return inputIsValid
 
-    def defineFactor(self, event):
+    def loadDataset(self):
+        """Loads the dataset under Mainframe.Dataset if it already exists"""
+        factors = self.DataPanel.MainFrame.Dataset['Factors']
+        Factors = []
+        for i in range(len(factors[0])):
+            newFactor = '%s(%s)' % (factors[0][i], factors[1][i])
+            Factors.append(newFactor)
+        self.Factor = factors[0]
+        self.Level = factors[1]
+        self.ListFactor.SetItems(Factors)
+        self.ButtonContinue.Enable()
 
+    def defineFactor(self, event):
+        """Move on to the Factor Definition window"""
         self.ModelFull = FactorDefinition(self.Sheet, self)
         self.ModelFull.Show(True)
         self.Show(False)
+
+        # If something was changed, than drop dataset stored under MainFrame
+        if self.DataPanel.MainFrame.Dataset != {}:
+            oldFactors = self.DataPanel.MainFrame.Dataset['Factors']
+            newFactor = self.Factor
+            newLevel = self.Level
+            if oldFactors[0] != newFactor or oldFactors[0] != newLevel:
+                self.DataPanel.MainFrame.Dataset = {}
 
 
 class FactorDefinition(wx.Frame):
@@ -440,6 +463,10 @@ class FactorDefinition(wx.Frame):
         wx.EVT_LISTBOX(self, self.ListWithin.Id, self.withinListSelected)
         wx.EVT_LISTBOX(self, self.ListBetween.Id, self.betweenListSelected)
         wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.covariateListSelected)
+
+        # Fill in table if dataset already exists
+        if self.FactorWithin.DataPanel.MainFrame.Dataset != {}:
+            self.loadDataset()
 
     def onClose(self, event):
         """Show previous window and close current one"""
@@ -746,131 +773,88 @@ class FactorDefinition(wx.Frame):
         # If all inputs are valid, return True
         return True
 
+    def loadDataset(self):
+        """Loads the dataset under Mainframe.Dataset if it already exists"""
+        dataset = self.FactorWithin.DataPanel.MainFrame.Dataset
+
+        # Collect the variables to write
+        subjectVariable = dataset['Subject'][0][0]
+        listWithin = [e[0] + e[1] for e in dataset['WithinFactor']]
+        listWithinLabels = [e[0] for e in dataset['WithinFactor']]
+        listBetween = [e[0] for e in dataset['BetweenFactor']]
+        listCovariate = [e[0] for e in dataset['Covariate']]
+        listInput = dataset['Table']['labels']
+        listInput = [e for e in listInput if e not in subjectVariable]
+        listInput = [e for e in listInput if e not in listWithinLabels]
+        listInput = [e for e in listInput if e not in listBetween]
+        listInput = [e for e in listInput if e not in listCovariate]
+
+        # Write all values in specific cells
+        self.ListInput.SetItems(listInput)
+        self.SubjectVariable.SetValue(subjectVariable)
+        self.ListWithin.SetItems(listWithin)
+        self.ListBetween.SetItems(listBetween)
+        self.ListCovariate.SetItems(listCovariate)
+
     def finishFactors(self, event):
+        """
+        Finishes Factor Definition window and opens MainFrame again.
+        All relevant values are stored under MainFrame.Dataset.
+        """
 
+        # Check if input factors are valid
         inputIsValid = self.checkInput()
-
-        self.Dataset = {}
         if inputIsValid:
 
-            self.Dataset['ColFactor'] = self.ListWithin.GetItems()
-            level = np.array(self.FactorWithin.Level)
-            self.Dataset['Level'] = level
-            NbLevel = level.prod()
-            error = []
-            subject = []
-            errortmp = []
-            if self.Subject == []:
-                error.append('Subject colone not define')
-            for i in self.Subject:
-                if type(i) == list:
-                    for s in i:
-                        try:
-                            subject.append(int(s))
-                        except:
-                            errortmp = 1
-                else:
-                    try:
-                        subject.append(int(s))
-                    except:
-                        errortmp = 1
+            # Create output dataset
+            self.Dataset = {}
 
-            if errortmp == 1:
-                error.append('Subject colone must be an integer')
-            else:
-                subject = np.array(subject)
-                if subject.max() > len(subject):
-                    error.append('Subject number bigger than length')
-                else:
-                    self.Subject = subject.squeeze()
-                    self.Dataset['Subject'] = subject.squeeze()
+            # Collect the Data Table
+            dataTable = self.FactorWithin.dataTable
+            self.Dataset['Table'] = dataTable
 
-            Within = []
-            errortmp = []
-            for f in self.Within:
-                if type(f) == list:
-                    tmp = []
-                    for e in f:
-                        if e[len(e) - 4:len(e)] == '.eph':
+            # Collect Subject Variable
+            subjectVariable = self.SubjectVariable.GetValue()
+            subjectListId = dataTable['labels'].index(subjectVariable)
+            self.Dataset['Subject'] = [(
+                subjectVariable,
+                map(int, dataTable['content'][subjectListId]))]
 
-                            tmp.append(os.path.abspath(str(e)))
-                        else:
-                            errortmp = 1
-                    Within.append(tmp)
-                else:
-                    if f[len(f) - 4:len(f)] == '.eph':
-                        Within.append(str(f))
-                    else:
-                        errortmp = 2
+            # Collect Within Subject Factor(s)
+            withinListLabels = [e[0:e.find('(')]
+                                for e in self.ListWithin.GetItems()]
+            withinListLevel = [e[e.find('('):]
+                               for e in self.ListWithin.GetItems()]
+            withinListIdx = [dataTable['labels'].index(i)
+                             for i in withinListLabels]
+            withinListTable = [dataTable['content'][l] for l in withinListIdx]
+            self.Dataset['WithinFactor'] = zip(withinListLabels,
+                                               withinListLevel,
+                                               withinListTable)
 
-            if errortmp == 1:
-                error.append('Within colones must contain *.eph file')
-            elif errortmp == 2:
-                error.append('Within colone must contain *.eph file')
-            else:
-                self.Dataset['Within'] = Within
-            if NbLevel != len(self.Within):
-                error.append('Fill all Within subject factor')
+            # Collect Between Subject Factor(s)
+            betweenListLabels = self.ListBetween.GetItems()
+            betweenListIdx = [dataTable['labels'].index(i)
+                              for i in betweenListLabels]
+            betweenListTable = [map(int, dataTable['content'][l])
+                                for l in betweenListIdx]
+            self.Dataset['BetweenFactor'] = zip(betweenListLabels,
+                                                betweenListTable)
 
-            errortmp = []
-            between = []
-            for f in self.Between:
-                if type(f) == list:
-                    tmp = []
-                    for e in f:
-                        try:
-                            tmp.append(int(e))
-                        except:
-                            errortmp = 1
-                    between.append(tmp)
-                else:
-                    try:
-                        between.append(int(e))
-                    except:
-                        errortmp = 2
-            if errortmp == 1:
-                error.append('Between colones must be an integer')
-            elif errortmp == 2:
-                error.append('Between colone must be an integer')
-            else:
-                between = np.array(between)
-                self.Dataset['Between'] = between.squeeze()
-                self.Dataset['BetweenIndex'] = self.BetweenIndex
+            # Collect Covariate(s)
+            covariateLabels = self.ListCovariate.GetItems()
+            covariateIdx = [dataTable['labels'].index(i)
+                            for i in covariateLabels]
+            covariateTable = [map(float, dataTable['content'][l])
+                              for l in covariateIdx]
+            self.Dataset['Covariate'] = zip(covariateLabels, covariateTable)
 
-            covariate = []
-            errortmp = []
-            for f in self.Covariate:
-                if type(f) == list:
-                    tmp = []
-                    for e in f:
-                        try:
-                            tmp.append(float(e))
-                        except:
-                            errortmp = 1
-                    covariate.append(tmp)
-                else:
-                    try:
-                        covariate.append(float(e))
-                    except:
-                        errortmp = 2
-            if errortmp == 1:
-                error.append('Covariate colones must be a float')
-            elif errortmp == 2:
-                error.append('Covariate colone must be a float')
-            else:
-                covariate = np.array(covariate)
-                self.Dataset['Covariate'] = covariate.squeeze()
-                self.Dataset['CovariateIndex'] = self.CovariateIndex
+            # Collect within Factor names and levels
+            self.Dataset['Factors'] = [self.FactorWithin.Factor,
+                                       self.FactorWithin.Level]
 
-            if error != []:
-                self.Show(False)
-                self.Dataset['Buttonsave'].Disable()
-                # self.Dataset['ButtonModify'].Disable()
-                dlg = wx.MessageDialog(self, " \n ".join(error), style=wx.OK)
-                retour = dlg.ShowModal()
-                dlg.Destroy()
-
-            else:
-                self.Dataset['Buttonsave'].Enable()
-                # self.Dataset['ButtonModify'].Enable()
-                self.Show(False)
+            # Close Factor Within window
+            self.Show(False)
+            self.FactorWithin.DataPanel.Show(False)
+            self.FactorWithin.DataPanel.MainFrame.Show(True)
+            self.FactorWithin.DataPanel.MainFrame.Dataset = self.Dataset
