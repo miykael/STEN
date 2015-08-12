@@ -51,6 +51,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.onClose)
         wx.EVT_BUTTON(self, self.ButtonStart.Id, self.startAction)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
+        self.PanelData.SetFocus()
 
         # MenuBar
         menuBar = wx.MenuBar()
@@ -95,5 +96,24 @@ class MainFrame(wx.Frame):
 
     def startAction(self, event):
         """Starts the calculation"""
-        # TODO: check variable Memory and what needs to be kept
-        Calculation.startCalculation(self)
+        # Make sure that a dataset is present and saved before continuing
+        if self.Dataset == {}:
+            dlg = wx.MessageDialog(
+                self, caption='No dataset Loaded',
+                message='No dataset is loaded. Create a new dataset or load ' +
+                        'an already existing one to continue.',
+                style=wx.OK | wx.ICON_QUESTION)
+            dlg.ShowModal()
+            dlg.Destroy()
+        elif self.Dataset != {} and not self.saved:
+            dlg = wx.MessageDialog(
+                self, caption='Unsaved Dataset',
+                message='Are you sure that you want to continue ' +
+                        'without saving the loaded dataset first?',
+                style=wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+            answer = dlg.ShowModal()
+            dlg.Destroy()
+            if answer == wx.ID_OK:
+                Calculation.startCalculation(self)
+        else:
+            Calculation.startCalculation(self)

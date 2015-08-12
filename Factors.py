@@ -58,17 +58,17 @@ class WithinFactor(wx.Frame):
         # Button Add, Delete, Change and Continue
         PanelButton = wx.Panel(PanelDefinition, wx.ID_ANY)
         sizerButton = wx.BoxSizer(wx.VERTICAL)
-        self.ButtonAdd = wx.Button(PanelButton, wx.ID_ANY, label="Add")
+        self.ButtonAdd = wx.Button(PanelButton, wx.ID_ANY, label="&Add")
         sizerButton.Add(self.ButtonAdd, 0, wx.EXPAND)
-        self.ButtonDelete = wx.Button(PanelButton, wx.ID_ANY, label="Delete")
+        self.ButtonDelete = wx.Button(PanelButton, wx.ID_ANY, label="&Delete")
         self.ButtonDelete.Disable()
         sizerButton.Add(self.ButtonDelete, 0, wx.EXPAND)
-        self.ButtonChange = wx.Button(PanelButton, wx.ID_ANY, label="Change")
+        self.ButtonChange = wx.Button(PanelButton, wx.ID_ANY, label="Chan&ge")
         self.ButtonChange.Disable()
         sizerButton.Add(self.ButtonChange, 0, wx.EXPAND)
         sizerButton.AddSpacer(30)
         self.ButtonContinue = wx.Button(PanelButton, wx.ID_ANY,
-                                        label="Continue")
+                                        label="&Continue")
         self.ButtonContinue.Disable()
         sizerButton.Add(self.ButtonContinue, 0, wx.EXPAND)
         PanelButton.SetSizerAndFit(sizerButton)
@@ -877,3 +877,5 @@ class FactorDefinition(wx.Frame):
             self.WithinFactor.DataPanel.Show(False)
             self.WithinFactor.DataPanel.MainFrame.Show(True)
             self.WithinFactor.DataPanel.MainFrame.Dataset = self.Dataset
+            self.WithinFactor.DataPanel.MainFrame.ButtonDataModify.Enable()
+            self.WithinFactor.DataPanel.MainFrame.ButtonDataSave.Enable()
