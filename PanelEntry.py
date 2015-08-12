@@ -71,7 +71,7 @@ class DataEntry(wx.Frame):
         sizerButton.AddSpacer(10)
         # Number of Rows Field
         TextInserRow = wx.StaticText(
-            PanelButton, wx.ID_ANY, label="Number of Rows: ")
+            PanelButton, wx.ID_ANY, label="Number of &Rows: ")
         sizerButton.Add(TextInserRow, 0, wx.ALIGN_CENTRE)
         self.Sheet.nRow = self.Sheet.GetNumberRows()
         self.Row = wx.SpinCtrl(PanelButton, 1, str(self.Sheet.nRow),
@@ -81,7 +81,7 @@ class DataEntry(wx.Frame):
         sizerButton.AddSpacer(20)
         # Number of Columns Field
         TextInserCol = wx.StaticText(
-            PanelButton, wx.ID_ANY, label="Number of Columns: ")
+            PanelButton, wx.ID_ANY, label="Number of &Columns: ")
         sizerButton.Add(TextInserCol, 0, wx.ALIGN_CENTRE)
         self.Sheet.nCol = self.Sheet.GetNumberCols()
         self.Col = wx.SpinCtrl(PanelButton, 2, str(self.Sheet.nCol),
@@ -90,18 +90,18 @@ class DataEntry(wx.Frame):
         sizerButton.Add(self.Col, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
         # Define Import Button
-        ButtonImport = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
-                                 label="Import CSV Data")
+        ButtonImport = wx.Button(PanelButton, wx.ID_ANY, size=(135, 25),
+                                 label="&Import CSV Table")
         sizerButton.Add(ButtonImport, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
-        # Define Export Button
-        ButtonExport = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
-                                 label="Export CSV Data")
-        sizerButton.Add(ButtonExport, 0, wx.EXPAND)
+        # Define Save Button
+        ButtonSave = wx.Button(PanelButton, wx.ID_ANY, size=(135, 25),
+                               label="&Save Table as CSV")
+        sizerButton.Add(ButtonSave, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
         # Define Factor Button
-        ButtonDefineFactor = wx.Button(PanelButton, wx.ID_ANY, size=(130, 25),
-                                       label="Define Factor")
+        ButtonDefineFactor = wx.Button(PanelButton, wx.ID_ANY, size=(135, 25),
+                                       label="&Define Factor")
         sizerButton.Add(ButtonDefineFactor, 0, wx.EXPAND)
         sizerButton.AddSpacer(20)
 
@@ -119,7 +119,7 @@ class DataEntry(wx.Frame):
         wx.EVT_SPINCTRL(self, self.Row.Id, self.modifyRow)
         wx.EVT_SPINCTRL(self, self.Col.Id, self.modifyCol)
         wx.EVT_BUTTON(self, ButtonDefineFactor.Id, self.defineFactor)
-        wx.EVT_BUTTON(self, ButtonExport.Id, self.exportData)
+        wx.EVT_BUTTON(self, ButtonSave.Id, self.exportData)
         wx.EVT_BUTTON(self, ButtonImport.Id, self.importData)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onCellSelected)
@@ -131,7 +131,7 @@ class DataEntry(wx.Frame):
         self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.onCellRightClick)
 
         # Drag and Drop Function
-        dropTarget = GridFileDropTarget(self.Sheet)
+        dropTarget = GridFileDropTarget(self)
         self.Sheet.SetDropTarget(dropTarget)
         self.Sheet.EnableDragRowSize()
         self.Sheet.EnableDragColSize()
@@ -147,7 +147,7 @@ class DataEntry(wx.Frame):
             self.onClose(event)
         elif keycode == 127:   # If del is pressed
             self.onDelete()
-        if event.ControlDown():
+        elif event.ControlDown():
             if keycode == 67:  # If Ctrl+C is pressed
                 self.onCtrlCopy()
             elif keycode == 86:  # If Ctrl+V is pressed
@@ -157,12 +157,6 @@ class DataEntry(wx.Frame):
                     self.onCtrlPaste('undo')
             elif keycode == 65:  # If Ctrl+A is pressed
                 self.Sheet.SelectAll()
-            elif keycode == 83:  # If Ctrl+S is pressed
-                self.exportData(event)
-            elif keycode == 79:  # If Ctrl+O is pressed
-                self.importData(event)
-            elif keycode == 68:  # If Ctrl+D is pressed
-                self.defineFactor(event)
         else:
             event.Skip()
 
@@ -237,12 +231,11 @@ class DataEntry(wx.Frame):
         # Convert cell content from clipboard text to cell values
         for row_id, column in enumerate(cellcontent.splitlines()):
             for col_id, content in enumerate(column.split('\t')):
-                if row_id + rowstart < self.Sheet.NumberRows \
-                        and col_id + colstart < self.Sheet.NumberCols:
-                    newText4undo += str(self.Sheet.GetCellValue(
-                        rowstart + row_id, colstart + col_id)) + '\t'
-                    self.Sheet.SetCellValue(
-                        rowstart + row_id, colstart + col_id, content)
+                self.adjustGrid(row_id + rowstart, col_id + colstart)
+                newText4undo += str(self.Sheet.GetCellValue(
+                    rowstart + row_id, colstart + col_id)) + '\t'
+                self.Sheet.SetCellValue(
+                    rowstart + row_id, colstart + col_id, content)
             newText4undo = newText4undo[:-1] + '\n'
 
         # store undo content
@@ -279,7 +272,6 @@ class DataEntry(wx.Frame):
         # Get cell location and row size
         col_id = event.GetCol()
         row_id = event.GetRow()
-        nRow = self.Sheet.GetNumberRows()
 
         # Highlight Cell
         self.Sheet.SetGridCursor(row_id, col_id)
@@ -298,7 +290,8 @@ class DataEntry(wx.Frame):
             # Store file paths into table
             content = dlg.GetPaths()
             for i, e in enumerate(content):
-                if row_id + i < nRow:
+                self.adjustGrid(row_id + i, col_id)
+                if row_id + i < self.Sheet.GetNumberRows():
                     self.Sheet.SetCellValue(row_id + i, col_id, e)
 
             # If first column is called 'Subject' fill out all none empty cells
@@ -376,6 +369,17 @@ class DataEntry(wx.Frame):
             elif SheetCol > ActualCol:
                 self.Sheet.DeleteCols(ActualCol)
             SheetCol = self.Sheet.GetNumberCols()
+
+    def adjustGrid(self, row_id, col_id):
+        """Make sure that the grid is big enough"""
+        if row_id == self.Sheet.NumberRows:
+            self.Sheet.AppendRows()
+            self.Row.SetValue(self.Sheet.NumberRows)
+        if col_id == self.Sheet.NumberCols:
+            self.Sheet.SetColLabelValue(self.Sheet.NumberCols,
+                                        "F%d" % self.Sheet.NumberCols)
+            self.Sheet.AppendCols()
+            self.Col.SetValue(self.Sheet.NumberCols)
 
     def onCellSelected(self, event):
         """Show content of select cell in content field"""
@@ -574,16 +578,17 @@ class DataEntry(wx.Frame):
                 dataTable['content'] = map(list, zip(*inputdata))
                 dataTable['nRows'] = len(dataTable['content'][0])
 
-                # Change name of labels
-                for i, l in enumerate(dataTable['labels']):
-                    self.Sheet.SetColLabelValue(i, l)
-
                 # Write content to table
                 self.Sheet.ClearGrid()
                 for r in range(dataTable['nRows']):
                     for c in range(dataTable['nCols']):
                         value = dataTable['content'][c][r]
+                        self.adjustGrid(r, c)
                         self.Sheet.SetCellValue(r, c, value)
+
+                # Change name of labels
+                for i, l in enumerate(dataTable['labels']):
+                    self.Sheet.SetColLabelValue(i, l)
 
             # If file doesn't exists
             else:
@@ -599,15 +604,16 @@ class DataEntry(wx.Frame):
         """Loads the dataset under Mainframe.Dataset if it already exists"""
         dataTable = self.MainFrame.Dataset['Table']
 
-        # Change name of labels
-        for i, l in enumerate(dataTable['labels']):
-            self.Sheet.SetColLabelValue(i, l)
-
         # Write content to table
         for r in range(dataTable['nRows']):
             for c in range(dataTable['nCols']):
                 value = dataTable['content'][c][r]
+                self.adjustGrid(r, c)
                 self.Sheet.SetCellValue(r, c, value)
+
+        # Change name of labels
+        for i, l in enumerate(dataTable['labels']):
+            self.Sheet.SetColLabelValue(i, l)
 
 
 class GridFileDropTarget(wx.FileDropTarget):
@@ -616,7 +622,8 @@ class GridFileDropTarget(wx.FileDropTarget):
 
     def __init__(self, grid):
         wx.FileDropTarget.__init__(self)
-        self.grid = grid
+        self.grid = grid.Sheet
+        self.Table = grid
 
     def OnDropFiles(self, x, y, filenames):
         # the x,y coordinates are Unscrolled coordinates.
@@ -631,6 +638,7 @@ class GridFileDropTarget(wx.FileDropTarget):
         if not os.path.isdir(filenames[0]):
             for i, f in enumerate(filenames):
                 if row > -1 and col > -1:
+                    self.Table.adjustGrid(row + i, col)
                     self.grid.SetCellValue(row + i, col, f)
             linesAdded = len(filenames)
 
@@ -640,6 +648,7 @@ class GridFileDropTarget(wx.FileDropTarget):
                 listOfFiles = sorted(os.listdir(filenames[j]))
                 for i, f in enumerate(listOfFiles):
                     if row > -1 and col > -1:
+                        self.Table.adjustGrid(row + i, col + j)
                         self.grid.SetCellValue(row + i, col + j,
                                                os.path.join(filenames[j], f))
             linesAdded = len(listOfFiles)
