@@ -3,7 +3,7 @@ import os
 import itertools
 
 
-class FactorWithin(wx.Frame):
+class WithinFactor(wx.Frame):
 
     """Window to specify the within factors"""
 
@@ -256,7 +256,7 @@ class FactorWithin(wx.Frame):
         self.ModelFull.Show(True)
         self.Show(False)
 
-        # If something was changed, than drop dataset stored under MainFrame
+        # If something was changed, drop MainFrame.Ddataset
         if self.DataPanel.MainFrame.Dataset != {}:
             oldFactors = self.DataPanel.MainFrame.Dataset['Factors']
             newFactor = self.Factor
@@ -270,13 +270,13 @@ class FactorDefinition(wx.Frame):
     """TODO: Better description, perhaps also another name for window?
     Window to specify the factors"""
 
-    def __init__(self, Sheet, FactorWithin):
+    def __init__(self, Sheet, WithinFactor):
         wx.Frame.__init__(self, None, wx.ID_ANY, size=(200, 250),
                           title="Factor definition")
 
         # Specify relevant variables
-        self.FactorWithin = FactorWithin
-        self.LabelNames = FactorWithin.dataTable['labels']
+        self.WithinFactor = WithinFactor
+        self.LabelNames = WithinFactor.dataTable['labels']
         self.Subject = ''
 
         # Panel: Left Input Area
@@ -341,11 +341,11 @@ class FactorDefinition(wx.Frame):
                                    label="Within Subject Factor(s)",
                                    style=wx.ALIGN_CENTER)
         sizerWithinVariable.Add(TextWithin, 0, wx.EXPAND)
-        supportext = '(%s)' % ', '.join(FactorWithin.Factor)
+        supportext = '(%s)' % ', '.join(WithinFactor.Factor)
         TextSupport = wx.StaticText(PanelWithinVariable, wx.ID_ANY,
                                     label=supportext, style=wx.ALIGN_CENTER)
         sizerWithinVariable.Add(TextSupport, 0, wx.EXPAND)
-        iterationFactor = [range(1, e + 1) for e in FactorWithin.Level]
+        iterationFactor = [range(1, e + 1) for e in WithinFactor.Level]
         iterList = list(itertools.product(*iterationFactor))
         factorLabels = ['_?_%s' % str(e).replace(' ', '') if len(e) > 1
                         else '_?_(%s)' % str(e[0]) for e in iterList]
@@ -465,12 +465,12 @@ class FactorDefinition(wx.Frame):
         wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.covariateListSelected)
 
         # Fill in table if dataset already exists
-        if self.FactorWithin.DataPanel.MainFrame.Dataset != {}:
+        if self.WithinFactor.DataPanel.MainFrame.Dataset != {}:
             self.loadDataset()
 
     def onClose(self, event):
         """Show previous window and close current one"""
-        self.FactorWithin.Show(True)
+        self.WithinFactor.Show(True)
         self.Show(False)
 
     def showMessage(self, title, message):
@@ -704,7 +704,7 @@ class FactorDefinition(wx.Frame):
         withinList = self.ListWithin.GetItems()
         betweenList = self.ListBetween.GetItems()
         covariates = self.ListCovariate.GetItems()
-        dataTable = self.FactorWithin.dataTable
+        dataTable = self.WithinFactor.dataTable
 
         # Check Subject Variable
         if subjectVariable == u'':
@@ -775,7 +775,7 @@ class FactorDefinition(wx.Frame):
 
     def loadDataset(self):
         """Loads the dataset under Mainframe.Dataset if it already exists"""
-        dataset = self.FactorWithin.DataPanel.MainFrame.Dataset
+        dataset = self.WithinFactor.DataPanel.MainFrame.Dataset
 
         # Collect the variables to write
         subjectVariable = dataset['Subject'][0][0]
@@ -810,7 +810,7 @@ class FactorDefinition(wx.Frame):
             self.Dataset = {}
 
             # Collect the Data Table
-            dataTable = self.FactorWithin.dataTable
+            dataTable = self.WithinFactor.dataTable
             self.Dataset['Table'] = dataTable
 
             # Collect Subject Variable
@@ -850,11 +850,11 @@ class FactorDefinition(wx.Frame):
             self.Dataset['Covariate'] = zip(covariateLabels, covariateTable)
 
             # Collect within Factor names and levels
-            self.Dataset['Factors'] = [self.FactorWithin.Factor,
-                                       self.FactorWithin.Level]
+            self.Dataset['Factors'] = [self.WithinFactor.Factor,
+                                       self.WithinFactor.Level]
 
             # Close Factor Within window
             self.Show(False)
-            self.FactorWithin.DataPanel.Show(False)
-            self.FactorWithin.DataPanel.MainFrame.Show(True)
-            self.FactorWithin.DataPanel.MainFrame.Dataset = self.Dataset
+            self.WithinFactor.DataPanel.Show(False)
+            self.WithinFactor.DataPanel.MainFrame.Show(True)
+            self.WithinFactor.DataPanel.MainFrame.Dataset = self.Dataset
