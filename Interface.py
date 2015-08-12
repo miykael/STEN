@@ -46,10 +46,11 @@ class MainFrame(wx.Frame):
         sizerMainV.Add(PanelStart, 0, wx.EXPAND)
         self.SetSizerAndFit(sizerMainV)
         self.Show(True)
-        wx.EVT_BUTTON(self, self.ButtonStart.Id, self.startAction)
 
-        # Execute when STEN gets closed
+        # Specification of events
         self.Bind(wx.EVT_CLOSE, self.onClose)
+        wx.EVT_BUTTON(self, self.ButtonStart.Id, self.startAction)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
 
         # MenuBar
         menuBar = wx.MenuBar()
@@ -63,6 +64,14 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onAbout, m_about)
         menuBar.Append(menu, "&Help")
         self.SetMenuBar(menuBar)
+
+    def onKeyDown(self, event):
+        """Key event handler if key is pressed within frame"""
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:  # If ESC is pressed
+            self.onClose(event)
+        else:
+            event.Skip()
 
     def onAbout(self, event):
         """Show about message when About Menu opened"""

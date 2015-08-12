@@ -45,7 +45,7 @@ class DataEntry(wx.Frame):
         # Grid: XLS (XLS-style)
         self.Sheet = wx.grid.Grid(PanelSheet)
 
-        # Specify relevant variables
+        # Specify gird relevant variables
         self.factorNames = []
         self.factorLevels = []
         self.Sheet.nRow = 30
@@ -58,12 +58,6 @@ class DataEntry(wx.Frame):
         self.Sheet.SetColLabelValue(0, "Subject")
         for i in xrange(1, self.Sheet.nCol):
             self.Sheet.SetColLabelValue(i, "F%d" % i)
-
-        # Specify grid events
-        self.Sheet.Bind(wx.EVT_KEY_DOWN, self.onControlKey)
-        self.Sheet.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK,
-                        self.onLabelRightClick)
-        self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.onCellRightClick)
 
         # Create the grid object
         sizerPanelSheet.Add(self.Sheet)
@@ -129,6 +123,12 @@ class DataEntry(wx.Frame):
         wx.EVT_BUTTON(self, ButtonImport.Id, self.importData)
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onCellSelected)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
+
+        # Specify grid events
+        self.Sheet.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK,
+                        self.onLabelRightClick)
+        self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.onCellRightClick)
 
         # Drag and Drop Function
         dropTarget = GridFileDropTarget(self.Sheet)
@@ -140,11 +140,14 @@ class DataEntry(wx.Frame):
         if self.MainFrame.Dataset != {}:
             self.loadDataset()
 
-    def onControlKey(self, event):
-        """Key event handler if Ctrl is pressed"""
-        controlKeyDown = event.ControlDown()
+    def onKeyDown(self, event):
+        """Key event handler if key is pressed within frame"""
         keycode = event.GetKeyCode()
-        if controlKeyDown:
+        if keycode == wx.WXK_ESCAPE:  # If ESC is pressed
+            self.onClose(event)
+        elif keycode == 127:   # If del is pressed
+            self.onDelete()
+        if event.ControlDown():
             if keycode == 67:  # If Ctrl+C is pressed
                 self.onCtrlCopy()
             elif keycode == 86:  # If Ctrl+V is pressed
@@ -160,8 +163,6 @@ class DataEntry(wx.Frame):
                 self.importData(event)
             elif keycode == 68:  # If Ctrl+D is pressed
                 self.defineFactor(event)
-        if keycode == 127:   # If del is pressed
-            self.onDelete()
         else:
             event.Skip()
 
@@ -331,15 +332,23 @@ class DataEntry(wx.Frame):
 
     def onClose(self, event):
         """Show exit message when Data Panel gets closed"""
-        dlg = wx.MessageDialog(
-            self, "Do you really want to close the data entry window?",
-            "Exit Data Entry Window",
-            wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-        answer = dlg.ShowModal()
-        dlg.Destroy()
-        if answer == wx.ID_OK:
+
+        # If table is still empty, close without popup
+        dataTable, errorMessage = self.readTable()
+        if dataTable['content'] == []:
             self.Destroy()
             self.MainFrame.Show(True)
+        # Show Popup Window before closing
+        else:
+            dlg = wx.MessageDialog(
+                self, "Do you really want to close the data entry window?",
+                "Exit Data Entry Window",
+                wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+            answer = dlg.ShowModal()
+            dlg.Destroy()
+            if answer == wx.ID_OK:
+                self.Destroy()
+                self.MainFrame.Show(True)
 
     def modifyRow(self, event):
         "Adds or deletes number of rows"

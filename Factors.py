@@ -97,6 +97,7 @@ class WithinFactor(wx.Frame):
         wx.EVT_BUTTON(self, self.ButtonDelete.Id, self.deleteFactor)
         wx.EVT_BUTTON(self, self.ButtonChange.Id, self.changeFactor)
         wx.EVT_BUTTON(self, self.ButtonContinue.Id, self.defineFactor)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
 
         # Update List with previous elements if window was already opened
         if self.Factor != []:
@@ -105,6 +106,15 @@ class WithinFactor(wx.Frame):
         # Fill in table if dataset already exists
         if self.DataPanel.MainFrame.Dataset != {}:
             self.loadDataset()
+
+    def onKeyDown(self, event):
+        """Key event handler if key is pressed within frame"""
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:  # If ESC is pressed
+            self.DataPanel.Show(True)
+            self.Show(False)
+        else:
+            event.Skip()
 
     def updateList(self):
         """Adds previous factors to list if Factor Window was already open"""
@@ -463,10 +473,19 @@ class FactorDefinition(wx.Frame):
         wx.EVT_LISTBOX(self, self.ListWithin.Id, self.withinListSelected)
         wx.EVT_LISTBOX(self, self.ListBetween.Id, self.betweenListSelected)
         wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.covariateListSelected)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
 
         # Fill in table if dataset already exists
         if self.WithinFactor.DataPanel.MainFrame.Dataset != {}:
             self.loadDataset()
+
+    def onKeyDown(self, event):
+        """Key event handler if key is pressed within frame"""
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:  # If ESC is pressed
+            self.onClose(event)
+        else:
+            event.Skip()
 
     def onClose(self, event):
         """Show previous window and close current one"""
