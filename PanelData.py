@@ -1,11 +1,11 @@
 ﻿import wx
 import os
-from PanelEntry import DataEntry
+import PanelEntry
 from Information import ReturnInfomation
 import wx.lib.sheet
 
 
-class OnOpen(wx.Panel):
+class CreateDataset(wx.Panel):
 
     """
     This panel contains the functions to create a new dataset, to load
@@ -16,6 +16,12 @@ class OnOpen(wx.Panel):
 
         # Create Data Frame window
         wx.Panel.__init__(self, parent=PanelData, style=wx.SUNKEN_BORDER)
+
+        # Specify relevant variables
+        self.MainFrame = MainFrame
+        self.MainFrame.Dataset = {}
+        # TODO: What about this H5?
+        self.MainFrame.H5 = []
 
         # Panel: Data Handler
         self.PanelDataHandler = wx.Panel(self, wx.ID_ANY)
@@ -93,13 +99,6 @@ class OnOpen(wx.Panel):
         wx.EVT_BUTTON(self, ButtonResult.Id, self.resultAction)
         wx.EVT_BUTTON(self, ButtonDataCreate.Id, self.createData)
 
-        # Specify relevant variables
-        self.MainFrame = MainFrame
-        self.MainFrame.Dataset = {}
-        # TODO: What about this H5?
-        self.MainFrame = MainFrame
-        self.MainFrame.H5 = []
-
     def loadData(self, event):
         """Opens the DataLoad Panel"""
         dlg = wx.FileDialog(
@@ -137,6 +136,6 @@ class OnOpen(wx.Panel):
 
     def createData(self, event):
         """Opens the DataEntry Panel"""
-        self.DataWindow = DataEntry(self.MainFrame)
+        self.DataWindow = PanelEntry.DataEntry(self.MainFrame)
         self.DataWindow.Show(True)
         self.MainFrame.Show(False)

@@ -1,7 +1,7 @@
 ﻿import wx
-import PanelAnalysis
 import PanelData
-from Calculation import startCalculation
+import PanelAnalysis
+import Calculation
 
 
 class MainFrame(wx.Frame):
@@ -23,13 +23,13 @@ class MainFrame(wx.Frame):
         sizerStart = wx.BoxSizer(wx.HORIZONTAL)
 
         # Panel: Data
-        self.PanelData = PanelData.OnOpen(self.panel, self)
+        self.PanelData = PanelData.CreateDataset(self.panel, self)
         sizerMainH.Add(self.PanelData, 1, wx.EXPAND)
 
         # Panel: Option
         self.PanelOption = wx.Notebook(self.panel, 1, style=wx.NB_TOP)
-        self.AnovaWave = PanelAnalysis.PanelAnovaWave(self.PanelOption)
-        self.AnovaIS = PanelAnalysis.PanelAnovaIS(self.PanelOption)
+        self.AnovaWave = PanelAnalysis.AnovaWave(self.PanelOption)
+        self.AnovaIS = PanelAnalysis.AnovaIS(self.PanelOption)
         self.PanelOption.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
         self.PanelOption.AddPage(self.AnovaIS, 'ANOVA on Brain Space')
         self.AnovaWave.SetFocus()
@@ -86,4 +86,5 @@ class MainFrame(wx.Frame):
 
     def startAction(self, event):
         """Starts the calculation"""
-        startCalculation(self)
+        # TODO: check variable Memory and what needs to be kept
+        Calculation.startCalculation(self)

@@ -1,5 +1,5 @@
 import wx
-from Interface import MainFrame
+import Interface
 
 """
 Start STEN and open the GUI
@@ -31,7 +31,7 @@ class STENSplashScreen(wx.SplashScreen):
 
     def OnExit(self, evt):
         self.Hide()
-        MyFrame = MainFrame()
+        MyFrame = Interface.MainFrame()
         app.SetTopWindow(MyFrame)
         MyFrame.Show(True)
         evt.Skip()

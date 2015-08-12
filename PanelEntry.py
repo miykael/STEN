@@ -1,6 +1,6 @@
 import wx
 import os
-from Factors import FactorWithin
+import Factors
 
 
 class DataEntry(wx.Frame):
@@ -482,10 +482,17 @@ class DataEntry(wx.Frame):
         """Opens Factor Definition Window if everything is ok"""
         # Get Table info
         self.dataTable, ok2proceed = self.getTableInfo()
-        # Open Factor definition dialog
+
         if ok2proceed:
-            self.ModelDef = FactorWithin(self, self.factorNames,
-                                         self.factorLevels)
+
+            # If something was changed, drop MainFrame.Ddataset
+            if self.MainFrame.Dataset != {}:
+                if self.MainFrame.Dataset['Table'] != self.dataTable:
+                    self.MainFrame.Dataset = {}
+
+            # Open Factor definition dialog
+            self.ModelDef = Factors.WithinFactor(self, self.factorNames,
+                                                 self.factorLevels)
             self.ModelDef.Show(True)
 
     def exportData(self, event):

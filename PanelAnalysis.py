@@ -1,7 +1,7 @@
 import wx
 
 
-class PanelAnovaWave(wx.Panel):
+class AnovaWave(wx.Panel):
 
     def __init__(self, conteneur):
         wx.Panel.__init__(self, parent=conteneur)
@@ -489,7 +489,7 @@ class PanelAnovaWave(wx.Panel):
         dlg.Show(True)
 
 
-class PanelAnovaIS(wx.Panel):
+class AnovaIS(wx.Panel):
 
     def __init__(self, conteneur):
         wx.Panel.__init__(self, parent=conteneur)
@@ -933,7 +933,7 @@ class PanelAnovaIS(wx.Panel):
                 dlg.Destroy()
 
 
-class PanelManovaWave(wx.Panel):
+class ManovaWave(wx.Panel):
 
     def __init__(self, conteneur):
         wx.Panel.__init__(self, parent=conteneur)
@@ -1040,7 +1040,7 @@ class PanelManovaWave(wx.Panel):
         self.PostHoc = self.PostHocCheckBox.GetValue()
 
 
-class PanelManovaIS(wx.Panel):
+class ManovaIS(wx.Panel):
 
     def __init__(self, conteneur):
         wx.Panel.__init__(self, parent=conteneur)
