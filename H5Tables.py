@@ -1,9 +1,5 @@
 import tables
 
-# TODO: Found a bug - if you load a dataset, than click on modify, change
-#       nothing, keep factors, press ok und than exit -> than STEN doesn't
-#       quite. unclear why this is
-
 class WriteDataset:
 
     """

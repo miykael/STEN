@@ -223,7 +223,6 @@ class WithinFactor(wx.Frame):
                                caption=title, message=message)
         dlg.ShowModal()
         dlg.Destroy()
-        event.Skip()
 
     def checkInput(self, name, level):
         """Checks if a factor input is valid or not"""
@@ -249,7 +248,6 @@ class WithinFactor(wx.Frame):
                 message='Number of levels must be bigger than 1!')
         else:
             inputIsValid = True
-        event.Skip()
         return inputIsValid
 
     def loadDataset(self):
@@ -503,7 +501,6 @@ class FactorDefinition(wx.Frame):
                                caption=title, message=message)
         dlg.ShowModal()
         dlg.Destroy()
-        event.Skip()
 
     def addSubject(self, event):
         """Add selected factor to subject variable"""
