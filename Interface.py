@@ -83,6 +83,7 @@ class MainFrame(wx.Frame):
             "About STEN", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
+        event.Skip()
 
     def onClose(self, event):
         """Show exit message when MainFrame gets closed"""
@@ -93,6 +94,7 @@ class MainFrame(wx.Frame):
         dlg.Destroy()
         if answer == wx.ID_OK:
             self.Destroy()
+        event.Skip()
 
     def startAction(self, event):
         """Starts the calculation"""
@@ -117,3 +119,4 @@ class MainFrame(wx.Frame):
                 Calculation.startCalculation(self)
         else:
             Calculation.startCalculation(self)
+        event.Skip()

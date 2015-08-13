@@ -29,12 +29,12 @@ class STENSplashScreen(wx.SplashScreen):
         self.Bind(wx.EVT_CLOSE, self.OnExit)
         wx.Yield()
 
-    def OnExit(self, evt):
+    def OnExit(self, event):
         self.Hide()
         MyFrame = Interface.MainFrame()
         app.SetTopWindow(MyFrame)
         MyFrame.Show(True)
-        evt.Skip()
+        event.Skip()
 
 # Opens the GUI if script is run directly
 if __name__ == "__main__":

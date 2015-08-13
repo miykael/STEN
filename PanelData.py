@@ -1,6 +1,7 @@
 ﻿import wx
 import os
 import PanelEntry
+import H5Tables
 from Information import ReturnInfomation
 import wx.lib.sheet
 
@@ -62,10 +63,10 @@ class CreateDataset(wx.Panel):
         # Panel: Save Dataset
         PanelSaveFile = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
         sizerPanelSaveFile = wx.BoxSizer(wx.HORIZONTAL)
-        self.DataFile = wx.TextCtrl(
+        self.DataSaveFile = wx.TextCtrl(
             PanelSaveFile, wx.ID_ANY, size=(500, 21),
             value=os.path.join(os.getcwd(), 'dataset.h5'))
-        sizerPanelSaveFile.Add(self.DataFile, 0, wx.EXPAND)
+        sizerPanelSaveFile.Add(self.DataSaveFile, 0, wx.EXPAND)
         self.MainFrame.ButtonDataSave = wx.Button(
             PanelSaveFile, wx.ID_ANY, label="&Save Dataset", size=(110, 28))
         self.MainFrame.ButtonDataSave.Disable()
@@ -84,10 +85,10 @@ class CreateDataset(wx.Panel):
         # Panel: Load Dataset
         PanelLoadFile = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
         sizerPanelLoadFile = wx.BoxSizer(wx.HORIZONTAL)
-        self.DataFile = wx.TextCtrl(
+        self.DataLoadFile = wx.TextCtrl(
             PanelLoadFile, wx.ID_ANY, size=(500, 21),
             value=os.path.join(os.getcwd(), 'dataset.h5'))
-        sizerPanelLoadFile.Add(self.DataFile, 0, wx.EXPAND)
+        sizerPanelLoadFile.Add(self.DataLoadFile, 0, wx.EXPAND)
         self.MainFrame.ButtonDataLoad = wx.Button(
             PanelLoadFile, wx.ID_ANY, label="&Load Dataset", size=(110, 28))
         sizerPanelLoadFile.Add(self.MainFrame.ButtonDataLoad, 0, wx.EXPAND)
@@ -134,7 +135,7 @@ class CreateDataset(wx.Panel):
 
     def createData(self, event):
         """Opens DataEntry Panel with new dataset"""
-        # Popup Window that preexisting dataset will be overwritten
+        # Popup Window to inform that preexisting dataset will be overwritten
         if self.MainFrame.Dataset != {}:
             dlg = wx.MessageDialog(
                 self, style=wx.OK | wx.CANCEL,
@@ -163,35 +164,73 @@ class CreateDataset(wx.Panel):
 
     def saveData(self, event):
         """Save an already loaded or created dataset as an H5 file"""
-        # TODO: how to save dataset with pytables?
-        # TODO: how to make sure that not only previous analysis are stored?
-        self.MainFrame.saved = True
+        fileDirectory = os.path.dirname(self.DataSaveFile.Value)
+        filename = os.path.basename(self.DataSaveFile.Value)
+        dlg = wx.FileDialog(None, "Save Dataset as H5 File", wildcard="*.h5",
+                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                            defaultDir=fileDirectory, defaultFile=filename)
+        answer = dlg.ShowModal()
+        filepath = dlg.GetPath()
+
+        filename, file_extension = os.path.splitext(filepath)
+        filename += '.h5'
+
+        dlg.Destroy()
+        if answer == wx.ID_OK:
+            # TODO: this function doesn't consider additional H5 file content
+            #       (e.g. from previous analysis)
+            H5Tables.WriteDataset(filename, self.MainFrame.Dataset)
+            self.DataSaveFile.SetValue(filename)
+            self.MainFrame.saved = True
 
     def loadData(self, event):
-        """Opens the DataLoad Panel"""
-        dlg = wx.FileDialog(
-            None, "Load H5 file", wildcard="*.h5", style=wx.FD_OPEN,
-            defaultDir=self.DataFile.Value)
-        answer = dlg.ShowModal()
-        # TODO: Does this code make sense? Can it be cleaned more?
-        if answer == wx.ID_OK:
-            self.PathFile = dlg.GetPath()
-            self.DataFile.SetLabel(self.PathFile)
-            self.MainFrame.H5 = self.PathFile
-            info = ReturnInfomation(self.PathFile)
-            self.TxtInfo.SetLabel("".join(info.text))
-            if info.CovariatePresent:
-                self.MainFrame.AnovaWave.PostHocCheckBox.Disable()
-                self.MainFrame.AnovaIS.PostHocCheckBox.Disable()
-                self.MainFrame.AnovaWave.PostHocCheckBox.SetValue(False)
-                self.MainFrame.AnovaIS.PostHocCheckBox.SetValue(False)
-            else:
-                self.MainFrame.AnovaWave.PostHocCheckBox.Enable()
-                self.MainFrame.AnovaIS.PostHocCheckBox.Enable()
-
+        """Load a dataset from an H5 file"""
+        # Popup Window to inform that preexisting dataset will be overwritten
+        ok2proceed = False
+        if self.MainFrame.Dataset != {}:
+            dlg = wx.MessageDialog(
+                self, style=wx.OK | wx.CANCEL,
+                caption='A Dataset is already loaded',
+                message='A dataset is already loaded, are you sure that you ' +
+                        'want to load a new dataset?')
+            answer = dlg.ShowModal()
+            dlg.Destroy()
+            if answer == wx.ID_OK:
+                ok2proceed = True
         else:
-            self.MainFrame.H5 = []
-            self.DataFile.SetLabel('')
+            ok2proceed = True
+
+        # Load the dataset
+        if ok2proceed:
+
+            # Get path to H5 file
+            fileDirectory = os.path.dirname(self.DataLoadFile.Value)
+            filename = os.path.basename(self.DataLoadFile.Value)
+            dlg = wx.FileDialog(None, "Load Dataset from a H5 File",
+                                defaultDir=fileDirectory, defaultFile=filename,
+                                wildcard="*.h5", style=wx.FD_OPEN)
+            answer = dlg.ShowModal()
+            filepath = dlg.GetPath()
+            dlg.Destroy()
+            if answer == wx.ID_OK:
+                datatable = H5Tables.ReadDataset(filepath)
+                self.MainFrame.Dataset = datatable.inputTable
+                self.MainFrame.ButtonDataSave.Enable()
+                self.MainFrame.ButtonDataModify.Enable()
+
+#                # TODO: Check what panels should be accesable
+#                if info.CovariatePresent:
+#                    self.MainFrame.AnovaWave.PostHocCheckBox.Disable()
+#                    self.MainFrame.AnovaIS.PostHocCheckBox.Disable()
+#                    self.MainFrame.AnovaWave.PostHocCheckBox.SetValue(False)
+#                    self.MainFrame.AnovaIS.PostHocCheckBox.SetValue(False)
+#                else:
+#                    self.MainFrame.AnovaWave.PostHocCheckBox.Enable()
+#                    self.MainFrame.AnovaIS.PostHocCheckBox.Enable()
+#
+#            else:
+#                self.MainFrame.H5 = []
+#                self.DataLoadFile.SetLabel('')
 
     def resultFolder(self, event):
         """Opens the DataResult Panel"""
@@ -199,6 +238,8 @@ class CreateDataset(wx.Panel):
                            defaultPath=self.TextResult.Value,
                            style=wx.DD_DEFAULT_STYLE)
         answer = dlg.ShowModal()
+        resultPath = dlg.GetPath()
+        dlg.Destroy()
         if answer == wx.ID_OK:
-            self.PathResult = dlg.GetPath()
+            self.PathResult = resultPath
             self.TextResult.SetValue(self.PathResult)

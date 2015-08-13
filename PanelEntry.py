@@ -342,6 +342,7 @@ class DataEntry(wx.Frame):
             if answer == wx.ID_OK:
                 self.Destroy()
                 self.MainFrame.Show(True)
+        event.Skip()
 
     def modifyRow(self, event):
         "Adds or deletes number of rows"
@@ -355,6 +356,7 @@ class DataEntry(wx.Frame):
             elif SheetRow > ActualRow:
                 self.Sheet.DeleteRows(ActualRow)
             SheetRow = self.Sheet.GetNumberRows()
+        event.Skip()
 
     def modifyCol(self, event):
         "Adds or deletes number of columns"
@@ -369,6 +371,7 @@ class DataEntry(wx.Frame):
             elif SheetCol > ActualCol:
                 self.Sheet.DeleteCols(ActualCol)
             SheetCol = self.Sheet.GetNumberCols()
+        event.Skip()
 
     def adjustGrid(self, row_id, col_id):
         """Make sure that the grid is big enough"""
@@ -507,6 +510,7 @@ class DataEntry(wx.Frame):
             self.ModelDef = Factors.WithinFactor(self, self.factorNames,
                                                  self.factorLevels)
             self.ModelDef.Show(True)
+        event.Skip()
 
     def exportData(self, event):
         """Saves Table content into a csv-file"""
@@ -539,6 +543,7 @@ class DataEntry(wx.Frame):
                     a = csv.writer(fcsv, delimiter=',')
                     a.writerow(self.dataTable['labels'])
                     a.writerows(output)
+        event.Skip()
 
     def importData(self, event):
         """Get content from a csv-file and write it into the table"""
@@ -599,6 +604,7 @@ class DataEntry(wx.Frame):
                             "\nFile doesn't exist!")
                 dlg.ShowModal()
                 dlg.Destroy()
+        event.Skip()
 
     def loadDataset(self):
         """Loads the dataset under Mainframe.Dataset if it already exists"""

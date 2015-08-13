@@ -135,6 +135,7 @@ class WithinFactor(wx.Frame):
         # Change GUI layout
         self.ButtonChange.Enable()
         self.ButtonDelete.Enable()
+        event.Skip()
 
     def addFactor(self, event):
         """Add Factor to inventar and to list field"""
@@ -169,6 +170,7 @@ class WithinFactor(wx.Frame):
                 self.FactorName.SetValue('')
                 self.NumLevel.SetValue('')
                 self.ButtonContinue.Enable()
+        event.Skip()
 
     def deleteFactor(self, event):
         """Delete selected factor from inventar and list field"""
@@ -193,6 +195,7 @@ class WithinFactor(wx.Frame):
             self.FactorName.SetValue(self.Factor[idx - 1])
             self.NumLevel.SetValue(unicode(self.Level[idx - 1]))
             self.ListFactor.SetSelection(idx - 1)
+        event.Skip()
 
     def changeFactor(self, event):
         """Changes the name and level of a selected factor"""
@@ -212,6 +215,7 @@ class WithinFactor(wx.Frame):
             Factor[idx] = newFactor
             self.ListFactor.SetItems(Factor)
             self.ListFactor.SetSelection(idx)
+        event.Skip()
 
     def showMessage(self, title, message):
         """Shows Warning Popup Window"""
@@ -219,6 +223,7 @@ class WithinFactor(wx.Frame):
                                caption=title, message=message)
         dlg.ShowModal()
         dlg.Destroy()
+        event.Skip()
 
     def checkInput(self, name, level):
         """Checks if a factor input is valid or not"""
@@ -234,7 +239,6 @@ class WithinFactor(wx.Frame):
             self.showMessage(
                 title='Not a valid name',
                 message='Value for factor name must start with a letter!')
-
         elif not level.isdigit():
             self.showMessage(
                 title='Not a valid number',
@@ -245,7 +249,7 @@ class WithinFactor(wx.Frame):
                 message='Number of levels must be bigger than 1!')
         else:
             inputIsValid = True
-
+        event.Skip()
         return inputIsValid
 
     def loadDataset(self):
@@ -273,6 +277,7 @@ class WithinFactor(wx.Frame):
             newLevel = self.Level
             if oldFactors[0] != newFactor or oldFactors[0] != newLevel:
                 self.DataPanel.MainFrame.Dataset = {}
+        event.Skip()
 
 
 class FactorDefinition(wx.Frame):
@@ -445,7 +450,7 @@ class FactorDefinition(wx.Frame):
         sizerButtons.Add(ButtonPrevious, 0, wx.ALIGN_LEFT)
         sizerButtons.AddSpacer(27)
         sizerButtons.AddSpacer(27)
-        ButtonOK = wx.Button(PanelButtons, wx.ID_ANY, label='OK')
+        ButtonOK = wx.Button(PanelButtons, wx.ID_ANY, label='&OK')
         sizerButtons.Add(ButtonOK, 0, wx.ALIGN_RIGHT)
         PanelButtons.SetSizer(sizerButtons)
 
@@ -498,6 +503,7 @@ class FactorDefinition(wx.Frame):
                                caption=title, message=message)
         dlg.ShowModal()
         dlg.Destroy()
+        event.Skip()
 
     def addSubject(self, event):
         """Add selected factor to subject variable"""
@@ -519,6 +525,7 @@ class FactorDefinition(wx.Frame):
             # Change GUI layout
             self.ButtonSubjectAdd.Disable()
             self.ButtonSubjectRm.Enable()
+        event.Skip()
 
     def rmSubject(self, event):
         """Remove selected factor from subject variable"""
@@ -533,6 +540,7 @@ class FactorDefinition(wx.Frame):
         # Change GUI layout
         self.ButtonSubjectAdd.Enable()
         self.ButtonSubjectRm.Disable()
+        event.Skip()
 
     def addWithin(self, event):
         """Add selected factor to within subject factors"""
@@ -573,6 +581,7 @@ class FactorDefinition(wx.Frame):
 
             self.ListInput.SetItems(items)
             self.ListWithin.SetItems(factors)
+        event.Skip()
 
     def rmWithin(self, event):
         """Remove selected factors from within subject factors"""
@@ -596,6 +605,7 @@ class FactorDefinition(wx.Frame):
 
         self.ListInput.SetItems(items)
         self.ListWithin.SetItems(factors)
+        event.Skip()
 
     def addBetween(self, event):
         """Add selected factor to between subject factors"""
@@ -617,6 +627,7 @@ class FactorDefinition(wx.Frame):
                 items.remove('')
             self.ListInput.SetItems(items)
             self.ListBetween.SetItems(factors)
+        event.Skip()
 
     def rmBetween(self, event):
         """Remove selected factor from the between subject factors"""
@@ -635,6 +646,7 @@ class FactorDefinition(wx.Frame):
 
         self.ListInput.SetItems(items)
         self.ListBetween.SetItems(factors)
+        event.Skip()
 
     def addCovariate(self, event):
         """Add selected factor to covariate subject factors"""
@@ -656,6 +668,7 @@ class FactorDefinition(wx.Frame):
                 items.remove('')
             self.ListInput.SetItems(items)
             self.ListCovariate.SetItems(factors)
+        event.Skip()
 
     def rmCovariate(self, event):
         """Remove selected factor from the covariate subject factors"""
@@ -674,6 +687,7 @@ class FactorDefinition(wx.Frame):
 
         self.ListInput.SetItems(items)
         self.ListCovariate.SetItems(factors)
+        event.Skip()
 
     def inputListSelected(self, event):
         """GUI reconfiguration if Input list is selected"""
@@ -689,6 +703,7 @@ class FactorDefinition(wx.Frame):
         else:
             self.ButtonSubjectAdd.Disable()
             self.ButtonSubjectRm.Enable()
+        event.Skip()
 
     def withinListSelected(self, event):
         """GUI reconfiguration if Within list is selected"""
@@ -698,6 +713,7 @@ class FactorDefinition(wx.Frame):
         self.ButtonCovariateRm.Disable()
         self.ButtonWithinAdd.Disable()
         self.ButtonWithinRm.Enable()
+        event.Skip()
 
     def betweenListSelected(self, event):
         """GUI reconfiguration if Between list is selected"""
@@ -707,6 +723,7 @@ class FactorDefinition(wx.Frame):
         self.ButtonCovariateRm.Disable()
         self.ButtonWithinAdd.Disable()
         self.ButtonWithinRm.Disable()
+        event.Skip()
 
     def covariateListSelected(self, event):
         """GUI reconfiguration if Input Covariate is selected"""
@@ -716,6 +733,7 @@ class FactorDefinition(wx.Frame):
         self.ButtonCovariateRm.Enable()
         self.ButtonWithinAdd.Disable()
         self.ButtonWithinRm.Disable()
+        event.Skip()
 
     def checkInput(self):
         """Checks if a factor input is valid or not"""
@@ -734,10 +752,11 @@ class FactorDefinition(wx.Frame):
         subjectId = dataTable['labels'].index(subjectVariable)
         subjectList = dataTable['content'][subjectId]
         for e in subjectList:
-            if not e.isdigit():
+            if not e.isdigit() or int(e) < 0:
                 self.showMessage(
                     title='Subject List not valid',
-                    message='Not all values in the Subject List are integers.')
+                    message='Not all values in the Subject List are ' +
+                            'positive integers.')
                 return False
 
         # Check Within Subject Factors
@@ -767,11 +786,11 @@ class FactorDefinition(wx.Frame):
                 betweenId = dataTable['labels'].index(factor)
                 betweenList = dataTable['content'][betweenId]
                 for e in betweenList:
-                    if not e.isdigit():
+                    if not e.isdigit() or int(e) < 0:
                         self.showMessage(
                             title='Between Factor not valid',
-                            message='Not all values in the Between ' +
-                                    'Factor "%s" are integers.' % factor)
+                            message='Not all values in the Between Factor ' +
+                                    '"%s" are positive integers.' % factor)
                         return False
 
         # Check Covariate
@@ -797,7 +816,7 @@ class FactorDefinition(wx.Frame):
         dataset = self.WithinFactor.DataPanel.MainFrame.Dataset
 
         # Collect the variables to write
-        subjectVariable = dataset['Subject'][0][0]
+        subjectVariable = dataset['Subject'][0]
         listWithin = [e[0] + e[1] for e in dataset['WithinFactor']]
         listWithinLabels = [e[0] for e in dataset['WithinFactor']]
         listBetween = [e[0] for e in dataset['BetweenFactor']]
@@ -835,9 +854,9 @@ class FactorDefinition(wx.Frame):
             # Collect Subject Variable
             subjectVariable = self.SubjectVariable.GetValue()
             subjectListId = dataTable['labels'].index(subjectVariable)
-            self.Dataset['Subject'] = [(
+            self.Dataset['Subject'] = [
                 subjectVariable,
-                map(int, dataTable['content'][subjectListId]))]
+                map(int, dataTable['content'][subjectListId])]
 
             # Collect Within Subject Factor(s)
             withinListLabels = [e[0:e.find('(')]
@@ -879,3 +898,4 @@ class FactorDefinition(wx.Frame):
             self.WithinFactor.DataPanel.MainFrame.Dataset = self.Dataset
             self.WithinFactor.DataPanel.MainFrame.ButtonDataModify.Enable()
             self.WithinFactor.DataPanel.MainFrame.ButtonDataSave.Enable()
+            event.Skip()
