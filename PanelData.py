@@ -1,6 +1,6 @@
 ﻿import wx
 import os
-import PanelEntry
+import PanelTable
 import H5Tables
 from Information import ReturnInfomation
 import wx.lib.sheet
@@ -146,19 +146,19 @@ class CreateDataset(wx.Panel):
             dlg.Destroy()
             if answer == wx.ID_OK:
                 self.MainFrame.Dataset = {}
-                self.DataWindow = PanelEntry.DataEntry(self.MainFrame)
+                self.DataWindow = PanelTable.DataEntry(self.MainFrame)
                 self.DataWindow.Show(True)
                 self.MainFrame.Show(False)
                 self.MainFrame.ButtonDataModify.Disable()
                 self.MainFrame.ButtonDataSave.Disable()
         else:
-            self.DataWindow = PanelEntry.DataEntry(self.MainFrame)
+            self.DataWindow = PanelTable.DataEntry(self.MainFrame)
             self.DataWindow.Show(True)
             self.MainFrame.Show(False)
 
     def modifyData(self, event):
         """Opens DataEntry Panel with existing dataset"""
-        self.DataWindow = PanelEntry.DataEntry(self.MainFrame)
+        self.DataWindow = PanelTable.DataEntry(self.MainFrame)
         self.DataWindow.Show(True)
         self.MainFrame.Show(False)
 
