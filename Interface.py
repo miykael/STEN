@@ -102,12 +102,22 @@ class MainFrame(wx.Frame):
         # Make sure that a dataset is present and saved before continuing
         if self.Dataset == {}:
             dlg = wx.MessageDialog(
-                self, caption='No dataset Loaded',
+                self, caption='No dataset loaded',
                 message='No dataset is loaded. Create a new dataset or load ' +
                         'an already existing one to continue.',
                 style=wx.OK | wx.ICON_QUESTION)
             dlg.ShowModal()
             dlg.Destroy()
+        elif self.PanelData.TextResult.GetValue() == '':
+            dlg = wx.MessageDialog(
+                self, caption='No result folder selected',
+                message='Results folder was not indicated. Please specify ' +
+                        'where the results of the computation should be ' +
+                        'stored at.',
+                style=wx.OK | wx.ICON_QUESTION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            self.PanelData.resultFolder(event)
         elif self.Dataset != {} and not self.saved:
             dlg = wx.MessageDialog(
                 self, caption='Unsaved Dataset',
