@@ -1,5 +1,6 @@
 import tables
 
+
 class WriteDataset:
 
     """
@@ -7,8 +8,6 @@ class WriteDataset:
     """
 
     def __init__(self, name, dataset):
-
-        print dataset
 
         # Get Dataset Size
         nRows = dataset['Table']['nRows']
@@ -82,7 +81,6 @@ class WriteDataset:
             table.flush()
 
 
-
 class ReadDataset:
 
     """
@@ -100,8 +98,9 @@ class ReadDataset:
             dataset = {}
             dataset['Subject'] = [unicode(datatable['subjectLabel']),
                                   datatable['subjectList'].tolist()]
-            dataset['Factors'] = [[unicode(e) for e in datatable['factorsName']],
-                                  datatable['factorsLevel'].tolist()]
+            dataset['Factors'] = [
+                [unicode(e) for e in datatable['factorsName']],
+                datatable['factorsLevel'].tolist()]
             dataset['WithinFactor'] = zip(
                 [unicode(e) for e in datatable['withinLabel']],
                 [unicode(e) for e in datatable['withinFactor']],

@@ -285,7 +285,7 @@ class FactorDefinition(wx.Frame):
 
     def __init__(self, Sheet, WithinFactor):
         wx.Frame.__init__(self, None, wx.ID_ANY, size=(200, 250),
-                          title="Factor definition")
+                          title="Factor Definition")
 
         # Specify relevant variables
         self.WithinFactor = WithinFactor
@@ -783,7 +783,7 @@ class FactorDefinition(wx.Frame):
                 betweenId = dataTable['labels'].index(factor)
                 betweenList = dataTable['content'][betweenId]
                 for e in betweenList:
-                    if not e.isdigit() or int(e) < 0:
+                    if not e.isdigit() or int(e) < 1:
                         self.showMessage(
                             title='Between Factor not valid',
                             message='Not all values in the Between Factor ' +

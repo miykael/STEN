@@ -23,7 +23,7 @@ class STENSplashScreen(wx.SplashScreen):
     def __init__(self, parent=None):
         aBitmap = wx.Image(name="STEN_logo.png").ConvertToBitmap()
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
-        splashDuration = 1000
+        splashDuration = 2000
         wx.SplashScreen.__init__(self, aBitmap, splashStyle,
                                  splashDuration, parent)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
@@ -40,8 +40,3 @@ class STENSplashScreen(wx.SplashScreen):
 if __name__ == "__main__":
     app = StartSTEN()
     app.MainLoop()
-
-
-# TODO: For More Logo's Check
-# Logo Maker - http://logotypemaker.com/logo-maker
-# Design Mantic - www.designmantic.com/logo-design/samples
