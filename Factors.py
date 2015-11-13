@@ -17,7 +17,6 @@ class WithinFactor(wx.Frame):
         self.Factor = factorNames
         self.Level = factorLevels
         self.dataTable = DataPanel.dataTable
-        self.Sheet = DataPanel.Sheet
 
         # Panel: Factor Information
         PanelFactor = wx.Panel(self, wx.ID_ANY)
@@ -69,7 +68,7 @@ class WithinFactor(wx.Frame):
         sizerButton.AddSpacer(30)
         self.ButtonContinue = wx.Button(PanelButton, wx.ID_ANY,
                                         label="&Continue")
-        self.ButtonContinue.Disable()
+        self.ButtonContinue.Enable()
         sizerButton.Add(self.ButtonContinue, 0, wx.EXPAND)
         PanelButton.SetSizerAndFit(sizerButton)
 
@@ -132,7 +131,6 @@ class WithinFactor(wx.Frame):
             newFactor = '%s(%s)' % (factorNames[i], factorLevels[i])
             Factors.append(newFactor)
         self.ListFactor.SetItems(Factors)
-        self.ButtonContinue.Enable()
 
     def selectItem(self, event):
         """Write selected item information into fields above"""
@@ -176,7 +174,6 @@ class WithinFactor(wx.Frame):
                 self.ListFactor.DeselectAll()
                 self.FactorName.SetValue('')
                 self.NumLevel.SetValue('')
-                self.ButtonContinue.Enable()
         event.Skip()
 
     def deleteFactor(self, event):
@@ -193,7 +190,6 @@ class WithinFactor(wx.Frame):
         if listLength == 0:
             self.ButtonDelete.Disable()
             self.ButtonChange.Disable()
-            self.ButtonContinue.Disable()
         elif listLength > idx:
             self.FactorName.SetValue(self.Factor[idx])
             self.NumLevel.SetValue(unicode(self.Level[idx]))
@@ -267,11 +263,10 @@ class WithinFactor(wx.Frame):
         self.Factor = factors[0]
         self.Level = factors[1]
         self.ListFactor.SetItems(Factors)
-        self.ButtonContinue.Enable()
 
     def defineFactor(self, event):
         """Move on to the Factor Definition window"""
-        self.ModelFull = FactorDefinition(self.Sheet, self)
+        self.ModelFull = FactorDefinition(self)
         self.ModelFull.Show(True)
         self.Show(False)
 
@@ -290,7 +285,7 @@ class FactorDefinition(wx.Frame):
     """TODO: Better description, perhaps also another name for window?
     Window to specify the factors"""
 
-    def __init__(self, Sheet, WithinFactor):
+    def __init__(self, WithinFactor):
         wx.Frame.__init__(self, None, wx.ID_ANY, size=(200, 250),
                           title="Factor Definition")
 
@@ -357,18 +352,28 @@ class FactorDefinition(wx.Frame):
         PanelWithinButton.SetSizer(sizerWithinButton)
         PanelWithinVariable = wx.Panel(PanelWithin, wx.ID_ANY)
         sizerWithinVariable = wx.BoxSizer(wx.VERTICAL)
+
+        # Check if within factors were specified
+        if WithinFactor.Factor == []:
+            textTitle = "Data"
+            factorLabels = ['_?_(1)']
+            supportext = ''
+        else:
+            textTitle = "Within Subject Factor(s)"
+            iterationFactor = [range(1, e + 1) for e in WithinFactor.Level]
+            iterList = list(itertools.product(*iterationFactor))
+            factorLabels = ['_?_%s' % str(e).replace(' ', '')
+                            if len(e) > 1 else '_?_(%s)' % str(e[0])
+                            for e in iterList]
+            supportext = '(%s)' % ', '.join(WithinFactor.Factor)
+
         TextWithin = wx.StaticText(PanelWithinVariable, wx.ID_ANY,
-                                   label="Within Subject Factor(s)",
+                                   label=textTitle,
                                    style=wx.ALIGN_CENTER)
         sizerWithinVariable.Add(TextWithin, 0, wx.EXPAND)
-        supportext = '(%s)' % ', '.join(WithinFactor.Factor)
         TextSupport = wx.StaticText(PanelWithinVariable, wx.ID_ANY,
                                     label=supportext, style=wx.ALIGN_CENTER)
         sizerWithinVariable.Add(TextSupport, 0, wx.EXPAND)
-        iterationFactor = [range(1, e + 1) for e in WithinFactor.Level]
-        iterList = list(itertools.product(*iterationFactor))
-        factorLabels = ['_?_%s' % str(e).replace(' ', '') if len(e) > 1
-                        else '_?_(%s)' % str(e[0]) for e in iterList]
         self.ListWithin = wx.ListBox(PanelWithinVariable, wx.ID_ANY,
                                      choices=factorLabels, size=(180, 300),
                                      style=wx.LB_EXTENDED)
@@ -468,7 +473,6 @@ class FactorDefinition(wx.Frame):
         self.SetSizerAndFit(FrameSizer)
 
         # Specification of events
-        self.Bind(wx.EVT_CLOSE, self.onClose)
         wx.EVT_BUTTON(self, self.ButtonSubjectAdd.Id, self.addSubject)
         wx.EVT_BUTTON(self, self.ButtonSubjectRm.Id, self.rmSubject)
         wx.EVT_BUTTON(self, self.ButtonWithinAdd.Id, self.addWithin)
@@ -484,6 +488,7 @@ class FactorDefinition(wx.Frame):
         wx.EVT_LISTBOX(self, self.ListBetween.Id, self.betweenListSelected)
         wx.EVT_LISTBOX(self, self.ListCovariate.Id, self.covariateListSelected)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
 
         # Fill in table if dataset already exists
         if self.WithinFactor.DataPanel.MainFrame.Dataset != {}:
