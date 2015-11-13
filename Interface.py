@@ -119,11 +119,10 @@ class MainFrame(wx.Frame):
             if answer == wx.ID_OK:
                 Calculation.startCalculation(self)
         else:
-            #TODO: check if this makes sense
             # Before continuing, kill all children of MainFrame
             self.DestroyChildren()
 
             # Start Calculation
             Calculation.startCalculation(self)
-            
+
         event.Skip()

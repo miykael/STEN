@@ -282,8 +282,7 @@ class WithinFactor(wx.Frame):
 
 class FactorDefinition(wx.Frame):
 
-    """TODO: Better description, perhaps also another name for window?
-    Window to specify the factors"""
+    """Window to specify factors"""
 
     def __init__(self, WithinFactor):
         wx.Frame.__init__(self, None, wx.ID_ANY, size=(200, 250),

@@ -2,7 +2,6 @@
 import os
 import PanelTable
 import H5Tables
-from Information import ReturnInfomation
 import wx.lib.sheet
 
 
@@ -22,8 +21,6 @@ class CreateDataset(wx.Panel):
         self.MainFrame = MainFrame
         self.MainFrame.saved = False
         self.MainFrame.Dataset = {}
-        # TODO: What about this H5?
-        self.MainFrame.H5 = []
 
         # Panel: Data Handler
         self.PanelDataHandler = wx.Panel(self, wx.ID_ANY)
@@ -178,7 +175,7 @@ class CreateDataset(wx.Panel):
         dlg.Destroy()
         if answer == wx.ID_OK:
             # TODO: this function doesn't consider additional H5 file content
-            #       (e.g. from previous analysis)
+            # (e.g. from previous analysis)
             H5Tables.WriteDataset(filename, self.MainFrame.Dataset)
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
