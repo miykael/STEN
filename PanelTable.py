@@ -312,7 +312,9 @@ class DataEntry(wx.Frame):
     def onLabelRightClick(self, event):
         """Open popup window to change column label name on right click"""
         if event.GetCol() != -1:
-            dlg = wx.TextEntryDialog(None, 'Change column name to')
+            dlg = wx.TextEntryDialog(
+                None, 'Change column name to',
+                defaultValue=self.Sheet.GetColLabelValue(event.GetCol()))
             dlg.ShowModal()
             newLabelName = dlg.GetValue()
             dlg.Destroy()
@@ -545,6 +547,42 @@ class DataEntry(wx.Frame):
                     a.writerows(output)
         event.Skip()
 
+    def writeCSV2Table(self, path2csv):
+        dataTable = {}
+        inputdata = []
+
+        # Get CSV content and store it in dataTable variable
+        import csv
+        with open(path2csv, 'rb') as fcsv:
+            reader = csv.reader(fcsv)
+            for row in reader:
+
+                row = [unicode(cell, 'utf-8') for cell in row]
+
+                # Save Labels and number of columns
+                if dataTable == {}:
+                    dataTable['labels'] = row
+                    dataTable['nCols'] = len(row)
+
+                else:
+                    inputdata.append(row)
+
+        dataTable['content'] = map(list, zip(*inputdata))
+        dataTable['nRows'] = len(dataTable['content'][0])
+
+        # Write content to table
+        self.Sheet.ClearGrid()
+        for r in range(dataTable['nRows']):
+            for c in range(dataTable['nCols']):
+                value = dataTable['content'][c][r]
+                self.adjustGrid(r, c)
+                self.Sheet.SetCellValue(r, c, value)
+
+        # Change name of labels
+        for i, l in enumerate(dataTable['labels']):
+            self.Sheet.SetColLabelValue(i, l)
+
+
     def importData(self, event):
         """Get content from a csv-file and write it into the table"""
 
@@ -560,40 +598,7 @@ class DataEntry(wx.Frame):
 
             # If file exists
             if os.path.exists(path2csv):
-
-                dataTable = {}
-                inputdata = []
-
-                # Get CSV content and store it in dataTable variable
-                import csv
-                with open(path2csv, 'rb') as fcsv:
-                    reader = csv.reader(fcsv)
-                    for row in reader:
-
-                        row = [unicode(cell, 'utf-8') for cell in row]
-
-                        # Save Labels and number of columns
-                        if dataTable == {}:
-                            dataTable['labels'] = row
-                            dataTable['nCols'] = len(row)
-
-                        else:
-                            inputdata.append(row)
-
-                dataTable['content'] = map(list, zip(*inputdata))
-                dataTable['nRows'] = len(dataTable['content'][0])
-
-                # Write content to table
-                self.Sheet.ClearGrid()
-                for r in range(dataTable['nRows']):
-                    for c in range(dataTable['nCols']):
-                        value = dataTable['content'][c][r]
-                        self.adjustGrid(r, c)
-                        self.Sheet.SetCellValue(r, c, value)
-
-                # Change name of labels
-                for i, l in enumerate(dataTable['labels']):
-                    self.Sheet.SetColLabelValue(i, l)
+                self.writeCSV2Table(path2csv)
 
             # If file doesn't exists
             else:
@@ -640,28 +645,34 @@ class GridFileDropTarget(wx.FileDropTarget):
         col = self.grid.XToCol(x)
         row = self.grid.YToRow(y)
 
-        # if drop objects are files, add them to the column
-        if not os.path.isdir(filenames[0]):
-            for i, f in enumerate(filenames):
-                if row > -1 and col > -1:
-                    self.Table.adjustGrid(row + i, col)
-                    self.grid.SetCellValue(row + i, col, f)
-            linesAdded = len(filenames)
-
-        # if drop objects are folders add them successively to columns
+        # if drop object is a CSV file fill out the table
+        if filenames[0][-4:] == '.csv':
+            self.Table.writeCSV2Table(filenames[0])
         else:
-            for j, f in enumerate(filenames):
-                listOfFiles = sorted(os.listdir(filenames[j]))
-                for i, f in enumerate(listOfFiles):
+            # if drop objects are files, add them to the column
+            if not os.path.isdir(filenames[0]):
+                for i, f in enumerate(filenames):
                     if row > -1 and col > -1:
-                        self.Table.adjustGrid(row + i, col + j)
-                        self.grid.SetCellValue(row + i, col + j,
-                                               os.path.join(filenames[j], f))
-            linesAdded = len(listOfFiles)
+                        self.Table.adjustGrid(row + i, col)
+                        self.grid.SetCellValue(row + i, col, f)
+                linesAdded = len(filenames)
 
-        # If first column is called 'Subject' fill out all none empty cells
-        if self.grid.GetColLabelValue(0) == 'Subject':
-            for i in range(linesAdded):
-                if self.grid.GetCellValue(row + i, 0) == '':
-                    self.grid.SetCellValue(row + i, 0,
-                                           unicode(row + i + 1))
+            # if drop objects are folders add them successively to columns
+            else:
+                for j, f in enumerate(filenames):
+                    listOfFiles = sorted(os.listdir(filenames[j]))
+                    for i, f in enumerate(listOfFiles):
+                        if row > -1 and col > -1:
+                            self.Table.adjustGrid(row + i, col + j)
+                            self.grid.SetCellValue(row + i, col + j,
+                                                   os.path.join(filenames[j], f))
+                    foldername = os.path.basename(filenames[j])
+                    self.grid.SetColLabelValue(col + j, foldername)
+                linesAdded = len(listOfFiles)
+
+            # If first column is called 'Subject' fill out all none empty cells
+            if self.grid.GetColLabelValue(0) == 'Subject':
+                for i in range(linesAdded):
+                    if self.grid.GetCellValue(row + i, 0) == '':
+                        self.grid.SetCellValue(row + i, 0,
+                                               unicode(row + i + 1))
