@@ -512,6 +512,7 @@ class DataEntry(wx.Frame):
             self.ModelDef = Factors.WithinFactor(self, self.factorNames,
                                                  self.factorLevels)
             self.ModelDef.Show(True)
+            self.Show(False)
         event.Skip()
 
     def exportData(self, event):
@@ -581,7 +582,6 @@ class DataEntry(wx.Frame):
         # Change name of labels
         for i, l in enumerate(dataTable['labels']):
             self.Sheet.SetColLabelValue(i, l)
-
 
     def importData(self, event):
         """Get content from a csv-file and write it into the table"""
@@ -665,7 +665,8 @@ class GridFileDropTarget(wx.FileDropTarget):
                         if row > -1 and col > -1:
                             self.Table.adjustGrid(row + i, col + j)
                             self.grid.SetCellValue(row + i, col + j,
-                                                   os.path.join(filenames[j], f))
+                                                   os.path.join(filenames[j],
+                                                                f))
                     foldername = os.path.basename(filenames[j])
                     self.grid.SetColLabelValue(col + j, foldername)
                 linesAdded = len(listOfFiles)

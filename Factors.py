@@ -98,6 +98,7 @@ class WithinFactor(wx.Frame):
         wx.EVT_BUTTON(self, self.ButtonChange.Id, self.changeFactor)
         wx.EVT_BUTTON(self, self.ButtonContinue.Id, self.defineFactor)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyDown)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
 
         # Update List with previous elements if window was already opened
         if self.Factor != []:
@@ -106,6 +107,12 @@ class WithinFactor(wx.Frame):
         # Fill in table if dataset already exists
         if self.DataPanel.MainFrame.Dataset != {}:
             self.loadDataset()
+
+    def onClose(self, event):
+        """Show previous window and close current one"""
+        self.DataPanel.Show(True)
+        self.Show(False)
+        self.Destroy()
 
     def onKeyDown(self, event):
         """Key event handler if key is pressed within frame"""
@@ -494,6 +501,7 @@ class FactorDefinition(wx.Frame):
         """Show previous window and close current one"""
         self.WithinFactor.Show(True)
         self.Show(False)
+        self.Destroy()
 
     def showMessage(self, title, message):
         """Shows Warning Popup Window"""
