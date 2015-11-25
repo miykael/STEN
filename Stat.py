@@ -40,54 +40,148 @@ class Anova:
             # Creating Fromula for R Defferent treatement for Within and between subject Factor
             if FactorType=='Subject':
                 SubjectName=FactorName
-                self.FactorSubject=FactorData
             elif FactorType=='Within':
                 FormulaModel.append(FactorName)
                 FormulaErrorTerm.append(FactorName)
             else:
                 FormulaModel.append(FactorName)
         # Wrting Formula
-        if FormulaErrorTerm!=[]:
-            self.Formule = "".join(["DataR~","*".join(FormulaModel),'+ Error(',SubjectName,'/(',"*".join(FormulaErrorTerm),'))'])
-        else:
-            self.Formule = "".join(["DataR~","*".join(FormulaModel)]) 
+        self.Formule="".join(["DataR~","*".join(FormulaModel),'+ Error(',SubjectName,'/(',"*".join(FormulaErrorTerm),'))'])
 
 
     def Param(self, DataGFP=False):
+        
         # Extracting GFP or All Data
         if DataGFP:
-            Data=self.file.getNode('/Data/GFP')
+            Data=H5.getNode('/Data/GFP')
         else:
-            Data=self.file.getNode('/Data/All')
-        ShapeOriginalData=self.file.getnode('/Shape').read()
-            
+            Data=H5.getNode('/Data/All')
         # Calculating the number of Annova percycle to avoid Memory problem
-        NbAnova = int(Data.shape[0])
+        NbAnova = int(Data.shape[0] * Data.shape[1])
         Byte = np.array(Data.shape).prod()
         Cycle = int(Byte / 10000)
         try:
             NbAnovaCycle = NbAnova / Cycle
         except:
             NbAnovaCycle = NbAnova
-  
-        # Performed one Anova to Extract Terms Names
-        Raw=self.CalculatingAovR(Data[0,:],Formule)
-        # Terms Extraction
-        Terms=[]
-        # Len(Raw)=1 if not repeated measur !=2 if repeated Measure
-        if len(Raw)==1:
-            for r in Raw:
-                    tmp=r.rownames
-                    for t in tmp[0:-1]:
-                        Terms.append(t.replace(' ',''))
-        else:
-            for i in Raw:
-                for r in i:
-                    tmp=r.rownames
-                    for t in tmp[0:-1]:
-                        Terms.append(t.replace(' ',''))
+        DataR = robjects.r.matrix(Data.T)
+        robjects.globalenv["DataR"] = DataR
+        # I am here
 
-        # Terms is a list containing the order of th P different statistical output Name
+            
+        # Performed one Anova to Extract 
+        DataAnova = ExtractData(self.file, 0, 1, DataGFP)
+        DataAnova = DataAnova.extract.reshape((NbSujet * NbCond))
+        DataR = robjects.r.matrix(DataAnova.T)
+        robjects.globalenv["DataR"] = DataR
+        TextR = ['aov(', self.Formule, ')']
+        express = rpy2.robjects.r.parse(text="".join(TextR))
+        Fit = rpy2.robjects.r.eval(express)
+        robjects.globalenv["Fit"] = Fit
+        # calcul Anova
+        Raw = robjects.r.summary(Fit)
+
+        # calcul des Terms
+        Terms = []
+        ConfundTerm = False
+        index = []
+        for i in range(len(Raw)):
+            tmp = Raw[i][0]
+            tmp = robjects.r.slot(tmp, "row.names")
+            tmp = list(tmp)
+            del(tmp[len(tmp) - 1])
+            if i == 0:
+                if self.NameWithin:
+                    for t in tmp:
+                        if t.find(self.NameWithin[0]) != -1:
+                            ConfundTerm = True
+                            break
+
+            if ConfundTerm:
+                if i == 0:
+                    Terms.extend(tmp)
+                    TermsSubject = tmp
+                    rm = range(len(tmp))
+                    index.append(rm)
+                else:
+                    rm = range(len(tmp))
+                    for t in TermsSubject:
+                        ind = tmp.index(t)
+                        rm.remove(ind)
+                    for r in rm:
+                        Terms.append(tmp[r])
+                    index.append(rm)
+            else:
+                Terms.extend(tmp)
+
+        for i, t in enumerate(Terms):
+            Terms[i] = t[0:t.find(' ')]
+        NbTerms = len(Terms)
+        self.Terms = Terms
+
+        # terms des estimateurs
+        coef = robjects.r.coef(Fit)
+        coef = list(coef)
+        indexCoefTerms = []
+        CoefTermsTmp = []
+        for n, c in enumerate(coef):
+            txt = str(c)
+            m = 0
+            ind = []
+            if txt != 'numeric(0)':
+                txt = txt.replace('\r\n', '')
+                txt = txt.rsplit(' ')
+                for i in txt:
+                    if i != '':
+                        try:
+                            tmp = float(i)
+                        except:
+                            if ConfundTerm and n > 1:
+                                try:
+                                    CoefTermsTmp.index(i)
+                                    m += 1
+                                except:
+                                    CoefTermsTmp.append(i)
+                                    ind.append(m)
+                                    m += 1
+                            else:
+                                CoefTermsTmp.append(i)
+                                ind.append(m)
+                                m += 1
+            indexCoefTerms.append(ind)
+        CoefTerms = []
+        for i in CoefTermsTmp:
+            if i.find('\n') == -1:
+                CoefTerms.append(i)
+
+        self.CoefTerms = CoefTerms
+        NbCoefTerms = len(CoefTerms)
+
+        if DataGFP:  # c'est sur le GFP
+            ResultP = self.file.createEArray(
+                '/Result/Anova/GFP', 'P', tables.Float64Atom(), (0, NbTerms))
+            ResultF = self.file.createEArray(
+                '/Result/Anova/GFP', 'F', tables.Float64Atom(), (0, NbTerms))
+            self.file.createArray('/Result/Anova/GFP', 'Terms', self.Terms)
+            self.file.createArray('/Result/Anova/GFP', 'CoefTerms', CoefTerms)
+            CoefValue = self.file.createEArray('/Result/Anova/GFP',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
+        else:  # c'est sur toutes les electrodes
+            ResultP = self.file.createEArray(
+                '/Result/Anova/All', 'P', tables.Float64Atom(), (0, NbTerms))
+            ResultF = self.file.createEArray(
+                '/Result/Anova/All', 'F', tables.Float64Atom(), (0, NbTerms))
+            self.file.createArray('/Result/Anova/All', 'Terms', self.Terms)
+
+            self.file.createArray('/Result/Anova/All', 'CoefTerms', CoefTerms)
+            CoefValue = self.file.createEArray('/Result/Anova/All',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
+
+        Df = []
         # Anova caculation using R
         Maximum = NbAnova
         dlg = wx.ProgressDialog('Parametric Anova',
@@ -98,27 +192,115 @@ class Anova:
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
         n = 0
-        end = 0
-        # Calculation Separated into part to ovoid out of memory
+        fin1 = 0
         while fin1 < NbAnova:
-            start = n * NbAnovaCycle
-            end = (n + 1) * NbAnovaCycle
+            debut1 = n * NbAnovaCycle
+            fin1 = (n + 1) * NbAnovaCycle
             n += 1
             if fin1 > NbAnova:
                 fin1 = NbAnova
-            # Calculating Anovas
-            Raw=self.CalculatingAovR(Data[start:end,:],Formule)
-            P,F=self.ExtractingStat(Raw)
-            if n==0:
-                PValue=P
-                FValue=F
+                Data = ExtractData(self.file, debut1, fin1, DataGFP)
+                NbAnovaCycle = Data.extract.shape[0]
+                Data = Data.extract.reshape(
+                    (Data.extract.shape[0], NbSujet * NbCond))
             else:
-                PValue=np.append(PValue,P,axis=0)
-                FValue=np.append(FValue,F,axis=0)
-            #Dialog box for timing
-            pourcent = str(100.0 * end / (NbAnova))
+                Data = ExtractData(self.file, debut1, fin1, DataGFP)
+                Data = Data.extract.reshape((NbAnovaCycle, NbSujet * NbCond))
+
+            DataSize = Data.shape
+            # on transpose pour R
+            DataR = robjects.r.matrix(Data.T)
+            print(Data.T.shape)
+            robjects.globalenv["DataR"] = DataR
+            TextR = ['aov(', self.Formule, ')']
+            express = rpy2.robjects.r.parse(text="".join(TextR))
+            Fit = rpy2.robjects.r.eval(express)
+            robjects.globalenv["Fit"] = Fit
+            # calcul Anova
+            Raw = robjects.r.summary(Fit)
+            Raw = list(Raw)
+            # estimateurs
+            coef = robjects.r.coef(Fit)
+            coef = list(coef)
+            CoefValueTmp = np.zeros((NbAnovaCycle, NbCoefTerms))
+            debut = 0
+            for i, c in enumerate(coef):
+                nbterms = len(c) / NbAnovaCycle
+                tmp = np.array(c)
+                tmp = tmp.reshape((NbAnovaCycle, nbterms))
+                if ConfundTerm:
+                    tmp = tmp[:, indexCoefTerms[i]]
+                    nbterms = len(indexCoefTerms[i])
+                fin = debut + nbterms
+                CoefValueTmp[:, debut:fin] = tmp
+                debut = fin
+
+            # extraction de P,f, DF
+            P = np.zeros((DataSize[0], NbTerms))
+            F = np.zeros((DataSize[0], NbTerms))
+            for i, r in enumerate(Raw):
+                tmp = np.array(r)
+                p = tmp[:, 4, :]
+                f = tmp[:, 3, :]
+                MeanSq = tmp[:, 2, :]
+                if ConfundTerm:
+                    ind = index[i]
+                    NaNindex = p.shape[1] - 1
+                    ind.append(NaNindex)
+                    p = p[:, ind]
+                    f = f[:, ind]
+                    MeanSq = MeanSq[:, ind]
+                    ind.remove(NaNindex)
+
+                pshape = p.shape
+                nterms = pshape[1] - 1
+                if (np.isnan(p)).sum() == (np.array(pshape)).prod():
+                    p = p[np.isnan(p) == False]
+                # il y a que de NaN
+                elif (np.isnan(p)).sum() != DataSize[0]:
+                    # au moins une des collone est non NAN
+                    NbNanByCol = (np.isnan(p)).sum(axis=0) != DataSize[0]
+                    NbNanByCol = NbNanByCol.reshape((1, NbNanByCol.shape[0]))
+                    NbNanByCol = NbNanByCol.repeat(DataSize[0], axis=0)
+                    p = p[NbNanByCol]
+                    p[np.isnan(p)] = 1
+                else:
+                    p = p[np.isnan(p) == False]
+                if p.shape[0] == 0 and nterms != 0:
+                    p = np.ones((DataSize[0], nterms))
+                else:
+                    p = p.reshape((DataSize[0], nterms))
+
+                # il y a que de NaN
+                if (np.isnan(f)).sum() == (np.array(pshape)).prod():
+                    f = f[np.isnan(f) == False]
+                elif (np.isnan(f)).sum() != DataSize[0]:
+                    f = f[NbNanByCol]
+                    f[np.isnan(f)] = 0
+                else:
+                    f = f[np.isnan(f) == False]
+                if f.shape[0] == 0 and nterms != 0:
+                    f = np.zeros((DataSize[0], nterms))
+                else:
+                    f = f.reshape((DataSize[0], nterms))
+                df = tmp[0, 0, :].tolist()
+                Df.extend(df)
+                if i == 0:
+                    fin = 0
+                    debut = 0
+                else:
+                    debut = fin
+                fin += (p.shape[1])
+                P[:, debut:fin] = p
+                F[:, debut:fin] = f
+            ResultP.append(P)
+            ResultF.append(F)
+            CoefValue.append(CoefValueTmp)
+            self.Df = np.array(Df)
+            pourcent = str(100.0 * fin1 / (NbAnova))
             pourcent = pourcent[0:pourcent.find('.') + 3]
-            Cancel = dlg.Update(end, " ".join(['Progression  :', pourcent, ' %']))
+            Cancel = dlg.Update(
+                fin1, " ".join(['Progression  :', pourcent, ' %']))
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(
                     None,
@@ -133,159 +315,361 @@ class Anova:
                 else:
                     self.Cancel = False
                     dlg.Resume()
-        # Saving Results
-        if DataGFP:
-            Res=self.file.getNode('/Result/GFP/Anova')
-        else:
-            Res=self.file.getNode('/Result/All/Anova')
-        PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-        FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
         dlg.Close()
         dlg.Destroy()
-        
-    def NonParam(self, Iter, DataGFP=False):
-        Iter=int(Iter)
-        # Extracting GFP or All Data
+
+    def NonParam(self, iter, DataGFP=False):
+        iter = int(iter)
+        # mise en forme de Data
         if DataGFP:
-            Data=self.file.getNode('/Data/GFP')
+            shape = self.file.getNode('/Info/ShapeGFP')
         else:
-            Data=self.file.getNode('/Data/All')
-        ShapeOriginalData=self.file.getnode('/Shape').read()
-        # Calculating the number of Annova percycle to avoid Memory problem
-        NbAnova = int(Data.shape[0])
-        Byte = np.array(Data.shape).prod()
+            shape = self.file.getNode('/Info/Shape')
+        shape = shape.read()
+        NbSujet = shape[3]
+        NbCond = shape[2]
+        # GFP bool dit on cacul le GFP dans la stat
+        NbAnova = int(shape[0] * shape[1])
+        Byte = shape.prod()
         Cycle = int(Byte / 10000)
         try:
             NbAnovaCycle = NbAnova / Cycle
         except:
             NbAnovaCycle = NbAnova
-  
-        # Performed one Anova to Extract Terms Names
-        Raw=self.CalculatingAovR(Data[0,:],Formule)
-        # Terms Extraction
-        Terms=[]
-        # Len(Raw)=1 if not repeated measur !=2 if repeated Measure
-        if len(Raw)==1:
-            for r in Raw:
-                    tmp=r.rownames
-                    for t in tmp[0:-1]:
-                        Terms.append(t.replace(' ',''))
-        else:
-            for i in Raw:
-                for r in i:
-                    tmp=r.rownames
-                    for t in tmp[0:-1]:
-                        Terms.append(t.replace(' ',''))
 
-        # Terms is a list containing the order of th P different statistical output Name
-        # Anova caculation using R
-        Maximum = NbAnova
-        dlg = wx.ProgressDialog('Non Parametric Anova',
-                                'Calculation in progress : 0 %',
-                                maximum=Maximum,
-                                parent=self.parent,
-                                style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
-        dlg.SetSize((200, 175))
-        n = 0
-        end = 0
-        # Calculation Separated into part to ovoid out of memory
-        while fin1 < NbAnova:
-            #Originla Order Data                 
-            start = n * NbAnovaCycle
-            end = (n + 1) * NbAnovaCycle
-            n += 1
-            if fin1 > NbAnova:
-                fin1 = NbAnova
-            # Calculating Anovas
-            Raw=self.CalculatingAovR(Data[start:end,:],Formule)
-            P,FReal=self.ExtractingStat(Raw)
-            Count=np.zeros(FReal.shape)
-            # BootStraping Data
-            for i in range(Iter):
-                # Creating Bootstraping and permutation Data
-                DataBoot=BootstrapedData(Data[start:end,:],FactorSubject)
-                # Calculating F Value with Bootstraping Data
-                Raw=self.CalculatingAovR(DataBoot,Formule)
-                P,FBoot=self.ExtractingStat(Raw)
-                # Count Anova by Anova if Fboot is bigger than FReal To difine PValue
-                Diff=FBoot-FReal
-                Count[Diff>=0]+=1
-            P=Count/float(Iter)
-            if n==0:
-                PValue=P
-                FValue=F
-            else:
-                PValue=np.append(PValue,P,axis=0)
-                FValue=np.append(FValue,F,axis=0)
-            #Dialog box for timing
-            pourcent = str(100.0 * end / (NbAnova))
-            pourcent = pourcent[0:pourcent.find('.') + 3]
-            Cancel = dlg.Update(end, " ".join(['Progression  :', pourcent, ' %']))
-            if Cancel[0] == False:
-                dlgQuest = wx.MessageDialog(
-                    None,
-                    "Do you really want to cancel?",
-                    "Confirm Cancel",
-                    wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-                result = dlgQuest.ShowModal()
-                dlgQuest.Destroy()
-                if result == wx.ID_OK:
-                    self.Cancel = True
-                    break
-                else:
-                    self.Cancel = False
-                    dlg.Resume()
-        # Saving Results
-        if DataGFP:
-            Res=self.file.getNode('/Result/GFP/Anova')
-        else:
-            Res=self.file.getNode('/Result/All/Anova')
-        PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-        FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-        dlg.Close()
-        dlg.Destroy()  
-
-    def ExtractingStat(Raw):
-        for i,r in enumerate(Raw):
-            Dat=np.array(r)
-            if i==0:
-                P=Dat[:,4,0:-1]
-                F=Dat[:,3,0:-1]
-            else:
-                P=np.append(P,Dat[:,4,0:-1],axis=1)
-                F=np.append(F,Dat[:,3,0:-1],axis=1)
-        P[np.isnan(P)]=1
-        F[np.isnan(F)]=0
-        return P,F
-
-    def CalculatingAovR(Data,Formula):
-        DataR = robjects.Matrix(Data.T)
+        # On fait 1 anova pour les terms
+        DataAnova = ExtractData(self.file, 0, 1, DataGFP)
+        DataAnova = DataAnova.extract.reshape((NbSujet * NbCond))
+        DataR = robjects.r.matrix(DataAnova.T)
         robjects.globalenv["DataR"] = DataR
-        TextR = ['aov(', Formula, ')']
+        TextR = ['aov(', self.Formule, ')']
         express = rpy2.robjects.r.parse(text="".join(TextR))
         Fit = rpy2.robjects.r.eval(express)
         robjects.globalenv["Fit"] = Fit
         # calcul Anova
         Raw = robjects.r.summary(Fit)
-        return Raw
-    def BootstrapedData(Data,FactorSubject):
-        NbSubject=FactorSubject.max()
-        SubjectLabel=np.arange(1,NbSubject+1)
-        Order=[]
-        for r in range(NbSubject):
-            np.random.shuffle(SubjectLabel)
-            Drawing=np.nonzero(FactorSubject==SubjectLabel[0])[0]
-            # Shuffle the Subject Label to permute within subject Factor within each Subject. If their is no within Subject factor len(Drawing)=1
-            np.random.shuffle(Drawing)
-            Order.append(Drawing)
-        Order=np.array(Order)
-        # reshape Order to correspond to SubjectFactor style Subject 1= subect NbSubjt+1,...
-        Order=np.int64(np.reshape(Order.T,np.array(Order.shape).prod()))
-        return Data[:,Order]
 
-###Done until this part I have to test on real Data
-                
+        # calcul des Terms
+        Terms = []
+        ConfundTerm = False
+        index = []
+        for i in range(len(Raw)):
+            tmp = Raw[i][0]
+            tmp = robjects.r.slot(tmp, "row.names")
+            tmp = list(tmp)
+            del(tmp[len(tmp) - 1])
+            if i == 0:
+                if self.NameWithin:
+                    for t in tmp:
+                        if t.find(self.NameWithin[0]) != -1:
+                            ConfundTerm = True
+                            break
+
+            if ConfundTerm:
+                if i == 0:
+                    Terms.extend(tmp)
+                    TermsSubject = tmp
+                    rm = range(len(tmp))
+                    index.append(rm)
+                else:
+                    rm = range(len(tmp))
+                    for t in TermsSubject:
+                        ind = tmp.index(t)
+                        rm.remove(ind)
+                    for r in rm:
+                        Terms.append(tmp[r])
+                    index.append(rm)
+            else:
+                Terms.extend(tmp)
+        for i, t in enumerate(Terms):
+            Terms[i] = t[0:t.find(' ')]
+        NbTerms = len(Terms)
+        self.Terms = Terms
+
+        # terms des estimateurs
+        coef = robjects.r.coef(Fit)
+        coef = list(coef)
+        indexCoefTerms = []
+        CoefTermsTmp = []
+        for n, c in enumerate(coef):
+            txt = str(c)
+            m = 0
+            ind = []
+            if txt != 'numeric(0)':
+                txt = txt.replace('\r\n', '')
+                txt = txt.rsplit(' ')
+                for i in txt:
+                    if i != '':
+                        try:
+                            tmp = float(i)
+                        except:
+                            if ConfundTerm and n > 1:
+                                try:
+                                    CoefTermsTmp.index(i)
+                                    m += 1
+                                except:
+                                    CoefTermsTmp.append(i)
+                                    ind.append(m)
+                                    m += 1
+                            else:
+                                CoefTermsTmp.append(i)
+                                ind.append(m)
+                                m += 1
+            indexCoefTerms.append(ind)
+        CoefTerms = []
+        for i in CoefTermsTmp:
+            if i.find('\n') == -1:
+                CoefTerms.append(i)
+
+        self.CoefTerms = CoefTerms
+        NbCoefTerms = len(CoefTerms)
+
+        if DataGFP:  # c'est sur le GFP
+            ResultP = self.file.createEArray(
+                '/Result/Anova/GFP', 'P', tables.Float64Atom(), (0, NbTerms))
+            ResultF = self.file.createEArray(
+                '/Result/Anova/GFP', 'F', tables.Float64Atom(), (0, NbTerms))
+            self.file.createArray('/Result/Anova/GFP', 'Terms', self.Terms)
+            self.file.createArray('/Result/Anova/GFP', 'CoefTerms', CoefTerms)
+            CoefValue = self.file.createEArray('/Result/Anova/GFP',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
+        else:  # c'est sur toutes les electrodes
+            ResultP = self.file.createEArray(
+                '/Result/Anova/All', 'P', tables.Float64Atom(), (0, NbTerms))
+            ResultF = self.file.createEArray(
+                '/Result/Anova/All', 'F', tables.Float64Atom(), (0, NbTerms))
+            self.file.createArray('/Result/Anova/All', 'Terms', self.Terms)
+            self.file.createArray('/Result/Anova/All', 'CoefTerms', CoefTerms)
+
+            CoefValue = self.file.createEArray('/Result/Anova/All',
+                                               'CoefValue',
+                                               tables.Float64Atom(),
+                                               (0, NbCoefTerms))
+        # fiting
+        if NbAnova % NbAnovaCycle == 0:
+            Maximum = ((NbAnova / NbAnovaCycle)) * iter
+        else:
+            Maximum = ((NbAnova / NbAnovaCycle) + 1) * iter
+        dlg = wx.ProgressDialog('Non Parametric Anova',
+                                'Progression : 0 %',
+                                Maximum,
+                                parent=self.parent,
+                                style=wx.PD_CAN_ABORT |
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+        dlg.SetSize((200, 175))
+        n = 0
+        fin1 = 0
+        step = 0
+        self.OrderSubject = []
+        self.OrderCond = []
+        while fin1 < NbAnova:
+            debut1 = n * NbAnovaCycle
+            fin1 = (n + 1) * NbAnovaCycle
+            n += 1
+            if fin1 > NbAnova:
+                fin1 = NbAnova
+                Data = ExtractData(self.file, debut1, fin1, DataGFP)
+                NbAnovaCycle = Data.extract.shape[0]
+                Data = Data.extract.reshape(
+                    (Data.extract.shape[0], NbSujet * NbCond))
+            else:
+                Data = ExtractData(self.file, debut1, fin1, DataGFP)
+                Data = Data.extract.reshape((NbAnovaCycle, NbSujet * NbCond))
+
+            DataSize = Data.shape
+            # on transpose pour R
+            DataR = robjects.r.matrix(Data.T)
+            robjects.globalenv["DataR"] = DataR
+            TextR = ['aov(', self.Formule, ')']
+            express = rpy2.robjects.r.parse(text="".join(TextR))
+            Fit = rpy2.robjects.r.eval(express)
+            robjects.globalenv["Fit"] = Fit
+            # calcul Anova
+            Raw = robjects.r.summary(Fit)
+            Raw = list(Raw)
+            # estimateurs
+            coef = robjects.r.coef(Fit)
+            coef = list(coef)
+            CoefValueTmp = np.zeros((NbAnovaCycle, NbCoefTerms))
+            debut = 0
+            for i, c in enumerate(coef):
+                nbterms = len(c) / NbAnovaCycle
+                tmp = np.array(c)
+                tmp = tmp.reshape((NbAnovaCycle, nbterms))
+                if ConfundTerm:
+                    tmp = tmp[:, indexCoefTerms[i]]
+                    nbterms = len(indexCoefTerms[i])
+                fin = debut + nbterms
+                CoefValueTmp[:, debut:fin] = tmp
+                debut = fin
+            # extraction de P,f, DF
+            FReal = np.zeros((DataSize[0], NbTerms))
+            for i, r in enumerate(Raw):
+                tmp = np.array(r)
+                p = tmp[:, 4, :]
+                f = tmp[:, 3, :]
+                MeanSq = tmp[:, 2, :]
+                if ConfundTerm:
+                    ind = index[i]
+                    NaNindex = p.shape[1] - 1
+                    ind.append(NaNindex)
+                    p = p[:, ind]
+                    f = f[:, ind]
+                    MeanSq = MeanSq[:, ind]
+                    ind.remove(NaNindex)
+
+                pshape = p.shape
+                nterms = pshape[1] - 1
+                p = p[np.isnan(p) == False]
+                p = p.reshape((DataSize[0], nterms))
+                f = f[np.isnan(f) == False]
+                f = f.reshape((DataSize[0], nterms))
+                if i == 0:
+                    fin = 0
+                    debut = 0
+                else:
+                    debut = fin
+                fin += (f.shape[1])
+                FReal[:, debut:fin] = f
+            CoefValue.append(CoefValueTmp)
+            Count = np.zeros(FReal.shape)
+            ResultF.append(FReal)
+            for i in range(iter):
+                # on fait les randomisations
+                if debut1 == 0:
+                    NbSujet = int(shape[len(shape) - 1])
+                    NbCond = int(shape[len(shape) - 2])
+                    OrderSubject = []
+                    OrderCond = []
+                    for s in range(NbSujet):
+                        OrderSubject.append(random.randint(0, NbSujet - 1))
+                        Cond = range(NbCond)
+                        random.shuffle(Cond)
+                        OrderCond.append(Cond)
+                    self.OrderSubject.append(OrderSubject)
+                    self.OrderCond.append(OrderCond)
+                # donee bootstrap
+                if fin1 > NbAnova:
+                    fin1 = NbAnova
+                    NbAnovaCycle = Data.extract.shape[0]
+                    Data = ExtractDataNonParam(self.file, debut1, fin1,
+                                               DataGFP,
+                                               self.OrderSubject[i],
+                                               self.OrderCond[i])
+                    Data = Data.extract.reshape(
+                        (NbAnovaCycle, NbSujet * NbCond))
+                else:
+                    Data = ExtractDataNonParam(self.file, debut1, fin1,
+                                               DataGFP,
+                                               self.OrderSubject[i],
+                                               self.OrderCond[i])
+                    Data = Data.extract.reshape(
+                        (Data.extract.shape[0], NbSujet * NbCond))
+                DataSize = Data.shape
+                # on transpose pour R
+                DataR = robjects.r.matrix(Data.T)
+                robjects.globalenv["DataR"] = DataR
+                TextR = ['aov(', self.Formule, ')']
+                express = rpy2.robjects.r.parse(text="".join(TextR))
+                Fit = rpy2.robjects.r.eval(express)
+                robjects.globalenv["Fit"] = Fit
+                # calcul Anova
+                Raw = robjects.r.summary(Fit)
+                Raw = list(Raw)
+                # extraction de P,f, DF
+                FBoot = np.zeros((DataSize[0], NbTerms))
+                for i, r in enumerate(Raw):
+                    tmp = np.array(r)
+                    p = tmp[:, 4, :]
+                    f = tmp[:, 3, :]
+                    MeanSq = tmp[:, 2, :]
+                    if ConfundTerm:
+                        ind = index[i]
+                        NaNindex = p.shape[1] - 1
+                        ind.append(NaNindex)
+                        p = p[:, ind]
+                        f = f[:, ind]
+                        MeanSq = MeanSq[:, ind]
+                        ind.remove(NaNindex)
+
+                    pshape = p.shape
+                    nterms = pshape[1] - 1
+                    p = p[np.isnan(p) == False]
+                    p = p.reshape((DataSize[0], nterms))
+                    f = f[np.isnan(f) == False]
+                    f = f.reshape((DataSize[0], nterms))
+                    if i == 0:
+                        fin = 0
+                        debut = 0
+                    else:
+                        debut = fin
+                    fin += (f.shape[1])
+                    FBoot[:, debut:fin] = f
+                diff = FBoot - FReal
+                CountTmp = np.zeros(diff.shape)
+                CountTmp[diff > 0] = 1
+                Count += CountTmp
+                pourcent = str(100.0 * step / (Maximum))
+                pourcent = pourcent[0:pourcent.find('.') + 3]
+                Cancel = dlg.Update(
+                    step, " ".join(['Progression  :', pourcent, ' %']))
+                if Cancel[0] == False:
+                    dlgQuest = wx.MessageDialog(
+                        None,
+                        "Do you really want to cancel?",
+                        "Confirm Cancel",
+                        wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                    result = dlgQuest.ShowModal()
+                    dlgQuest.Destroy()
+                    if result == wx.ID_OK:
+                        self.Cancel = True
+                        break
+
+                    else:
+                        self.Cancel = False
+                        dlg.Resume()
+                step += 1
+            P = Count / iter
+            ResultP.append(P)
+            if self.Cancel:
+                break
+        dlg.Close()
+        dlg.Destroy()
+
+
+class ExtractData:
+
+    def __init__(self, file, debut, fin, GFP):
+        if GFP:
+            shape = file.getNode('/Info/ShapeGFP')
+        else:
+            shape = file.getNode('/Info/Shape')
+        shape = shape.read()
+        NbSujet = int(shape[len(shape) - 1])
+        NbCond = int(shape[len(shape) - 2])
+        NbAnovaCycle = fin - debut
+        DataTmp = np.zeros((NbAnovaCycle, NbCond, NbSujet))
+        for s in range(NbSujet):
+            for c in range(NbCond):
+                if GFP:
+                    location = [
+                        '/DataGFP/Subject', str(s), '/Condition', str(c)]
+                else:
+                    location = ['/Data/Subject', str(s), '/Condition', str(c)]
+
+                tmp = file.getNode("".join(location))
+                tmp = tmp.read()
+                NbAnova = tmp.shape
+                NbAnova = np.array(NbAnova)
+                tmp = tmp.reshape(NbAnova.prod())
+                DataTmp[:, c, s] = tmp[debut:fin]
+        # DataTmp=DataTmp.reshape((NbAnovaCycle,NbCond*NbSujet))
+        self.extract = DataTmp
+        del(DataTmp)
+
 
 class ExtractDataNonParam:
 
@@ -955,5 +1339,3 @@ class PostHoc:
             self.file.createArray('/Result/PostHoc/GFP', 'Terms', Name)
         else:
             self.file.createArray('/Result/PostHoc/All', 'Terms', Name)
-
-       

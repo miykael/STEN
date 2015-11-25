@@ -1,9 +1,8 @@
 ##Tables definition
 ##
 ##tables:
-##/Data/All #using createEArray('/','AllData',tables.Float64Atom(),(NbPoints,0))
-##/Shape # shape of AllData (TF,Electrodes)
-##/Data/GFP #using createEArray('/','AllData',tables.Float64Atom(),(NbPoints,0))
+##/Data/All #using createEArray('/','AllData',tables.Float64Atom(),(TF,Electrodes,0))
+##/Data/GFP #using createEArray('/','AllData',tables.Float64Atom(),(TF,1,0))
 ##/Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)
 ##/Info # using a tables that contain all the information in the "ExcelSheet"
 ##/Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
@@ -99,8 +98,8 @@ for l in range(NbLine):
 TablesInfo.flush()
 # Creating allResultTables
 TablesRes=H5.createTable(AllRes,'Anova',AnovaAllParticle)
-TablesRes=H5.createTable(AllRes,'IntermediateResult',IntermediateResultAllParticle)
-TablesRes=H5.createTable(GFPRes,'Anova',AnovaGFPParticle)
+TablesRes=H5.createTable(AllRes,'IntermediateResult',AnovaGFPParticle)
+TablesRes=H5.createTable(GFPRes,'Anova',IntermediateResultAllParticle)
 TablesRes=H5.createTable(GFPRes,'IntermediateResult',IntermediateResultGFPParticle)
 H5.close()
 H5=tables.openFile(H5File,'a')
