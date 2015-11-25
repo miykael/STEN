@@ -16,40 +16,22 @@ import glob
 import numpy as np
 import xlrd
 
-Path='C:\Users\jknebel\Documents\NAC\Article Std Only\Data-GM'
-XlsFile='C:\Users\jknebel\Documents\NAC\Article Std Only\Data-GM\\Data.xls'
-H5File='C:\Users\jknebel\Documents\python\PyProject\STEN\\TestData\SimulatedData.h5'
-EphFile=np.array(glob.glob("\\".join([Path,'*.eph'])))
+XlsFile='C:\Users\jknebel\Documents\NAC\Article Std Only\Data-GM\\sten.xls'
+H5File='C:\Users\jknebel\Documents\python\PyProject\STEN\\TestData\NACData.h5'
 wb=xlrd.open_workbook(XlsFile)
-sh=wb.sheet_by_name('feuille 1')
+sh=wb.sheet_by_name('STEN')
+AllEph=sh.col_values(0)
 Ratio=np.float64(sh.col_values(1))
+Between=np.int64(np.float64(sh.col_values(2)))
+Subject=np.int64(np.float64(sh.col_values(3)))
 ### Creation by hand of the grid Data
-
-# Simulation of reading grid
-DataColSubject=np.arange(1,52)
-DataColF1=EphFile
-np.random.shuffle(EphFile)
-DatColF2=EphFile
-DataColGroup=np.append(np.ones(30),2*np.ones(21))
-DatColRatio=Ratio
-
 # Geneating a Dict containing the grid info with artifical col name coming from grid
-InfoDict={'Subject':DataColSubject,'F1':DataColF1,'F2':DataColF1,'Group':DataColGroup,'Ratio':DatColRatio}
-NbLine=len(DataColSubject)
-# simulation difine factor
-Level=np.array([2])
-# Creation of Factor Definition for R by hand
-AllEph=np.append(DataColF1,DatColF2)
-SubjectFactor=np.append(DataColSubject,DataColSubject)
-Covariate=np.append(DatColRatio,DatColRatio)
-Between=np.append(DataColGroup,DataColGroup)
-Within=np.append(np.ones(51),2*np.ones(51))
+InfoDict={'Subject':Subject,'Group':Between,'Ratio':Ratio}
 # factor Name coming from selecting factor
-SubjectName={'Subject':SubjectFactor}
+SubjectName={'Subject':Subject}
 BetweeName={'Group':Between}
-CovariateName={'Ratio':Covariate}
-WithinName={'Cond':Within}
-AllFactor={'Subject':SubjectName,'BetweenFactor':BetweeName,'Covariate':CovariateName,'Within':WithinName}
+CovariateName={'Ratio':Ratio}
+AllFactor={'Subject':SubjectName,'Between':BetweeName,'Covariate':CovariateName}
 # Creation H5 File and differnt group
 H5=tables.openFile(H5File,'w')
 DataGroup=H5.createGroup('/','Data')
@@ -59,14 +41,20 @@ GFPRes=H5.createGroup(ResultGrp,'GFP')
 # read one file to extract TF and Electrod info
 TF=cf.Eph(AllEph[0]).TF
 Electrodes=cf.Eph(AllEph[0]).Electrodes
-AllData=H5.createEArray(DataGroup,'All',tables.Float64Atom(),(TF,Electrodes,0))
-GFPData=H5.createEArray(DataGroup,'GFP',tables.Float64Atom(),(TF,1,0))
-# Reading EphFile dans store into Tables with EArray
+NBpoints=TF*Electrodes
+shape=np.array([TF,Electrodes])
+Shape=H5.createArray('/','Shape',shape)
+AllData=H5.createEArray(DataGroup,'All',tables.Float64Atom(),(NBpoints,0))
+GFPData=H5.createEArray(DataGroup,'GFP',tables.Float64Atom(),(TF,0))
+## Reading EphFile dans store into Tables with EArray
 for e in AllEph:
     dat=cf.Eph(e)
-    AllData.append(dat.Data.reshape((dat.TF,dat.Electrodes,1)))
-    GFPData.append(dat.GFP.reshape((dat.TF,1,1)))
-ModelParticle = {'Name': tables.StringCol(40),'Value': tables.Int32Col(shape=len(SubjectFactor)),'Type':tables.StringCol(40)}
+    AllData.append(dat.Data.reshape((dat.TF*dat.Electrodes,1)))
+    GFPData.append(dat.GFP.reshape((dat.TF,1)))
+
+
+
+ModelParticle = {'Name': tables.StringCol(40),'Value': tables.Int32Col(shape=len(Subject)),'Type':tables.StringCol(40)}
 InfoParticle={}
 for c in InfoDict:
     InfoParticle[c]=tables.StringCol(256)
@@ -92,6 +80,7 @@ TablesModel.flush()
 TablesInfo=H5.createTable('/','Info',InfoParticle)
 # writing Model informations
 NewRow=TablesInfo.row
+NbLine=len(Subject)
 for l in range(NbLine):
     for c in InfoDict:
         NewRow[c]=InfoDict[c][l]
@@ -99,8 +88,8 @@ for l in range(NbLine):
 TablesInfo.flush()
 # Creating allResultTables
 TablesRes=H5.createTable(AllRes,'Anova',AnovaAllParticle)
-TablesRes=H5.createTable(AllRes,'IntermediateResult',IntermediateResultAllParticle)
-TablesRes=H5.createTable(GFPRes,'Anova',AnovaGFPParticle)
+TablesRes=H5.createTable(AllRes,'IntermediateResult',AnovaGFPParticle)
+TablesRes=H5.createTable(GFPRes,'Anova',IntermediateResultAllParticle)
 TablesRes=H5.createTable(GFPRes,'IntermediateResult',IntermediateResultGFPParticle)
 H5.close()
 H5=tables.openFile(H5File,'a')
