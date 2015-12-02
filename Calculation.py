@@ -774,7 +774,7 @@ def startCalculation(self):
                         self.WavePostStat.file.close()
 
         # calcul Anova on Inverse space
-        elif self.AnalyseType == 'ANOVA in Brain Space':
+        elif self.AnalyseType == 'ANOVA  on Brain Space':
 
             if self.AnovaCheck:
                 if CalculAnova:
@@ -957,27 +957,21 @@ def inputTest(self):
     # test all variable type
     # we strat with mandatory variable (PanelData)
     text = []
-    """
     if self.PanelData.PathResult is None:
         error = "Result folder is not selected"
         text.append(error)
     else:
         self.PathResult = self.PanelData.PathResult
-    """
-    self.PathResult = self.PanelData.TextResult.GetValue()
-
     # test si le filchier data est present
-    """
     if self.H5 == []:
         error = "Model not define or H5 not present"
         text.append(error)
-    """
     # on recuper le Panel de droite
     page = self.PanelOption.GetSelection()
     self.AnalyseType = self.PanelOption.GetPageText(page)
     # Anova wave GFP
     if self.AnalyseType == 'ANOVA on Wave/GFP':
-        # self.AnovaParam =Anova parmetric oui non / bool
+        # self.AnovaParam =Anova  parmetric oui non / bool
         # self.PostHoc = posthoc oui/non / bool
         # self.Type = type of analysis wave, gfp, both / String
         # self.AnovaAlpha= Anova Alpha value / Float
@@ -987,7 +981,7 @@ def inputTest(self):
         # self.AnovaClust = cluster sur xyz/ int
         # self.spi = xyz file / string
 
-        self.AnovaCheck = self.AnovaWave.AnovaPerform
+        self.AnovaCheck = self.AnovaWave.AnovaPerformed
         # si on a cocher anova
         if self.AnovaCheck:
             self.AnovaParam = self.AnovaWave.Param
@@ -1005,14 +999,14 @@ def inputTest(self):
                 self.AnovaPtsConsec = self.AnovaWave.PtsConseq
 
             if self.AnovaWave.Clust < 1:
-                error = "Cluster size for Anova must be strictly positive"
+                error = "Cluster size for Anova  must be strictly positive"
                 text.append(error)
             else:
                 self.AnovaClust = self.AnovaWave.Clust
 
             if not self.AnovaParam:
                 if self.AnovaWave.Iter < 1:
-                    error = "Iteraction Value for Anova must be strictly positive"
+                    error = "Iteraction Value for Anova  must be strictly positive"
                     text.append(error)
                 else:
                     self.AnovaIteration = Iteration = self.AnovaWave.Iter
@@ -1085,7 +1079,7 @@ def inputTest(self):
                 else:
                     self.SpaceFile = None
 
-    elif self.AnalyseType == 'ANOVA in Brain Space':
+    elif self.AnalyseType == 'ANOVA  on Brain Space':
         # self.AnovaParam =parmetric ou non / bool
         # self.PostHoc = posthoc ou/non / bool
         # self.Spi = Spi File for IS location / Path
@@ -1095,7 +1089,7 @@ def inputTest(self):
         # self.AnovaCheck = ANova perfromed oui / non /  bool
         # self.PostHocParam= PostHoc Param oui/non bool
         self.Type = None
-        self.AnovaCheck = self.AnovaIS.AnovaPerform
+        self.AnovaCheck = self.AnovaIS.AnovaPerformed
         if self.AnovaCheck:
             self.AnovaParam = self.AnovaIS.Param
             if self.AnovaIS.Alpha < 0 and self.AnovaIS.Alpha > 1:

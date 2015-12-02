@@ -1,948 +1,1124 @@
 import wx
-from os.path import dirname
 
 
 class AnovaWave(wx.Panel):
 
-    """TODO: EXPLANATION TEXT"""
-
-    def __init__(self, notebook):
-        wx.Panel.__init__(self, parent=notebook)
-
-        # Specify relevant variables
-        self.AnovaPerform = True
-        self.PostHoc = False
+    def __init__(self, conteneur):
+        wx.Panel.__init__(self, parent=conteneur)
+        FrameSizer = wx.BoxSizer(wx.VERTICAL)
+        # definition des OutPut
         self.Param = True
-        self.ParamPostHoc = True
-        self.nIteration = 1000
-        self.nIterationPostHoc = 1000
+        self.PostHocParam = True
+        self.Analyse = None
         self.Alpha = 0.05
-        self.AlphaPostHoc = 0.05
+        self.AlphaPostHoc = None
         self.PtsConseq = 1
-        self.PtsConseqPostHoc = 1
         self.Clust = 1
         self.ClustPostHoc = 1
-        self.AnalyseType = ''
-        self.SPIFile = ''
-        self.SPIPath = ''
+        self.PtsConseqPostHoc = 1
+        self.PostHoc = False
+        self.AnovaPerformed = True
+        self.Iter = 1000
+        self.IterPostHoc = 1000
+        self.Spi = None
+        # on cree les panels 1 a 1
 
-        # Panel: Perform ANOVA
-        self.PanelAnova = wx.Panel(self, wx.ID_ANY)
-        sizerAnova = wx.BoxSizer(wx.VERTICAL)
+        FrameSizer.AddSpacer(10)
+        # Panel Anova perormed
+        PanelAnova = wx.Panel(self, -1)
+        SizerAnova = wx.BoxSizer(wx.VERTICAL)
+        self.AnovaCheckBox = wx.CheckBox(PanelAnova, 12, "Performed ANOVA")
+        SizerAnova.Add(self.AnovaCheckBox, 0, wx.TOP)
+        PanelAnova.SetSizer(SizerAnova)
+        FrameSizer.Add(PanelAnova, 0, wx.EXPAND)
+        FrameSizer.AddSpacer(10)
+        self.AnovaCheckBox.SetValue(True)
 
-        # Add "Perform ANOVA" checkbox
-        self.AnovaCheckBox = wx.CheckBox(self, wx.ID_ANY, "Perform ANOVA")
-        self.AnovaCheckBox.SetValue(self.AnovaPerform)
+        self.PanelInfoAnova = wx.Panel(self, -1)
+        SizerInfoAnova = wx.BoxSizer(wx.VERTICAL)
 
-        # Parametric / Non-Parametric Test Section
-        PanelParam = wx.Panel(self.PanelAnova, wx.ID_ANY)
-        PanelNonParam = wx.Panel(PanelParam, wx.ID_ANY)
-
+        # panel pour les parma /non param
+        PanelParamAll = wx.Panel(self.PanelInfoAnova, -1)
+        SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
+        PanelParam = wx.Panel(PanelParamAll, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
+        # creation des radio button
         self.RadioParam = wx.RadioButton(
-            PanelNonParam, wx.ID_ANY, 'Parametric Test', style=wx.RB_GROUP)
+            PanelParam, 10, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParam, 0, wx.TOP)
+        SizerParam.AddSpacer(5)
         self.RadioNonParam = wx.RadioButton(
-            PanelNonParam, self.RadioParam.Id,
-            'Non-Parametric Test (Bootstrapping)')
-
-        # Iteration Section
-        self.PanelIter = wx.Panel(PanelParam, wx.ID_ANY)
-        TxtIter = wx.StaticText(self.PanelIter, wx.ID_ANY, label=" Iteration",
-                                style=wx.ALIGN_CENTER)
+            PanelParam, 10, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParam, 0, wx.TOP)
+        # lie les sizer au panel
+        PanelParam.SetSizer(SizerParam)
+        SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
+        # Bouton iteration
+        self.PanelIter = wx.Panel(PanelParamAll, -1)
+        IterSizer = wx.BoxSizer(wx.VERTICAL)
+        IterText = wx.StaticText(
+            self.PanelIter, -1, label="Iteration", style=wx.ALIGN_CENTER)
+        IterSizer.Add(IterText, 0, wx.EXPAND)
+        IterSizer.AddSpacer(5)
         self.IterInput = wx.TextCtrl(
-            self.PanelIter, wx.ID_ANY, value=str(self.nIteration),
-            style=wx.TE_CENTRE)
+            self.PanelIter, 4, value=str(self.Iter), style=wx.TE_CENTRE)
+        IterSizer.Add(self.IterInput, 0, wx.EXPAND)
+        self.PanelIter.SetSizer(IterSizer)
+        SizerParamAll.Add(self.PanelIter, 0, wx.EXPAND)
+        PanelParamAll.SetSizer(SizerParamAll)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoAnova.Add(PanelParamAll, 0, wx.EXPAND)
+        SizerInfoAnova.AddSpacer(10)
 
-        # Statistic (alpha, conseq pts, cluster size) Section
-        PanelStats = wx.Panel(self.PanelAnova, wx.ID_ANY)
-        PanelAlpha = wx.Panel(PanelStats, wx.ID_ANY)
-        TxtAlpha = wx.StaticText(PanelAlpha, wx.ID_ANY, label=" Alpha Value",
-                                 style=wx.ALIGN_CENTER)
+        # panel avec les infos Statitstique (alpha,pts conseq)
+        PanelInfo = wx.Panel(self.PanelInfoAnova, -1)
+        SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
+
+        PanelAlpha = wx.Panel(PanelInfo, -1)
+        SizerAlpha = wx.BoxSizer(wx.VERTICAL)
+        AlphaText = wx.StaticText(
+            PanelAlpha, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerAlpha.Add(AlphaText, 0, wx.EXPAND)
         self.AlphaInput = wx.TextCtrl(
-            PanelAlpha, wx.ID_ANY, value=str(self.Alpha), style=wx.TE_CENTRE)
+            PanelAlpha, 1, value=str(self.Alpha), style=wx.TE_CENTRE)
+        SizerAlpha.Add(self.AlphaInput, 0, wx.EXPAND)
+        PanelAlpha.SetSizer(SizerAlpha)
+        SizerInfo.Add(PanelAlpha)
+        SizerInfo.AddSpacer(10)
 
-        PanelPtsConseq = wx.Panel(PanelStats, wx.ID_ANY)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, wx.ID_ANY, label="Consecutive Time Frames",
-            style=wx.ALIGN_CENTER)
-        self.PtsConseqInput = wx.TextCtrl(
-            PanelPtsConseq, wx.ID_ANY, value=str(self.PtsConseq),
-            style=wx.TE_CENTRE)
+        PanelPtsConseq = wx.Panel(PanelInfo, -1)
+        SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
+        SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
+        self.PtsConsequInput = wx.TextCtrl(
+            PanelPtsConseq, 2, value=str(self.PtsConseq), style=wx.TE_CENTRE)
+        SizerPtsConseq.Add(self.PtsConsequInput, 0, wx.EXPAND)
+        PanelPtsConseq.SetSizer(SizerPtsConseq)
+        SizerInfo.Add(PanelPtsConseq)
+        SizerInfo.AddSpacer(10)
 
-        self.PanelClust = wx.Panel(PanelStats, wx.ID_ANY)
-        TxtClust = wx.StaticText(
-            self.PanelClust, wx.ID_ANY, label="Cluster Size (Electrodes)",
-            style=wx.ALIGN_CENTER)
-        self.ClustInput = wx.TextCtrl(
-            self.PanelClust, wx.ID_ANY, value=str(self.Clust),
-            style=wx.TE_CENTRE)
-
-        # Create Structure of "Perform ANOVA"
-        sizerNonParam = wx.BoxSizer(wx.VERTICAL)
-        sizerNonParam.Add(self.RadioParam, 0, wx.TOP)
-        sizerNonParam.AddSpacer(2)
-        sizerNonParam.Add(self.RadioNonParam, 0, wx.TOP)
-        PanelNonParam.SetSizer(sizerNonParam)
-
-        sizerIter = wx.BoxSizer(wx.VERTICAL)
-        sizerIter.Add(TxtIter, 0, wx.EXPAND)
-        sizerIter.AddSpacer(2)
-        sizerIter.Add(self.IterInput, 0, wx.EXPAND)
-        self.PanelIter.SetSizer(sizerIter)
-
-        sizerParam = wx.BoxSizer(wx.HORIZONTAL)
-        sizerParam.Add(PanelNonParam, 0, wx.EXPAND)
-        sizerParam.AddSpacer(10)
-        sizerParam.Add(self.PanelIter, 0, wx.EXPAND)
-        PanelParam.SetSizer(sizerParam)
-
-        sizerAlpha = wx.BoxSizer(wx.VERTICAL)
-        sizerAlpha.Add(TxtAlpha, 0, wx.EXPAND)
-        sizerAlpha.Add(self.AlphaInput, 0, wx.EXPAND)
-        PanelAlpha.SetSizer(sizerAlpha)
-
-        sizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        sizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
-        sizerPtsConseq.Add(self.PtsConseqInput, 0, wx.EXPAND)
-        PanelPtsConseq.SetSizer(sizerPtsConseq)
-
+        self.PanelClust = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        SizerPtsClust.Add(TxtClust, 0, wx.EXPAND)
+        ClustText = wx.StaticText(self.PanelClust, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
+        SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
+        self.ClustInput = wx.TextCtrl(
+            self.PanelClust, 3, value=str(self.Clust), style=wx.TE_CENTRE)
         SizerPtsClust.Add(self.ClustInput, 0, wx.EXPAND)
         self.PanelClust.SetSizer(SizerPtsClust)
-
-        sizerStats = wx.BoxSizer(wx.HORIZONTAL)
-        sizerStats.Add(PanelAlpha)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(PanelPtsConseq)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(self.PanelClust)
-        sizerStats.AddSpacer(10)
-        PanelStats.SetSizer(sizerStats)
-
-        sizerAnova.Add(PanelParam, 0, wx.EXPAND)
-        sizerAnova.AddSpacer(10)
-        sizerAnova.Add(PanelStats, 0, wx.EXPAND)
-        sizerAnova.AddSpacer(10)
-        self.PanelAnova.SetSizer(sizerAnova)
-
-        # Panel: Perform Post hoc Analysis
-        self.PanelPostHoc = wx.Panel(self, wx.ID_ANY)
-        sizerPostHoc = wx.BoxSizer(wx.VERTICAL)
-
-        # Add "Post hoc Analysis" checkbox
-        titlePostHocText = "Post hoc Analysis (all possible t-test)"
-        titlePostHocText += " - only on ANOVA, not on ANCOVA"
-        # TODO: check that field is disabled if there is a covariate
-        self.PostHocCheckBox = wx.CheckBox(self, wx.ID_ANY, titlePostHocText)
-        self.PostHocCheckBox.SetValue(self.PostHoc)
-
-        # Parametric / Non-Parametric Test Section
-        PanelParam = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
-        PanelNonParam = wx.Panel(PanelParam, wx.ID_ANY)
-
-        self.RadioParamPostHoc = wx.RadioButton(
-            PanelNonParam, wx.ID_ANY, 'Parametric Test', style=wx.RB_GROUP)
-        self.RadioNonParamPostHoc = wx.RadioButton(
-            PanelNonParam, self.RadioParamPostHoc.Id,
-            'Non-Parametric Test (Bootstrapping)')
-
-        # IterPostHocation Section
-        self.PanelIterPostHoc = wx.Panel(PanelParam, wx.ID_ANY)
-        TxtIterPostHoc = wx.StaticText(
-            self.PanelIterPostHoc, wx.ID_ANY, label=" Iteration",
-            style=wx.ALIGN_CENTER)
-        self.IterInputPostHoc = wx.TextCtrl(
-            self.PanelIterPostHoc, wx.ID_ANY, style=wx.TE_CENTRE,
-            value=str(self.nIterationPostHoc))
-
-        # Statistic (alpha, conseq pts, cluster size) Section
-        PanelStatsPostHoc = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
-        PanelAlphaPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        TxtAlphaPostHoc = wx.StaticText(
-            PanelAlphaPostHoc, wx.ID_ANY, label=" Alpha Value",
-            style=wx.ALIGN_CENTER)
-        self.AlphaInputPostHoc = wx.TextCtrl(
-            PanelAlphaPostHoc, wx.ID_ANY, value=str(self.Alpha),
-            style=wx.TE_CENTRE)
-
-        PanelPtsConseqPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        PtsConseqTextPostHoc = wx.StaticText(
-            PanelPtsConseqPostHoc, wx.ID_ANY, label="Consecutive Time Frames",
-            style=wx.ALIGN_CENTER)
-        self.PtsConseqInputPostHoc = wx.TextCtrl(
-            PanelPtsConseqPostHoc, wx.ID_ANY, value=str(self.PtsConseqPostHoc),
-            style=wx.TE_CENTRE)
-
-        self.PanelClustPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        TxtClustPostHoc = wx.StaticText(
-            self.PanelClustPostHoc, wx.ID_ANY,
-            label="Cluster Size (Electrodes)", style=wx.ALIGN_CENTER)
-        self.ClustInputPostHoc = wx.TextCtrl(
-            self.PanelClustPostHoc, wx.ID_ANY, value=str(self.ClustPostHoc),
-            style=wx.TE_CENTRE)
-
-        # Create Structure of "Perform Post hoc Analysis"
-        sizerNonParam = wx.BoxSizer(wx.VERTICAL)
-        sizerNonParam.Add(self.RadioParamPostHoc, 0, wx.TOP)
-        sizerNonParam.AddSpacer(2)
-        sizerNonParam.Add(self.RadioNonParamPostHoc, 0, wx.TOP)
-        PanelNonParam.SetSizer(sizerNonParam)
-
-        sizerIterPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerIterPostHoc.Add(TxtIterPostHoc, 0, wx.EXPAND)
-        sizerIterPostHoc.AddSpacer(2)
-        sizerIterPostHoc.Add(self.IterInputPostHoc, 0, wx.EXPAND)
-        self.PanelIterPostHoc.SetSizer(sizerIterPostHoc)
-
-        sizerParam = wx.BoxSizer(wx.HORIZONTAL)
-        sizerParam.Add(PanelNonParam, 0, wx.EXPAND)
-        sizerParam.AddSpacer(10)
-        sizerParam.Add(self.PanelIterPostHoc, 0, wx.EXPAND)
-        PanelParam.SetSizer(sizerParam)
-
-        sizerAlphaPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerAlphaPostHoc.Add(TxtAlphaPostHoc, 0, wx.EXPAND)
-        sizerAlphaPostHoc.Add(self.AlphaInputPostHoc, 0, wx.EXPAND)
-        PanelAlphaPostHoc.SetSizer(sizerAlphaPostHoc)
-
-        sizerPtsConseqPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerPtsConseqPostHoc.Add(PtsConseqTextPostHoc, 0, wx.EXPAND)
-        sizerPtsConseqPostHoc.Add(self.PtsConseqInputPostHoc, 0, wx.EXPAND)
-        PanelPtsConseqPostHoc.SetSizer(sizerPtsConseqPostHoc)
-
-        SizerPtsClustPostHoc = wx.BoxSizer(wx.VERTICAL)
-        SizerPtsClustPostHoc.Add(TxtClustPostHoc, 0, wx.EXPAND)
-        SizerPtsClustPostHoc.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
-        self.PanelClustPostHoc.SetSizer(SizerPtsClustPostHoc)
-
-        sizerStats = wx.BoxSizer(wx.HORIZONTAL)
-        sizerStats.Add(PanelAlphaPostHoc)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(PanelPtsConseqPostHoc)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(self.PanelClustPostHoc)
-        sizerStats.AddSpacer(10)
-        PanelStatsPostHoc.SetSizer(sizerStats)
-
-        sizerPostHoc.Add(PanelParam, 0, wx.EXPAND)
-        sizerPostHoc.AddSpacer(10)
-        sizerPostHoc.Add(PanelStatsPostHoc, 0, wx.EXPAND)
-        sizerPostHoc.AddSpacer(10)
-        self.PanelPostHoc.SetSizer(sizerPostHoc)
-
-        # Panel: Specify SPI
-        self.PanelSPI = wx.Panel(self, wx.ID_ANY)
-
-        TxtSPI = wx.StaticText(
-            self.PanelSPI, wx.ID_ANY, label="Select XYZ File",
-            style=wx.ALIGN_CENTER)
-        self.FieldSPIFile = wx.TextCtrl(
-            self.PanelSPI, wx.ID_ANY, value=self.SPIFile, style=wx.TE_READONLY)
-        self.ButtonSPI = wx.Button(self.PanelSPI, wx.ID_ANY, label="Browse")
-        sizerSPI = wx.GridBagSizer()
-        sizerSPI.Add(TxtSPI, (0, 0), (1, 5), wx.EXPAND)
-        sizerSPI.Add(self.FieldSPIFile, (1, 0), (1, 4), wx.EXPAND)
-        sizerSPI.Add(self.ButtonSPI, (1, 5), (1, 1), wx.EXPAND)
-        self.PanelSPI.SetSizer(sizerSPI)
-        sizerSPI.AddGrowableCol(0)
-
-        # Panel: Analyse Type (GFP, All electrodes or both)
-        TxtAnalyse = wx.StaticText(
-            self, wx.ID_ANY, label="Choose Analyse Type", style=wx.CENTRE)
-        analyseTypes = ["All Electrodes", "GFP Only", "Both"]
-        self.BoxAnalyse = wx.ComboBox(self, wx.ID_ANY, choices=analyseTypes,
-                                      style=wx.CB_READONLY)
-        self.BoxAnalyse.SetSelection(1)
-
-        # Create structure of Analysis Frame
-        sizerFrame = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizerFrame)
-        sizerFrame.Add(self.AnovaCheckBox, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PanelAnova, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PostHocCheckBox, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PanelPostHoc, 0, wx.EXPAND)
-        sizerFrame.Add(self.PanelSPI, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(10)
-        sizerFrame.Add(TxtAnalyse, 0, wx.EXPAND)
-        sizerFrame.Add(self.BoxAnalyse, 0, wx.EXPAND)
-        self.SetSizer(sizerFrame)
-
-        # Inactive certain Sections
-        self.PanelPostHoc.Disable()
+        SizerInfo.Add(self.PanelClust)
+        SizerInfo.AddSpacer(10)
         self.PanelClust.Disable()
+
+        # lie les sizer au panel
+        PanelInfo.SetSizer(SizerInfo)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoAnova.Add(PanelInfo, 0, wx.EXPAND)
+        SizerInfoAnova.AddSpacer(10)
+        self.PanelInfoAnova.SetSizer(SizerInfoAnova)
+        FrameSizer.Add(self.PanelInfoAnova, 0, wx.EXPAND)
+
+        # Panel Post-Hoc
+        PanelPostHoc = wx.Panel(self, -1)
+        SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
+        self.PostHocCheckBox = wx.CheckBox(
+            PanelPostHoc, 13,
+            "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
+        SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
+        SizerPostHoc.AddSpacer(10)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelPostHoc.SetSizer(SizerPostHoc)
+        # lie le sizer de la fenetre a la fenetre
+
+        # Panel Info Post-Hoc
+        self.PanelInfoPostHoc = wx.Panel(self, -1)
+        SizerInfoPostHoc = wx.BoxSizer(wx.VERTICAL)
+
+        # panel Param
+        PanelParamAll = wx.Panel(self.PanelInfoPostHoc, -1)
+        SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
+        PanelParam = wx.Panel(PanelParamAll, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
+        self.RadioParamPostHoc = wx.RadioButton(
+            PanelParam, 11, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParamPostHoc, 0, wx.EXPAND)
+        SizerParam.AddSpacer(5)
+        self.RadioNonParamPostHoc = wx.RadioButton(
+            PanelParam, 11, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParamPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelParam.SetSizer(SizerParam)
+        SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
+        self.PanelIterPostHoc = wx.Panel(PanelParamAll, -1)
+        IterSizer = wx.BoxSizer(wx.VERTICAL)
+        IterText = wx.StaticText(self.PanelIterPostHoc, -1,
+                                 label="Iteration", style=wx.ALIGN_CENTER)
+        IterSizer.Add(IterText, 0, wx.EXPAND)
+        IterSizer.AddSpacer(5)
+        self.IterInputPostHoc = wx.TextCtrl(
+            self.PanelIterPostHoc, 8, value="", style=wx.TE_CENTRE)
+        IterSizer.Add(self.IterInputPostHoc, 0, wx.EXPAND)
+        self.PanelIterPostHoc.SetSizer(IterSizer)
+        SizerParamAll.Add(self.PanelIterPostHoc, 0, wx.EXPAND)
+        PanelParamAll.SetSizer(SizerParamAll)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoPostHoc.Add(PanelParamAll, 0, wx.EXPAND)
+        SizerInfoPostHoc.AddSpacer(10)
+
+        # panel avec les infos Statitstique (alpha,pts conseq, Clust)
+        PanelInfo = wx.Panel(self.PanelInfoPostHoc, -1)
+        SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
+
+        PanelAlpha = wx.Panel(PanelInfo, -1)
+        SizerAlpha = wx.BoxSizer(wx.VERTICAL)
+        AlphaText = wx.StaticText(
+            PanelAlpha, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerAlpha.Add(AlphaText, 0, wx.EXPAND)
+        self.AlphaInputPostHoc = wx.TextCtrl(
+            PanelAlpha, 5, value=str(self.Alpha), style=wx.TE_CENTRE)
+        SizerAlpha.Add(self.AlphaInputPostHoc, 0, wx.EXPAND)
+        PanelAlpha.SetSizer(SizerAlpha)
+        SizerInfo.Add(PanelAlpha)
+        SizerInfo.AddSpacer(10)
+
+        PanelPtsConseq = wx.Panel(PanelInfo, -1)
+        SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
+        SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
+        self.PtsConsequInputPostHoc = wx.TextCtrl(
+            PanelPtsConseq, 6, value=str(self.PtsConseq), style=wx.TE_CENTRE)
+        SizerPtsConseq.Add(self.PtsConsequInputPostHoc, 0, wx.EXPAND)
+        PanelPtsConseq.SetSizer(SizerPtsConseq)
+        SizerInfo.Add(PanelPtsConseq)
+        SizerInfo.AddSpacer(10)
+
+        self.PanelClustPostHoc = wx.Panel(PanelInfo, -1)
+        SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
+        ClustText = wx.StaticText(self.PanelClustPostHoc, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
+        SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
+        self.ClustInputPostHoc = wx.TextCtrl(self.PanelClustPostHoc, 7,
+                                             value=str(self.Clust),
+                                             style=wx.TE_CENTRE)
+        SizerPtsClust.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
+        self.PanelClustPostHoc.SetSizer(SizerPtsClust)
+        SizerInfo.Add(self.PanelClustPostHoc)
+        SizerInfo.AddSpacer(10)
         self.PanelClustPostHoc.Disable()
+
+        # lie les sizer au panel
+        PanelInfo.SetSizer(SizerInfo)
+
+        # on mets le panel POstHoc dans le sizer de la frame
+        SizerInfoPostHoc.Add(PanelInfo, 0, wx.EXPAND)
+        self.PanelInfoPostHoc.SetSizer(SizerInfoPostHoc)
+        FrameSizer.Add(self.PanelInfoPostHoc, 0, wx.EXPAND)
+        FrameSizer.AddSpacer(10)
+        self.PanelInfoPostHoc.Disable()
+
+        # panel analyse (gfp, all elelctordes ou both)
+        PanelAnalyse = wx.Panel(self, -1)
+        SizerAnalyse = wx.BoxSizer(wx.VERTICAL)
+        # choix de l'analyse
+        TextAnalyse = wx.StaticText(
+            PanelAnalyse, -1, label="Choose your Analyse", style=wx.CENTRE)
+        text = ["", "All Electrodes", "GFP Only", "Both"]
+        self.BoxAnalyse = wx.ComboBox(
+            PanelAnalyse, 9, choices=text, style=wx.CB_READONLY)
+        SizerAnalyse.Add(TextAnalyse, 0, wx.CENTRE)
+        SizerAnalyse.Add(self.BoxAnalyse, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelAnalyse.SetSizer(SizerAnalyse)
+        FrameSizer.Add(PanelAnalyse, 0, wx.EXPAND)
+        self.SetSizer(FrameSizer)
+        self.Show(True)
         self.PanelIter.Disable()
         self.PanelIterPostHoc.Disable()
-        self.PanelSPI.Disable()
 
-        # Events
-        wx.EVT_CHECKBOX(self, self.AnovaCheckBox.Id, self.checkAnova)
-        wx.EVT_RADIOBUTTON(self, self.RadioParam.Id, self.clickParam)
-        wx.EVT_TEXT(self, self.AlphaInput.Id, self.chooseAlpha)
-        wx.EVT_TEXT(self, self.PtsConseqInput.Id, self.choosePtsConseq)
-        wx.EVT_TEXT(self, self.ClustInput.Id, self.chooseClust)
-        wx.EVT_TEXT(self, self.IterInput.Id, self.chooseIter)
+        # panel SPI (donner le ficheir SPI pour le calcul des pts conseq)
+        self.PanelSpi = wx.Panel(self, -1)
+        SizerSpi = wx.GridBagSizer()
+        # selection Spi file
+        TextSpi = wx.StaticText(
+            self.PanelSpi, -1, label="Select xyz File", style=wx.ALIGN_CENTER)
+        SizerSpi.Add(TextSpi, (0, 0), (1, 5), wx.EXPAND)
+        self.TextSpi = wx.TextCtrl(
+            self.PanelSpi, -1, value="", style=wx.TE_READONLY)
+        self.TextSpi.SetBackgroundColour(wx.WHITE)
+        SizerSpi.Add(self.TextSpi, (1, 0), (1, 4), wx.EXPAND)
+        ButtonSpi = wx.Button(self.PanelSpi, 14, label="Browse")
+        SizerSpi.Add(ButtonSpi, (1, 5), (1, 1), wx.EXPAND)
+        self.PanelSpi.Disable()
+        # lie les sizer au panel
+        self.PanelSpi.SetSizer(SizerSpi)
+        SizerSpi.AddGrowableCol(0)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(self.PanelSpi, 0, wx.EXPAND)
+        self.PanelSpi.Disable()
 
-        wx.EVT_CHECKBOX(self, self.PostHocCheckBox.Id, self.checkPostHoc)
-        wx.EVT_RADIOBUTTON(self, self.RadioParamPostHoc.Id,
-                           self.clickParamPostHoc)
-        wx.EVT_TEXT(self, self.AlphaInputPostHoc.Id, self.chooseAlphaPostHoc)
-        wx.EVT_TEXT(self, self.PtsConseqInputPostHoc.Id,
-                    self.choosePtsConseqPostHoc)
-        wx.EVT_TEXT(self, self.ClustInputPostHoc.Id, self.chooseClustPostHoc)
-        wx.EVT_TEXT(self, self.IterInputPostHoc.Id, self.chooseIterPostHoc)
-        wx.EVT_COMBOBOX(self, self.BoxAnalyse.Id, self.AnalyseChoose)
+        wx.EVT_RADIOBUTTON(self, 10, self.ClickParam)
+        wx.EVT_RADIOBUTTON(self, 11, self.ClickParamPostHoc)
+        # wx.EVT_RADIOBOX(self,2,self.ClickParam)
+        wx.EVT_COMBOBOX(self, 9, self.AnalyseChoose)
+        # alpha
+        wx.EVT_TEXT(self, 1, self.AlphaChoose)
+        wx.EVT_TEXT(self, 5, self.AlphaChoosePostHoc)
 
-        wx.EVT_BUTTON(self, self.ButtonSPI.Id, self.chooseSPI)
+        # Pts Conseq
+        wx.EVT_TEXT(self, 2, self.PtsConseqChoose)
+        wx.EVT_TEXT(self, 6, self.PtsConseqChoosePostHoc)
+        # Pts Conseq
+        wx.EVT_TEXT(self, 3, self.ClustChoose)
+        wx.EVT_TEXT(self, 7, self.ClustChoosePostHoc)
+        # iteration
+        wx.EVT_TEXT(self, 4, self.IterChoose)
+        wx.EVT_TEXT(self, 8, self.IterChoosePostHoc)
 
-    def checkAnova(self, event):
-        self.AnovaPerform = self.AnovaCheckBox.GetValue()
-        if self.AnovaCheckBox.GetValue():
-            self.PanelAnova.Enable()
-        else:
-            self.PanelAnova.Disable()
-        event.Skip()
+        wx.EVT_CHECKBOX(self, 12, self.AnovaCheck)
+        wx.EVT_CHECKBOX(self, 13, self.PostHocCheck)
 
-    def checkPostHoc(self, event):
-        self.PostHoc = self.PostHocCheckBox.GetValue()
-        if self.PostHoc:
-            self.PanelPostHoc.Enable()
-            self.AnalyseType = self.BoxAnalyse.GetValue()
-            if self.AnalyseType == 'GFP Only':
-                self.PanelClustPostHoc.Disable()
-            else:
-                self.PanelClustPostHoc.Enable()
+        # browse xyz
+        wx.EVT_BUTTON(self, 14, self.XYZChoose)
 
-            if self.ParamPostHoc:
-                self.PanelIterPostHoc.Disable()
-            else:
-                self.PanelIterPostHoc.Enable()
-        else:
-            self.PanelPostHoc.Disable()
-        event.Skip()
-
-    def clickParam(self, event):
+    def ClickParam(self, event):
         self.Param = self.RadioParam.GetValue()
         if self.Param:
             self.PanelIter.Disable()
         else:
             self.PanelIter.Enable()
-        event.Skip()
 
-    def clickParamPostHoc(self, event):
-        self.ParamPostHoc = self.RadioParamPostHoc.GetValue()
-        if self.ParamPostHoc:
+    def ClickParamPostHoc(self, event):
+        self.PostHocParam = self.RadioParamPostHoc.GetValue()
+        if self.PostHocParam:
             self.PanelIterPostHoc.Disable()
         else:
+            Iter = self.IterInput.GetValue()
+            self.IterInputPostHoc.SetValue(str(Iter))
             self.PanelIterPostHoc.Enable()
-        event.Skip()
-
-    def messageNotInteger(self, inputStr):
-        dlg = wx.MessageDialog(
-            self, "'%s' is not a positive Integer" % inputStr, style=wx.OK)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-    def messageNotAlpha(self, inputStr):
-        dlg = wx.MessageDialog(
-            self, "'%s' is not a float between 0 and 1" % inputStr,
-            style=wx.OK)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-    def chooseIter(self, event):
-        inputStr = self.IterInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.nIteration = int(inputStr)
-            self.IterInputPostHoc.SetValue(str(self.nIteration))
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.IterInput.SetValue(str(self.nIteration))
-        event.Skip()
-
-    def chooseIterPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.IterInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.nIterationPostHoc = int(inputStr)
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.IterInputPostHoc.SetValue(str(self.nIterationPostHoc))
-        event.Skip()
-
-    def checkAlpha(self, inputStr):
-        alphaOK = inputStr.replace('.', '', 1).isdigit()
-        if alphaOK:
-            alpha = float(inputStr)
-            if alpha > 0 and alpha < 1:
-                alphaOK = True
-            else:
-                alphaOK = False
-        return alphaOK
-
-    def chooseAlpha(self, event):
-        inputStr = self.AlphaInput.GetValue()
-        inputIsOK = self.checkAlpha(inputStr)
-        if inputIsOK:
-            self.Alpha = float(inputStr)
-            self.AlphaInputPostHoc.SetValue(inputStr)
-        elif inputStr not in ['', '.', '0', '0.', '0.0', '.0', '0.00', '.00',
-                              '0.000', '.000', '0.0000', '.0000', '0.00000',
-                              '.00000']:
-            self.messageNotAlpha(inputStr)
-            self.AlphaInput.SetValue(str(self.Alpha))
-        event.Skip()
-
-    def chooseAlphaPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.AlphaInputPostHoc.GetValue()
-        inputIsOK = self.checkAlpha(inputStr)
-        if inputIsOK:
-            self.AlphaPostHoc = float(inputStr)
-        elif inputStr not in ['', '.', '0', '0.', '0.0', '.0', '0.00', '.00',
-                              '0.000', '.000', '0.0000', '.0000', '0.00000',
-                              '.00000']:
-            self.messageNotAlpha(inputStr)
-            if 'e-' in str(self.AlphaPostHoc):
-                output = '%.16f' % self.AlphaPostHoc
-                self.AlphaInputPostHoc.SetValue(output.rstrip('0'))
-            else:
-                self.AlphaInputPostHoc.SetValue(str(self.AlphaPostHoc))
-        print self.AlphaPostHoc
-        event.Skip()
-
-    def choosePtsConseq(self, event):
-        inputStr = self.PtsConseqInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.PtsConseq = int(inputStr)
-            self.PtsConseqInputPostHoc.SetValue(str(self.PtsConseq))
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.PtsConseqInput.SetValue(str(self.PtsConseq))
-        event.Skip()
-
-    def choosePtsConseqPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.PtsConseqInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.PtsConseqPostHoc = int(inputStr)
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.PtsConseqInputPostHoc.SetValue(str(self.PtsConseqPostHoc))
-        event.Skip()
-
-    def chooseClust(self, event):
-        inputStr = self.ClustInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.Clust = int(inputStr)
-            self.ClustInputPostHoc.SetValue(str(self.Clust))
-            if self.Clust != 1:
-                self.PanelSPI.Enable()
-            else:
-                self.PanelSPI.Disable()
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.ClustInput.SetValue(str(self.Clust))
-        event.Skip()
-
-    def chooseClustPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.ClustInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.ClustPostHoc = int(inputStr)
-            if self.ClustPostHoc != 1:
-                self.PanelSPI.Enable()
-            else:
-                self.PanelSPI.Disable()
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.ClustInputPostHoc.SetValue(str(self.ClustPostHoc))
-        event.Skip()
-
-    def chooseSPI(self, event):
-        dlgXYZ = wx.FileDialog(None, "Load xyz file",
-                               defaultDir=self.SPIPath,
-                               wildcard='*.xyz',
-                               style=wx.OPEN)
-        if dlgXYZ.ShowModal() == wx.ID_OK:
-            self.SPIFile = dlgXYZ.GetPath()
-            self.FieldSPIFile.SetValue(self.SPIFile)
-            self.SPIPath = dirname(self.SPIFile)
-        dlgXYZ.Destroy()
-        event.Skip()
+            self.IterPostHoc = Iter
 
     def AnalyseChoose(self, event):
-        self.AnalyseType = self.BoxAnalyse.GetValue()
-        if self.AnalyseType != 'GFP Only':
+        self.Analyse = self.BoxAnalyse.GetValue()
+        self.BoxAnalyse.SetBackgroundColour(wx.WHITE)
+        if self.Analyse != 'GFP Only':
             self.PanelClust.Enable()
-            self.PanelClustPostHoc.Enable()
+            if self.PostHoc:
+                self.PanelClustPostHoc.Enable()
+            if self.Clust != 1 or self.ClustPostHoc != 1:
+                self.PanelSpi.Enable()
+            else:
+                self.PanelSpi.Disable()
+
         else:
             self.PanelClust.Disable()
             self.PanelClustPostHoc.Disable()
+            self.PanelSpi.Disable()
+
+    def AlphaChoose(self, event):
+        alpha = self.AlphaInput.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.Alpha = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.AlphaInputPostHoc.SetValue(str(alpha))
+
+    def AlphaChoosePostHoc(self, event):
+        alpha = self.AlphaInputPostHoc.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.AlphaPostHoc = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def PtsConseqChoose(self, event):
+        pts_consec = self.PtsConsequInput.GetValue()
+        if pts_consec != "":
+            try:
+                pts_consec = int(pts_consec)
+                self.PtsConseq = pts_consec
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.PtsConsequInputPostHoc.SetValue(str(pts_consec))
+
+    def PtsConseqChoosePostHoc(self, event):
+        pts_consec = self.PtsConsequInputPostHoc.GetValue()
+        if pts_consec != "":
+            try:
+                pts_consec = int(pts_consec)
+                self.PtsConseqPostHoc = int(pts_consec)
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def PostHocCheck(self, event):
+        self.PostHoc = self.PostHocCheckBox.GetValue()
+        if self.PostHocCheckBox.GetValue():
+            self.PanelInfoPostHoc.Enable()
+            alpha = self.AlphaInput.GetValue()
+            clust = self.ClustInput.GetValue()
+            pts_consec = self.PtsConsequInput.GetValue()
+            self.PtsConsequInputPostHoc.SetValue(str(pts_consec))
+            self.AlphaInputPostHoc.SetValue(str(alpha))
+            if self.Analyse == 'GFP Only' or self.Analyse is None:
+                self.PanelClustPostHoc.Disable()
+            else:
+                self.PanelClustPostHoc.Enable()
+                self.ClustInputPostHoc.SetValue(str(clust))
+            self.ClustPostHoc = int(clust)
+            self.AlphaPostHoc = float(alpha)
+            self.PtsConseqPostHoc = int(pts_consec)
+            if self.PostHocParam:
+                self.PanelIterPostHoc.Disable()
+            else:
+                Iter = self.IterInput.GetValue()
+                self.IterInputPostHoc.SetValue(str(Iter))
+                self.PanelIterPostHoc.Enable()
+                self.IterPostHoc = int(Iter)
+        else:
+            self.PanelInfoPostHoc.Disable()
+
+    def AnovaCheck(self, evemt):
+        self.AnovaPerformed = self.AnovaCheckBox.GetValue()
+        if self.AnovaCheckBox.GetValue():
+            self.PanelInfoAnova.Enable()
+        else:
+            self.PanelInfoAnova.Disable()
+
+    def IterChoose(self, event):
+        Iter = self.IterInput.GetValue()
+        if Iter != "":
+            try:
+                Iter = int(Iter)
+                self.Iter = Iter
+            except:
+                dlg = wx.MessageDialog(
+                    self, "Integer number for Iteration", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.IterInputPostHoc.SetValue(str(Iter))
+
+    def IterChoosePostHoc(self, event):
+        Iter = self.IterInputPostHoc.GetValue()
+        if Iter != "":
+            try:
+                Iter = int(Iter)
+                self.IterPostHoc = Iter
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Iteration in Post-Hoc Panel",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def ClustChoose(self, event):
+        clust = self.ClustInput.GetValue()
+        if clust != "":
+            try:
+                clust = int(clust)
+                self.Clust = clust
+                if clust == 1:
+                    self.PanelSpi.Disable()
+                else:
+                    self.PanelSpi.Enable()
+            except:
+                dlg = wx.MessageDialog(self,
+                                       "Integer number for Cluster size",
+                                       style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.ClustInputPostHoc.SetValue(str(clust))
+
+    def ClustChoosePostHoc(self, event):
+        clust = self.ClustInputPostHoc.GetValue()
+        if clust != "":
+            try:
+                clust = int(clust)
+                self.ClustPostHoc = clust
+                if clust == 1:
+                    self.PanelSpi.Disable()
+                else:
+                    self.PanelSpi.Enable()
+            except:
+                dlg = wx.MessageDialog(self,
+                                       "Integer number for Cluster size",
+                                       style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def XYZChoose(self, event):
+        wx.InitAllImageHandlers()
+        dlg = wx.FileDialog(
+            None, "select XYZ file", wildcard="*.xyz", style=wx.OPEN)
+        retour = dlg.ShowModal()
+        chemin = dlg.GetPath()
+        fichier = dlg.GetFilename()
+        self.TextSpi.SetLabel(chemin)
+        self.Spi = chemin
+        dlg.Destroy()
+        dlg.Show(True)
 
 
 class AnovaIS(wx.Panel):
 
-    """TODO: EXPLANATION TEXT"""
-
-    def __init__(self, notebook):
-        wx.Panel.__init__(self, parent=notebook)
-
-        # Specify relevant variables
-        self.AnovaPerform = True
-        self.PostHoc = False
+    def __init__(self, conteneur):
+        wx.Panel.__init__(self, parent=conteneur)
+        FrameSizer = wx.BoxSizer(wx.VERTICAL)
+        # definition des OutPut
         self.Param = True
-        self.ParamPostHoc = True
-        self.nIteration = 1000
-        self.nIterationPostHoc = 1000
+        self.PostHocParam = True
         self.Alpha = 0.05
-        self.AlphaPostHoc = 0.05
+        self.AlphaPostHoc = None
         self.PtsConseq = 1
         self.PtsConseqPostHoc = 1
         self.Clust = 1
-        self.ClustPostHoc = 1
-        self.SPIFile = ''
-        self.SPIPath = ''
+        self.ClustPostHoc = None
+        self.Spi = None
+        self.PostHoc = False
+        self.AnovaPerformed = True
+        self.Iter = 1000
+        self.IterPostHoc = None
+        # on cree les panels 1 a 1
+        # Panel Anova perormed
+        FrameSizer.AddSpacer(10)
+        PanelAnova = wx.Panel(self, -1)
+        SizerAnova = wx.BoxSizer(wx.VERTICAL)
+        self.AnovaCheckBox = wx.CheckBox(PanelAnova, 1, "Performed ANOVA")
+        SizerAnova.Add(self.AnovaCheckBox, 0, wx.EXPAND)
+        PanelAnova.SetSizer(SizerAnova)
+        FrameSizer.Add(PanelAnova, 0, wx.EXPAND)
+        FrameSizer.AddSpacer(10)
+        self.AnovaCheckBox.SetValue(True)
 
-        # Panel: Perform ANOVA
-        self.PanelAnova = wx.Panel(self, wx.ID_ANY)
-        sizerAnova = wx.BoxSizer(wx.VERTICAL)
+        self.PanelInfoAnova = wx.Panel(self, -1)
+        SizerInfoAnova = wx.BoxSizer(wx.VERTICAL)
 
-        # Add "Perform ANOVA" checkbox
-        self.AnovaCheckBox = wx.CheckBox(self, wx.ID_ANY, "Perform ANOVA")
-        self.AnovaCheckBox.SetValue(self.AnovaPerform)
-
-        # Parametric / Non-Parametric Test Section
-        PanelParam = wx.Panel(self.PanelAnova, wx.ID_ANY)
-        PanelNonParam = wx.Panel(PanelParam, wx.ID_ANY)
-
+        # panel pour les parma /non param
+        PanelParamAll = wx.Panel(self.PanelInfoAnova, -1)
+        SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
+        PanelParam = wx.Panel(PanelParamAll, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
+        # creation des radio button
         self.RadioParam = wx.RadioButton(
-            PanelNonParam, wx.ID_ANY, 'Parametric Test', style=wx.RB_GROUP)
+            PanelParam, 1, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParam, 0, wx.TOP)
+        SizerParam.AddSpacer(5)
         self.RadioNonParam = wx.RadioButton(
-            PanelNonParam, self.RadioParam.Id,
-            'Non-Parametric Test (Bootstrapping)')
-
-        # Iteration Section
-        self.PanelIter = wx.Panel(PanelParam, wx.ID_ANY)
-        TxtIter = wx.StaticText(self.PanelIter, wx.ID_ANY, label=" Iteration",
-                                style=wx.ALIGN_CENTER)
+            PanelParam, 1, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParam, 0, wx.TOP)
+        # lie les sizer au panel
+        PanelParam.SetSizer(SizerParam)
+        SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
+        # Bouton iteration
+        self.PanelIter = wx.Panel(PanelParamAll, -1)
+        IterSizer = wx.BoxSizer(wx.VERTICAL)
+        IterText = wx.StaticText(
+            self.PanelIter, -1, label="Iteration", style=wx.ALIGN_CENTER)
+        IterSizer.Add(IterText, 0, wx.EXPAND)
+        IterSizer.AddSpacer(5)
         self.IterInput = wx.TextCtrl(
-            self.PanelIter, wx.ID_ANY, value=str(self.nIteration),
-            style=wx.TE_CENTRE)
+            self.PanelIter, 4, value=str(self.Iter), style=wx.TE_CENTRE)
+        IterSizer.Add(self.IterInput, 0, wx.EXPAND)
+        self.PanelIter.SetSizer(IterSizer)
+        SizerParamAll.Add(self.PanelIter, 0, wx.EXPAND)
+        PanelParamAll.SetSizer(SizerParamAll)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoAnova.Add(PanelParamAll, 0, wx.EXPAND)
+        SizerInfoAnova.AddSpacer(10)
 
-        # Statistic (alpha, conseq pts, cluster size) Section
-        PanelStats = wx.Panel(self.PanelAnova, wx.ID_ANY)
-        PanelAlpha = wx.Panel(PanelStats, wx.ID_ANY)
-        TxtAlpha = wx.StaticText(PanelAlpha, wx.ID_ANY, label=" Alpha Value",
-                                 style=wx.ALIGN_CENTER)
+        # panel avec les infos Statitstique (alpha,pts conseq, Clust)
+        PanelInfo = wx.Panel(self.PanelInfoAnova, -1)
+        SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
+
+        PanelAlpha = wx.Panel(PanelInfo, -1)
+        SizerAlpha = wx.BoxSizer(wx.VERTICAL)
+        AlphaText = wx.StaticText(
+            PanelAlpha, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerAlpha.Add(AlphaText, 0, wx.EXPAND)
         self.AlphaInput = wx.TextCtrl(
-            PanelAlpha, wx.ID_ANY, value=str(self.Alpha), style=wx.TE_CENTRE)
+            PanelAlpha, 1, value=str(self.Alpha), style=wx.TE_CENTRE)
+        SizerAlpha.Add(self.AlphaInput, 0, wx.EXPAND)
+        PanelAlpha.SetSizer(SizerAlpha)
+        SizerInfo.Add(PanelAlpha)
+        SizerInfo.AddSpacer(10)
 
-        PanelPtsConseq = wx.Panel(PanelStats, wx.ID_ANY)
-        PtsConseqText = wx.StaticText(
-            PanelPtsConseq, wx.ID_ANY, label="Consecutive Time Frames",
-            style=wx.ALIGN_CENTER)
-        self.PtsConseqInput = wx.TextCtrl(
-            PanelPtsConseq, wx.ID_ANY, value=str(self.PtsConseq),
-            style=wx.TE_CENTRE)
+        PanelPtsConseq = wx.Panel(PanelInfo, -1)
+        SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
+        SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
+        self.PtsConsequInput = wx.TextCtrl(
+            PanelPtsConseq, 2, value=str(self.PtsConseq), style=wx.TE_CENTRE)
+        SizerPtsConseq.Add(self.PtsConsequInput, 0, wx.EXPAND)
+        PanelPtsConseq.SetSizer(SizerPtsConseq)
+        SizerInfo.Add(PanelPtsConseq)
+        SizerInfo.AddSpacer(10)
 
-        self.PanelClust = wx.Panel(PanelStats, wx.ID_ANY)
-        TxtClust = wx.StaticText(
-            self.PanelClust, wx.ID_ANY, label="Cluster Size (Voxels)",
-            style=wx.ALIGN_CENTER)
-        self.ClustInput = wx.TextCtrl(
-            self.PanelClust, wx.ID_ANY, value=str(self.Clust),
-            style=wx.TE_CENTRE)
-
-        # Create Structure of "Perform ANOVA"
-        sizerNonParam = wx.BoxSizer(wx.VERTICAL)
-        sizerNonParam.Add(self.RadioParam, 0, wx.TOP)
-        sizerNonParam.AddSpacer(2)
-        sizerNonParam.Add(self.RadioNonParam, 0, wx.TOP)
-        PanelNonParam.SetSizer(sizerNonParam)
-
-        sizerIter = wx.BoxSizer(wx.VERTICAL)
-        sizerIter.Add(TxtIter, 0, wx.EXPAND)
-        sizerIter.AddSpacer(2)
-        sizerIter.Add(self.IterInput, 0, wx.EXPAND)
-        self.PanelIter.SetSizer(sizerIter)
-
-        sizerParam = wx.BoxSizer(wx.HORIZONTAL)
-        sizerParam.Add(PanelNonParam, 0, wx.EXPAND)
-        sizerParam.AddSpacer(10)
-        sizerParam.Add(self.PanelIter, 0, wx.EXPAND)
-        PanelParam.SetSizer(sizerParam)
-
-        sizerAlpha = wx.BoxSizer(wx.VERTICAL)
-        sizerAlpha.Add(TxtAlpha, 0, wx.EXPAND)
-        sizerAlpha.Add(self.AlphaInput, 0, wx.EXPAND)
-        PanelAlpha.SetSizer(sizerAlpha)
-
-        sizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
-        sizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
-        sizerPtsConseq.Add(self.PtsConseqInput, 0, wx.EXPAND)
-        PanelPtsConseq.SetSizer(sizerPtsConseq)
-
+        self.PanelClust = wx.Panel(PanelInfo, -1)
         SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
-        SizerPtsClust.Add(TxtClust, 0, wx.EXPAND)
+        ClustText = wx.StaticText(self.PanelClust, -1,
+                                  label="Cluster Size (Voxels)",
+                                  style=wx.ALIGN_CENTER)
+        SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
+        self.ClustInput = wx.TextCtrl(
+            self.PanelClust, 3, value=str(self.Clust), style=wx.TE_CENTRE)
         SizerPtsClust.Add(self.ClustInput, 0, wx.EXPAND)
         self.PanelClust.SetSizer(SizerPtsClust)
+        SizerInfo.Add(self.PanelClust)
+        SizerInfo.AddSpacer(10)
+        # lie les sizer au panel
+        PanelInfo.SetSizerAndFit(SizerInfo)
+        SizerInfo.SetSizeHints(PanelInfo)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoAnova.Add(PanelInfo, 0, wx.EXPAND)
+        self.PanelInfoAnova.SetSizer(SizerInfoAnova)
+        FrameSizer.Add(self.PanelInfoAnova, 0, wx.EXPAND)
+        FrameSizer.AddSpacer(10)
 
-        sizerStats = wx.BoxSizer(wx.HORIZONTAL)
-        sizerStats.Add(PanelAlpha)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(PanelPtsConseq)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(self.PanelClust)
-        sizerStats.AddSpacer(10)
-        PanelStats.SetSizer(sizerStats)
+        # Panel Post-Hoc
+        PanelPostHoc = wx.Panel(self, -1)
+        SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
+        self.PostHocCheckBox = wx.CheckBox(
+            PanelPostHoc, 2,
+            "Post hoc analysis (all possible t-test only on ANOVA not on ANCOVA)")
+        SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
+        SizerPostHoc.AddSpacer(10)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelPostHoc.SetSizer(SizerPostHoc)
 
-        sizerAnova.Add(PanelParam, 0, wx.EXPAND)
-        sizerAnova.AddSpacer(10)
-        sizerAnova.Add(PanelStats, 0, wx.EXPAND)
-        sizerAnova.AddSpacer(10)
-        self.PanelAnova.SetSizer(sizerAnova)
+        # lie le sizer de la fenetre a la fenetre
 
-        # Panel: Perform Post hoc Analysis
-        self.PanelPostHoc = wx.Panel(self, wx.ID_ANY)
-        sizerPostHoc = wx.BoxSizer(wx.VERTICAL)
-
-        # Add "Post hoc Analysis" checkbox
-        titlePostHocText = "Post hoc Analysis (all possible t-test)"
-        titlePostHocText += " - only on ANOVA, not on ANCOVA"
-        # TODO: check that field is disabled if there is a covariate
-        self.PostHocCheckBox = wx.CheckBox(self, wx.ID_ANY, titlePostHocText)
-        self.PostHocCheckBox.SetValue(self.PostHoc)
-
-        # Parametric / Non-Parametric Test Section
-        PanelParam = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
-        PanelNonParam = wx.Panel(PanelParam, wx.ID_ANY)
-
+        # Panel Info Post-Hoc
+        self.PanelInfoPostHoc = wx.Panel(self, -1)
+        SizerInfoPostHoc = wx.BoxSizer(wx.VERTICAL)
+        # panel Param
+        PanelParamAll = wx.Panel(self.PanelInfoPostHoc, -1)
+        SizerParamAll = wx.BoxSizer(wx.HORIZONTAL)
+        PanelParam = wx.Panel(PanelParamAll, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
         self.RadioParamPostHoc = wx.RadioButton(
-            PanelNonParam, wx.ID_ANY, 'Parametric Test', style=wx.RB_GROUP)
+            PanelParam, 2, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParamPostHoc, 0, wx.EXPAND)
+        SizerParam.AddSpacer(5)
         self.RadioNonParamPostHoc = wx.RadioButton(
-            PanelNonParam, self.RadioParamPostHoc.Id,
-            'Non-Parametric Test (Bootstrapping)')
-
-        # IterPostHocation Section
-        self.PanelIterPostHoc = wx.Panel(PanelParam, wx.ID_ANY)
-        TxtIterPostHoc = wx.StaticText(
-            self.PanelIterPostHoc, wx.ID_ANY, label=" Iteration",
-            style=wx.ALIGN_CENTER)
+            PanelParam, 2, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParamPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelParam.SetSizer(SizerParam)
+        SizerParamAll.Add(PanelParam, 0, wx.EXPAND)
+        self.PanelIterPostHoc = wx.Panel(PanelParamAll, -1)
+        IterSizer = wx.BoxSizer(wx.VERTICAL)
+        IterText = wx.StaticText(self.PanelIterPostHoc, -1,
+                                 label="Iteration", style=wx.ALIGN_CENTER)
+        IterSizer.Add(IterText, 0, wx.EXPAND)
+        IterSizer.AddSpacer(5)
         self.IterInputPostHoc = wx.TextCtrl(
-            self.PanelIterPostHoc, wx.ID_ANY, style=wx.TE_CENTRE,
-            value=str(self.nIterationPostHoc))
+            self.PanelIterPostHoc, 8, value="", style=wx.TE_CENTRE)
+        IterSizer.Add(self.IterInputPostHoc, 0, wx.EXPAND)
+        self.PanelIterPostHoc.SetSizer(IterSizer)
+        SizerParamAll.Add(self.PanelIterPostHoc, 0, wx.EXPAND)
+        PanelParamAll.SetSizer(SizerParamAll)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoPostHoc.Add(PanelParamAll, 0, wx.EXPAND)
+        SizerInfoPostHoc.AddSpacer(10)
 
-        # Statistic (alpha, conseq pts, cluster size) Section
-        PanelStatsPostHoc = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
-        PanelAlphaPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        TxtAlphaPostHoc = wx.StaticText(
-            PanelAlphaPostHoc, wx.ID_ANY, label=" Alpha Value",
-            style=wx.ALIGN_CENTER)
+        PanelInfo = wx.Panel(self.PanelInfoPostHoc, -1)
+        SizerInfo = wx.BoxSizer(wx.HORIZONTAL)
+
+        PanelAlpha = wx.Panel(PanelInfo, -1)
+        SizerAlpha = wx.BoxSizer(wx.VERTICAL)
+        AlphaText = wx.StaticText(
+            PanelAlpha, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerAlpha.Add(AlphaText, 0, wx.EXPAND)
         self.AlphaInputPostHoc = wx.TextCtrl(
-            PanelAlphaPostHoc, wx.ID_ANY, value=str(self.Alpha),
-            style=wx.TE_CENTRE)
+            PanelAlpha, 5, value=str(self.Alpha), style=wx.TE_CENTRE)
+        SizerAlpha.Add(self.AlphaInputPostHoc, 0, wx.EXPAND)
+        PanelAlpha.SetSizer(SizerAlpha)
+        SizerInfo.Add(PanelAlpha)
+        SizerInfo.AddSpacer(10)
 
-        PanelPtsConseqPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        PtsConseqTextPostHoc = wx.StaticText(
-            PanelPtsConseqPostHoc, wx.ID_ANY, label="Consecutive Time Frames",
-            style=wx.ALIGN_CENTER)
-        self.PtsConseqInputPostHoc = wx.TextCtrl(
-            PanelPtsConseqPostHoc, wx.ID_ANY, value=str(self.PtsConseqPostHoc),
-            style=wx.TE_CENTRE)
+        PanelPtsConseq = wx.Panel(PanelInfo, -1)
+        SizerPtsConseq = wx.BoxSizer(wx.VERTICAL)
+        PtsConseqText = wx.StaticText(PanelPtsConseq, -1,
+                                      label="Consecutive Time Frame",
+                                      style=wx.ALIGN_CENTER)
+        SizerPtsConseq.Add(PtsConseqText, 0, wx.EXPAND)
+        self.PtsConsequInputPostHoc = wx.TextCtrl(
+            PanelPtsConseq, 6, value=str(self.PtsConseq), style=wx.TE_CENTRE)
+        SizerPtsConseq.Add(self.PtsConsequInputPostHoc, 0, wx.EXPAND)
+        PanelPtsConseq.SetSizer(SizerPtsConseq)
+        SizerInfo.Add(PanelPtsConseq)
+        SizerInfo.AddSpacer(10)
 
-        self.PanelClustPostHoc = wx.Panel(PanelStatsPostHoc, wx.ID_ANY)
-        TxtClustPostHoc = wx.StaticText(
-            self.PanelClustPostHoc, wx.ID_ANY,
-            label="Cluster Size (Voxels)", style=wx.ALIGN_CENTER)
-        self.ClustInputPostHoc = wx.TextCtrl(
-            self.PanelClustPostHoc, wx.ID_ANY, value=str(self.ClustPostHoc),
-            style=wx.TE_CENTRE)
+        self.PanelClustPostHoc = wx.Panel(PanelInfo, -1)
+        SizerPtsClust = wx.BoxSizer(wx.VERTICAL)
+        ClustText = wx.StaticText(self.PanelClustPostHoc, -1,
+                                  label="Cluster Size (Electrodes)",
+                                  style=wx.ALIGN_CENTER)
+        SizerPtsClust.Add(ClustText, 0, wx.EXPAND)
+        self.ClustInputPostHoc = wx.TextCtrl(self.PanelClustPostHoc, 7,
+                                             value=str(self.Clust),
+                                             style=wx.TE_CENTRE)
+        SizerPtsClust.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
+        self.PanelClustPostHoc.SetSizer(SizerPtsClust)
+        SizerInfo.Add(self.PanelClustPostHoc)
+        SizerInfo.AddSpacer(10)
+        self.PanelClustPostHoc.Disable()
 
-        # Create Structure of "Perform Post hoc Analysis"
-        sizerNonParam = wx.BoxSizer(wx.VERTICAL)
-        sizerNonParam.Add(self.RadioParamPostHoc, 0, wx.TOP)
-        sizerNonParam.AddSpacer(2)
-        sizerNonParam.Add(self.RadioNonParamPostHoc, 0, wx.TOP)
-        PanelNonParam.SetSizer(sizerNonParam)
+        # lie les sizer au panel
+        PanelInfo.SetSizer(SizerInfo)
+        SizerInfo.SetSizeHints(PanelInfo)
+        # on mets le panel de fichier dans le sizer de la frame
+        SizerInfoPostHoc.Add(PanelInfo, 0, wx.EXPAND)
+        self.PanelInfoPostHoc.SetSizer(SizerInfoPostHoc)
+        FrameSizer.Add(self.PanelInfoPostHoc, 0, wx.EXPAND)
+        FrameSizer.AddSpacer(10)
 
-        sizerIterPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerIterPostHoc.Add(TxtIterPostHoc, 0, wx.EXPAND)
-        sizerIterPostHoc.AddSpacer(2)
-        sizerIterPostHoc.Add(self.IterInputPostHoc, 0, wx.EXPAND)
-        self.PanelIterPostHoc.SetSizer(sizerIterPostHoc)
-
-        sizerParam = wx.BoxSizer(wx.HORIZONTAL)
-        sizerParam.Add(PanelNonParam, 0, wx.EXPAND)
-        sizerParam.AddSpacer(10)
-        sizerParam.Add(self.PanelIterPostHoc, 0, wx.EXPAND)
-        PanelParam.SetSizer(sizerParam)
-
-        sizerAlphaPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerAlphaPostHoc.Add(TxtAlphaPostHoc, 0, wx.EXPAND)
-        sizerAlphaPostHoc.Add(self.AlphaInputPostHoc, 0, wx.EXPAND)
-        PanelAlphaPostHoc.SetSizer(sizerAlphaPostHoc)
-
-        sizerPtsConseqPostHoc = wx.BoxSizer(wx.VERTICAL)
-        sizerPtsConseqPostHoc.Add(PtsConseqTextPostHoc, 0, wx.EXPAND)
-        sizerPtsConseqPostHoc.Add(self.PtsConseqInputPostHoc, 0, wx.EXPAND)
-        PanelPtsConseqPostHoc.SetSizer(sizerPtsConseqPostHoc)
-
-        SizerPtsClustPostHoc = wx.BoxSizer(wx.VERTICAL)
-        SizerPtsClustPostHoc.Add(TxtClustPostHoc, 0, wx.EXPAND)
-        SizerPtsClustPostHoc.Add(self.ClustInputPostHoc, 0, wx.EXPAND)
-        self.PanelClustPostHoc.SetSizer(SizerPtsClustPostHoc)
-
-        sizerStats = wx.BoxSizer(wx.HORIZONTAL)
-        sizerStats.Add(PanelAlphaPostHoc)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(PanelPtsConseqPostHoc)
-        sizerStats.AddSpacer(10)
-        sizerStats.Add(self.PanelClustPostHoc)
-        sizerStats.AddSpacer(10)
-        PanelStatsPostHoc.SetSizer(sizerStats)
-
-        sizerPostHoc.Add(PanelParam, 0, wx.EXPAND)
-        sizerPostHoc.AddSpacer(10)
-        sizerPostHoc.Add(PanelStatsPostHoc, 0, wx.EXPAND)
-        sizerPostHoc.AddSpacer(10)
-        self.PanelPostHoc.SetSizer(sizerPostHoc)
-
-        # Panel: Specify SPI
-        self.PanelSPI = wx.Panel(self, wx.ID_ANY)
-
-        TxtSPI = wx.StaticText(
-            self.PanelSPI, wx.ID_ANY, label="Select XYZ File",
-            style=wx.ALIGN_CENTER)
-        self.FieldSPIFile = wx.TextCtrl(
-            self.PanelSPI, wx.ID_ANY, value=self.SPIFile, style=wx.TE_READONLY)
-        self.ButtonSPI = wx.Button(self.PanelSPI, wx.ID_ANY, label="Browse")
-        sizerSPI = wx.GridBagSizer()
-        sizerSPI.Add(TxtSPI, (0, 0), (1, 5), wx.EXPAND)
-        sizerSPI.Add(self.FieldSPIFile, (1, 0), (1, 4), wx.EXPAND)
-        sizerSPI.Add(self.ButtonSPI, (1, 5), (1, 1), wx.EXPAND)
-        self.PanelSPI.SetSizer(sizerSPI)
-        sizerSPI.AddGrowableCol(0)
-
-        # Create structure of Analysis Frame
-        sizerFrame = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizerFrame)
-        sizerFrame.Add(self.AnovaCheckBox, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PanelAnova, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PostHocCheckBox, 0, wx.EXPAND)
-        sizerFrame.AddSpacer(5)
-        sizerFrame.Add(self.PanelPostHoc, 0, wx.EXPAND)
-        sizerFrame.Add(self.PanelSPI, 0, wx.EXPAND)
-        self.SetSizer(sizerFrame)
-
-        # Inactive certain Sections
-        self.PanelPostHoc.Disable()
+        # panel SPI (donner le ficheir SPI pour le calcul des pts conseq)
+        self.PanelSpi = wx.Panel(self, -1)
+        SizerSpi = wx.GridBagSizer()
+        # selection Spi file
+        TextSpi = wx.StaticText(
+            self.PanelSpi, -1, label="Select Spi File", style=wx.ALIGN_CENTER)
+        SizerSpi.Add(TextSpi, (0, 0), (1, 5), wx.EXPAND)
+        self.TextSpi = wx.TextCtrl(
+            self.PanelSpi, -1, value="", style=wx.TE_READONLY)
+        self.TextSpi.SetBackgroundColour(wx.WHITE)
+        SizerSpi.Add(self.TextSpi, (1, 0), (1, 4), wx.EXPAND)
+        ButtonSpi = wx.Button(self.PanelSpi, 1, label="Browse")
+        SizerSpi.Add(ButtonSpi, (1, 5), (1, 1), wx.EXPAND)
+        self.PanelSpi.Disable()
+        # lie les sizer au panel
+        self.PanelSpi.SetSizer(SizerSpi)
+        SizerSpi.AddGrowableCol(0)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(self.PanelSpi, 0, wx.EXPAND)
+        # lie le sizer de la fenetre a la fenetre
+        self.SetSizer(FrameSizer)
+        self.PanelInfoPostHoc.Disable()
+        self.Show(True)
         self.PanelIter.Disable()
         self.PanelIterPostHoc.Disable()
-        self.PanelSPI.Disable()
+        # param
+        wx.EVT_RADIOBUTTON(self, 1, self.ClickParam)
+        wx.EVT_RADIOBUTTON(self, 2, self.ClickParamPostHoc)
+        # browse spi
+        wx.EVT_BUTTON(self, 1, self.SpiChoose)
+        # alpha
+        wx.EVT_TEXT(self, 1, self.AlphaChoose)
+        wx.EVT_TEXT(self, 5, self.AlphaChoosePostHoc)
+        # Pts Conseq
+        wx.EVT_TEXT(self, 2, self.PtsConseqChoose)
+        wx.EVT_TEXT(self, 6, self.PtsConseqChoosePostHoc)
+        # Pts Conseq
+        wx.EVT_TEXT(self, 3, self.ClustChoose)
+        wx.EVT_TEXT(self, 7, self.ClustChoosePostHoc)
+        # Post Hoc
+        wx.EVT_CHECKBOX(self, 2, self.PostHocCheck)
+        wx.EVT_CHECKBOX(self, 1, self.AnovaCheck)
 
-        # Events
-        wx.EVT_CHECKBOX(self, self.AnovaCheckBox.Id, self.checkAnova)
-        wx.EVT_RADIOBUTTON(self, self.RadioParam.Id, self.clickParam)
-        wx.EVT_TEXT(self, self.AlphaInput.Id, self.chooseAlpha)
-        wx.EVT_TEXT(self, self.PtsConseqInput.Id, self.choosePtsConseq)
-        wx.EVT_TEXT(self, self.ClustInput.Id, self.chooseClust)
-        wx.EVT_TEXT(self, self.IterInput.Id, self.chooseIter)
+        # iteration
+        wx.EVT_TEXT(self, 4, self.IterChoose)
+        wx.EVT_TEXT(self, 8, self.IterChoosePostHoc)
 
-        wx.EVT_CHECKBOX(self, self.PostHocCheckBox.Id, self.checkPostHoc)
-        wx.EVT_RADIOBUTTON(self, self.RadioParamPostHoc.Id,
-                           self.clickParamPostHoc)
-        wx.EVT_TEXT(self, self.AlphaInputPostHoc.Id, self.chooseAlphaPostHoc)
-        wx.EVT_TEXT(self, self.PtsConseqInputPostHoc.Id,
-                    self.choosePtsConseqPostHoc)
-        wx.EVT_TEXT(self, self.ClustInputPostHoc.Id, self.chooseClustPostHoc)
-        wx.EVT_TEXT(self, self.IterInputPostHoc.Id, self.chooseIterPostHoc)
-
-        wx.EVT_BUTTON(self, self.ButtonSPI.Id, self.chooseSPI)
-
-    def checkAnova(self, event):
-        self.AnovaPerform = self.AnovaCheckBox.GetValue()
-        if self.AnovaCheckBox.GetValue():
-            self.PanelAnova.Enable()
-        else:
-            self.PanelAnova.Disable()
-        event.Skip()
-
-    def checkPostHoc(self, event):
-        self.PostHoc = self.PostHocCheckBox.GetValue()
-        if self.PostHoc:
-            self.PanelPostHoc.Enable()
-            if self.ParamPostHoc:
-                self.PanelIterPostHoc.Disable()
-            else:
-                self.PanelIterPostHoc.Enable()
-        else:
-            self.PanelPostHoc.Disable()
-        event.Skip()
-
-    def clickParam(self, event):
+    def ClickParam(self, event):
         self.Param = self.RadioParam.GetValue()
         if self.Param:
             self.PanelIter.Disable()
         else:
             self.PanelIter.Enable()
-        event.Skip()
 
-    def clickParamPostHoc(self, event):
-        self.ParamPostHoc = self.RadioParamPostHoc.GetValue()
-        if self.ParamPostHoc:
+    def ClickParamPostHoc(self, event):
+        self.PostHocParam = self.RadioParamPostHoc.GetValue()
+        if self.PostHocParam:
             self.PanelIterPostHoc.Disable()
         else:
+            Iter = self.IterInput.GetValue()
+            self.IterInputPostHoc.SetValue(str(Iter))
             self.PanelIterPostHoc.Enable()
-        event.Skip()
+            self.IterPostHoc = Iter
 
-    def messageNotInteger(self, inputStr):
-        dlg = wx.MessageDialog(
-            self, "'%s' is not a positive Integer" % inputStr, style=wx.OK)
-        dlg.ShowModal()
+    def SpiChoose(self, event):
+        wx.InitAllImageHandlers()
+        dlg = wx.FileDialog(
+            None, "select Spi file", wildcard="*.spi", style=wx.OPEN)
+        retour = dlg.ShowModal()
+        chemin = dlg.GetPath()
+        fichier = dlg.GetFilename()
+        self.TextSpi.SetLabel(chemin)
+        self.Spi = chemin
         dlg.Destroy()
+        dlg.Show(True)
 
-    def messageNotAlpha(self, inputStr):
-        dlg = wx.MessageDialog(
-            self, "'%s' is not a float between 0 and 1" % inputStr,
-            style=wx.OK)
-        dlg.ShowModal()
-        dlg.Destroy()
+    def AlphaChoose(self, event):
+        alpha = self.AlphaInput.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.Alpha = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.AlphaInputPostHoc.SetValue(str(alpha))
 
-    def chooseIter(self, event):
-        inputStr = self.IterInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.nIteration = int(inputStr)
-            self.IterInputPostHoc.SetValue(str(self.nIteration))
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.IterInput.SetValue(str(self.nIteration))
-        event.Skip()
+    def AlphaChoosePostHoc(self, event):
+        alpha = self.AlphaInputPostHoc.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.AlphaPostHoc = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
 
-    def chooseIterPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.IterInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.nIterationPostHoc = int(inputStr)
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.IterInputPostHoc.SetValue(str(self.nIterationPostHoc))
-        event.Skip()
+    def PtsConseqChoose(self, event):
+        pts_consec = self.PtsConsequInput.GetValue()
+        if pts_consec != "":
+            try:
+                pts_consec = int(pts_consec)
+                self.PtsConseq = pts_consec
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.PtsConsequInputPostHoc.SetValue(str(pts_consec))
 
-    def checkAlpha(self, inputStr):
-        alphaOK = inputStr.replace('.', '', 1).isdigit()
-        if alphaOK:
-            alpha = float(inputStr)
-            if alpha > 0 and alpha < 1:
-                alphaOK = True
+    def PtsConseqChoosePostHoc(self, event):
+        pts_consec = self.PtsConsequInputPostHoc.GetValue()
+        if pts_consec != "":
+            try:
+                pts_consec = int(pts_consec)
+                self.PtsConseqPostHoc = int(pts_consec)
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Consecutive Time Frame",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def ClustChoose(self, event):
+        clust = self.ClustInput.GetValue()
+        if clust != "":
+            try:
+                clust = int(clust)
+                self.Clust = clust
+                if clust == 1:
+                    self.PanelSpi.Disable()
+                else:
+                    self.PanelSpi.Enable()
+            except:
+                dlg = wx.MessageDialog(
+                    self, "Integer number for Cluster size", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.ClustInputPostHoc.SetValue(str(clust))
+
+    def ClustChoosePostHoc(self, event):
+        clust = self.ClustInputPostHoc.GetValue()
+        if clust != "":
+            try:
+                clust = int(clust)
+                self.ClustPostHoc = int(clust)
+                if clust == 1:
+                    self.PanelSpi.Disable()
+                else:
+                    self.PanelSpi.Enable()
+            except:
+                dlg = wx.MessageDialog(
+                    self, "Integer number for Cluster size", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def PostHocCheck(self, event):
+        self.PostHoc = self.PostHocCheckBox.GetValue()
+        if self.PostHocCheckBox.GetValue():
+            self.PanelInfoPostHoc.Enable()
+            alpha = self.AlphaInput.GetValue()
+            clust = self.ClustInput.GetValue()
+            pts_consec = self.PtsConsequInput.GetValue()
+            self.PtsConsequInputPostHoc.SetValue(str(pts_consec))
+            self.AlphaInputPostHoc.SetValue(str(alpha))
+            self.ClustInputPostHoc.SetValue(str(clust))
+            self.AlphaPostHoc = float(alpha)
+            self.PtsConseqPostHoc = int(pts_consec)
+            self.ClustPostHoc = int(clust)
+            if self.PostHocParam:
+                self.PanelIterPostHoc.Disable()
             else:
-                alphaOK = False
-        return alphaOK
+                Iter = self.IterInput.GetValue()
+                self.IterInputPostHoc.SetValue(str(Iter))
+                self.PanelIterPostHoc.Enable()
+                self.IterPostHoc = int(Iter)
 
-    def chooseAlpha(self, event):
-        inputStr = self.AlphaInput.GetValue()
-        inputIsOK = self.checkAlpha(inputStr)
-        if inputIsOK:
-            self.Alpha = float(inputStr)
-            self.AlphaInputPostHoc.SetValue(inputStr)
-        elif inputStr not in ['', '.', '0', '0.', '0.0', '.0', '0.00', '.00',
-                              '0.000', '.000', '0.0000', '.0000', '0.00000',
-                              '.00000']:
-            self.messageNotAlpha(inputStr)
-            self.AlphaInput.SetValue(str(self.Alpha))
-        event.Skip()
+        else:
+            self.PanelInfoPostHoc.Disable()
 
-    def chooseAlphaPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.AlphaInputPostHoc.GetValue()
-        inputIsOK = self.checkAlpha(inputStr)
-        if inputIsOK:
-            self.AlphaPostHoc = float(inputStr)
-        elif inputStr not in ['', '.', '0', '0.', '0.0', '.0', '0.00', '.00',
-                              '0.000', '.000', '0.0000', '.0000', '0.00000',
-                              '.00000']:
-            self.messageNotAlpha(inputStr)
-            if 'e-' in str(self.AlphaPostHoc):
-                output = '%.16f' % self.AlphaPostHoc
-                self.AlphaInputPostHoc.SetValue(output.rstrip('0'))
-            else:
-                self.AlphaInputPostHoc.SetValue(str(self.AlphaPostHoc))
-        print self.AlphaPostHoc
-        event.Skip()
+    def AnovaCheck(self, event):
+        self.AnovaPerformed = self.AnovaCheckBox.GetValue()
+        if self.AnovaCheckBox.GetValue():
+            self.PanelInfoAnova.Enable()
+        else:
+            self.PanelInfoAnova.Disable()
 
-    def choosePtsConseq(self, event):
-        inputStr = self.PtsConseqInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.PtsConseq = int(inputStr)
-            self.PtsConseqInputPostHoc.SetValue(str(self.PtsConseq))
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.PtsConseqInput.SetValue(str(self.PtsConseq))
-        event.Skip()
+    def IterChoose(self, event):
+        Iter = self.IterInput.GetValue()
+        if Iter != "":
+            try:
+                Iter = int(Iter)
+                self.Iter = Iter
+            except:
+                dlg = wx.MessageDialog(
+                    self, "Integer number for Iteration", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+        if self.PostHocCheckBox.GetValue():
+            self.IterInputPostHoc.SetValue(str(Iter))
 
-    def choosePtsConseqPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.PtsConseqInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.PtsConseqPostHoc = int(inputStr)
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.PtsConseqInputPostHoc.SetValue(str(self.PtsConseqPostHoc))
-        event.Skip()
+    def IterChoosePostHoc(self, event):
+        Iter = self.IterInputPostHoc.GetValue()
+        if Iter != "":
+            try:
+                Iter = int(Iter)
+                self.IterPostHoc = Iter
+            except:
+                dlg = wx.MessageDialog(
+                    self,
+                    "Integer number for Iteration in Post-Hoc Panel",
+                    style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
 
-    def chooseClust(self, event):
-        inputStr = self.ClustInput.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.Clust = int(inputStr)
-            self.ClustInputPostHoc.SetValue(str(self.Clust))
-            if self.Clust != 1:
-                self.PanelSPI.Enable()
-            else:
-                self.PanelSPI.Disable()
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.ClustInput.SetValue(str(self.Clust))
-        event.Skip()
 
-    def chooseClustPostHoc(self, event):
-        # TODO: do the values have to be the same for normal and posthoc?
-        inputStr = self.ClustInputPostHoc.GetValue()
-        inputIsOK = inputStr.isdigit()
-        if inputIsOK and int(inputStr) != 0:
-            self.ClustPostHoc = int(inputStr)
-            if self.ClustPostHoc != 1:
-                self.PanelSPI.Enable()
-            else:
-                self.PanelSPI.Disable()
-        elif inputStr != '':
-            self.messageNotInteger(inputStr)
-            self.ClustInputPostHoc.SetValue(str(self.ClustPostHoc))
-        event.Skip()
+class ManovaWave(wx.Panel):
 
-    def chooseSPI(self, event):
-        dlgSPI = wx.FileDialog(None, "Load spi file",
-                               defaultDir=self.SPIPath,
-                               wildcard='*.spi',
-                               style=wx.OPEN)
-        if dlgSPI.ShowModal() == wx.ID_OK:
-            self.SPIFile = dlgSPI.GetPath()
-            self.FieldSPIFile.SetValue(self.SPIFile)
-            self.SPIPath = dirname(self.SPIFile)
-        dlgSPI.Destroy()
-        event.Skip()
+    def __init__(self, conteneur):
+        wx.Panel.__init__(self, parent=conteneur)
+        FrameSizer = wx.BoxSizer(wx.VERTICAL)
+        # definition des OutPut
+        self.Param = True
+        self.Analyse = None
+        self.Alpha = 0.05
+        self.PostHoc = False
+        # on cree les panels 1 a 1
+
+        # panel pour les parma /non param
+        PanelParam = wx.Panel(self, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
+        # creation des radio button
+        self.RadioParam = wx.RadioButton(
+            PanelParam, 1, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParam, 0, wx.EXPAND)
+        SizerParam.AddStretchSpacer()
+        self.RadioNonParam = wx.RadioButton(
+            PanelParam, 1, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParam, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelParam.SetSizerAndFit(SizerParam)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelParam, 0, wx.EXPAND)
+        FrameSizer.AddStretchSpacer()
+
+        # panel analyse (gfp, all elelctordes ou both)
+        PanelAnalyse = wx.Panel(self, -1)
+        SizerAnalyse = wx.BoxSizer(wx.VERTICAL)
+        # choix des facteurs
+        TextAnalyse = wx.StaticText(
+            PanelAnalyse, -1, label="Choose your Analyse")
+        text = ["", "All Electrodes", "GFP Only", "Both"]
+        self.BoxAnalyse = wx.ComboBox(
+            PanelAnalyse, 1, choices=text, style=wx.CB_READONLY)
+        SizerAnalyse.Add(TextAnalyse, 0, wx.EXPAND)
+        SizerAnalyse.Add(self.BoxAnalyse, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelAnalyse.SetSizerAndFit(SizerAnalyse)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelAnalyse, 0, wx.EXPAND)
+        FrameSizer.AddStretchSpacer()
+
+        # panel avec les infos Statitstique (alpha)
+        PanelInfo = wx.Panel(self, -1)
+        SizerInfo = wx.GridBagSizer()
+        AlphaText = wx.StaticText(
+            PanelInfo, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerInfo.Add(AlphaText, (0, 0), (1, 1), wx.EXPAND)
+        self.AlphaInput = wx.TextCtrl(PanelInfo, 1, value=str(self.Alpha))
+        SizerInfo.Add(self.AlphaInput, (1, 0), (1, 1), wx.EXPAND)
+        # lie les sizer au panel
+        PanelInfo.SetSizerAndFit(SizerInfo)
+        SizerInfo.SetSizeHints(PanelInfo)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelInfo, 0, wx.EXPAND)
+        FrameSizer.AddStretchSpacer()
+
+        # Panel Post-Hoc
+        PanelPostHoc = wx.Panel(self, -1)
+        SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
+        self.PostHocCheckBox = wx.CheckBox(
+            PanelPostHoc, 1, "Post hoc analysis (all possible 2 by 1 MANOVA)")
+        SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelPostHoc.SetSizerAndFit(SizerPostHoc)
+        # lie le sizer de la fenetre a la fenetre
+        # FrameSizer.AddGrowableRow(0)
+        self.SetSizerAndFit(FrameSizer)
+
+        self.Show(True)
+
+        wx.EVT_RADIOBUTTON(self, 1, self.ClickParam)
+        # wx.EVT_RADIOBOX(self,2,self.ClickParam)
+        wx.EVT_COMBOBOX(self, 1, self.AnalyseChoose)
+        # alpha
+        wx.EVT_TEXT(self, 1, self.AlphaChoose)
+        # Pts Conseq
+        wx.EVT_CHECKBOX(self, 1, self.PostHocCheck)
+
+    def ClickParam(self, event):
+        self.Param = self.RadioParam.GetValue()
+
+    def AnalyseChoose(self, event):
+        self.Analyse = self.BoxAnalyse.GetValue()
+
+    def AlphaChoose(self, event):
+        alpha = self.AlphaInput.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.Alpha = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def PostHocCheck(self, evemt):
+        self.PostHoc = self.PostHocCheckBox.GetValue()
+
+
+class ManovaIS(wx.Panel):
+
+    def __init__(self, conteneur):
+        wx.Panel.__init__(self, parent=conteneur)
+        FrameSizer = wx.BoxSizer(wx.VERTICAL)
+        # definition des OutPut
+        self.Param = True
+        self.Alpha = 0.05
+        self.PostHoc = False
+        # on cree les panels 1 a 1
+
+        # panel pour les parma /non param
+        PanelParam = wx.Panel(self, -1)
+        SizerParam = wx.BoxSizer(wx.VERTICAL)
+        # creation des radio button
+        self.RadioParam = wx.RadioButton(
+            PanelParam, 1, 'Parametric Test', (-1, -1), style=wx.RB_GROUP)
+        SizerParam.Add(self.RadioParam, 0, wx.EXPAND)
+        SizerParam.AddStretchSpacer()
+        self.RadioNonParam = wx.RadioButton(
+            PanelParam, 1, 'Non-Parametric Test (Bootstraping)', (-1, -1))
+        SizerParam.Add(self.RadioNonParam, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelParam.SetSizerAndFit(SizerParam)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelParam, 0, wx.EXPAND)
+        FrameSizer.AddStretchSpacer()
+
+        # panel avec les infos Statitstique (alpha)
+        PanelInfo = wx.Panel(self, -1)
+        SizerInfo = wx.GridBagSizer()
+        AlphaText = wx.StaticText(
+            PanelInfo, -1, label="Alpha Value", style=wx.ALIGN_CENTER)
+        SizerInfo.Add(AlphaText, (0, 0), (1, 1), wx.EXPAND)
+        self.AlphaInput = wx.TextCtrl(PanelInfo, 1, value=str(self.Alpha))
+        SizerInfo.Add(self.AlphaInput, (1, 0), (1, 1), wx.EXPAND)
+        # lie les sizer au panel
+        PanelInfo.SetSizerAndFit(SizerInfo)
+        SizerInfo.SetSizeHints(PanelInfo)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelInfo, 0, wx.EXPAND)
+        FrameSizer.AddStretchSpacer()
+
+        # Panel Post-Hoc
+        PanelPostHoc = wx.Panel(self, -1)
+        SizerPostHoc = wx.BoxSizer(wx.VERTICAL)
+        self.PostHocCheckBox = wx.CheckBox(
+            PanelPostHoc, 1, "Post hoc analysis (all possible 2 by 1 MANOVA)")
+        SizerPostHoc.Add(self.PostHocCheckBox, 0, wx.EXPAND)
+        # on mets le panel de fichier dans le sizer de la frame
+        FrameSizer.Add(PanelPostHoc, 0, wx.EXPAND)
+        # lie les sizer au panel
+        PanelPostHoc.SetSizerAndFit(SizerPostHoc)
+        # lie le sizer de la fenetre a la fenetre
+        # FrameSizer.AddGrowableRow(0)
+        self.SetSizerAndFit(FrameSizer)
+
+        self.Show(True)
+
+        wx.EVT_RADIOBUTTON(self, 1, self.ClickParam)
+        # alpha
+        wx.EVT_TEXT(self, 1, self.AlphaChoose)
+        # Pts Conseq
+        wx.EVT_CHECKBOX(self, 1, self.PostHocCheck)
+
+    def ClickParam(self, event):
+        self.Param = self.RadioParam.GetValue()
+
+    def AlphaChoose(self, event):
+        alpha = self.AlphaInput.GetValue()
+        if alpha != "":
+            try:
+                alpha = float(alpha)
+                self.Alpha = alpha
+            except:
+                dlg = wx.MessageDialog(
+                    self, "float number for alpha", style=wx.OK)
+                retour = dlg.ShowModal()
+                dlg.Destroy()
+
+    def PostHocCheck(self, evemt):
+        self.PostHoc = self.PostHocCheckBox.GetValue()
