@@ -1,7 +1,7 @@
 ﻿import wx
 import PanelData
 import PanelAnalysis
-import Calculation
+import Calculation_new
 
 
 class MainFrame(wx.Frame):
@@ -28,8 +28,8 @@ class MainFrame(wx.Frame):
 
         # Panel: Option
         self.PanelOption = wx.Notebook(self.panel, 1, style=wx.NB_TOP)
-        self.AnovaWave = PanelAnalysis.AnovaWave(self.PanelOption)
-        self.AnovaIS = PanelAnalysis.AnovaIS(self.PanelOption)
+        self.AnovaWave = PanelAnalysis.AnovaWave(self.PanelOption, self)
+        self.AnovaIS = PanelAnalysis.AnovaIS(self.PanelOption, self)
         self.PanelOption.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
         self.PanelOption.AddPage(self.AnovaIS, 'ANOVA in Brain Space')
         self.AnovaWave.SetFocus()
@@ -100,6 +100,7 @@ class MainFrame(wx.Frame):
     def startAction(self, event):
         """Starts the calculation"""
         # Make sure that a dataset is present and saved before continuing
+        startCalculation = False
         if self.Dataset == {}:
             dlg = wx.MessageDialog(
                 self, caption='No dataset loaded',
@@ -127,12 +128,13 @@ class MainFrame(wx.Frame):
             answer = dlg.ShowModal()
             dlg.Destroy()
             if answer == wx.ID_OK:
-                Calculation.startCalculation(self)
+                startCalculation = True
         else:
-            # Before continuing, kill all children of MainFrame
-            self.DestroyChildren()
+            startCalculation = True
 
-            # Start Calculation
-            Calculation.startCalculation(self)
+        # Start Calculation
+        if startCalculation:
+            self.ButtonStart.Disable()
+            calc = Calculation_new.Start(self)
 
         event.Skip()

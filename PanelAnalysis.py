@@ -6,10 +6,11 @@ class AnovaWave(wx.Panel):
 
     """TODO: EXPLANATION TEXT"""
 
-    def __init__(self, notebook):
+    def __init__(self, notebook, Mainframe):
         wx.Panel.__init__(self, parent=notebook)
 
         # Specify relevant variables
+        self.Mainframe = Mainframe
         self.AnovaPerform = True
         self.PostHoc = False
         self.Param = True
@@ -446,8 +447,11 @@ class AnovaWave(wx.Panel):
             self.ClustInputPostHoc.SetValue(str(self.Clust))
             if self.Clust != 1:
                 self.PanelSPI.Enable()
+                if self.SPIFile == '':
+                    self.Mainframe.ButtonStart.Disable()
             else:
                 self.PanelSPI.Disable()
+                self.Mainframe.ButtonStart.Enable()
         elif inputStr != '':
             self.messageNotInteger(inputStr)
             self.ClustInput.SetValue(str(self.Clust))
@@ -461,8 +465,11 @@ class AnovaWave(wx.Panel):
             self.ClustPostHoc = int(inputStr)
             if self.ClustPostHoc != 1:
                 self.PanelSPI.Enable()
+                if self.SPIFile == '':
+                    self.Mainframe.ButtonStart.Disable()
             else:
                 self.PanelSPI.Disable()
+                self.Mainframe.ButtonStart.Enable()
         elif inputStr != '':
             self.messageNotInteger(inputStr)
             self.ClustInputPostHoc.SetValue(str(self.ClustPostHoc))
@@ -477,6 +484,7 @@ class AnovaWave(wx.Panel):
             self.SPIFile = dlgXYZ.GetPath()
             self.FieldSPIFile.SetValue(self.SPIFile)
             self.SPIPath = dirname(self.SPIFile)
+            self.Mainframe.ButtonStart.Enable()
         dlgXYZ.Destroy()
         event.Skip()
 
@@ -494,10 +502,11 @@ class AnovaIS(wx.Panel):
 
     """TODO: EXPLANATION TEXT"""
 
-    def __init__(self, notebook):
+    def __init__(self, notebook, Mainframe):
         wx.Panel.__init__(self, parent=notebook)
 
         # Specify relevant variables
+        self.Mainframe = Mainframe
         self.AnovaPerform = True
         self.PostHoc = False
         self.Param = True
@@ -913,8 +922,11 @@ class AnovaIS(wx.Panel):
             self.ClustInputPostHoc.SetValue(str(self.Clust))
             if self.Clust != 1:
                 self.PanelSPI.Enable()
+                if self.SPIFile == '':
+                    self.Mainframe.ButtonStart.Disable()
             else:
                 self.PanelSPI.Disable()
+                self.Mainframe.ButtonStart.Enable()
         elif inputStr != '':
             self.messageNotInteger(inputStr)
             self.ClustInput.SetValue(str(self.Clust))
@@ -928,8 +940,11 @@ class AnovaIS(wx.Panel):
             self.ClustPostHoc = int(inputStr)
             if self.ClustPostHoc != 1:
                 self.PanelSPI.Enable()
+                if self.SPIFile == '':
+                    self.Mainframe.ButtonStart.Disable()
             else:
                 self.PanelSPI.Disable()
+                self.Mainframe.ButtonStart.Enable()
         elif inputStr != '':
             self.messageNotInteger(inputStr)
             self.ClustInputPostHoc.SetValue(str(self.ClustPostHoc))
@@ -944,5 +959,6 @@ class AnovaIS(wx.Panel):
             self.SPIFile = dlgSPI.GetPath()
             self.FieldSPIFile.SetValue(self.SPIFile)
             self.SPIPath = dirname(self.SPIFile)
+            self.Mainframe.ButtonStart.Enable()
         dlgSPI.Destroy()
         event.Skip()
