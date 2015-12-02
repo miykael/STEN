@@ -31,7 +31,7 @@ class MainFrame(wx.Frame):
         self.AnovaWave = PanelAnalysis.AnovaWave(self.PanelOption)
         self.AnovaIS = PanelAnalysis.AnovaIS(self.PanelOption)
         self.PanelOption.AddPage(self.AnovaWave, 'ANOVA on Wave/GFP')
-        self.PanelOption.AddPage(self.AnovaIS, 'ANOVA on Brain Space')
+        self.PanelOption.AddPage(self.AnovaIS, 'ANOVA in Brain Space')
         self.AnovaWave.SetFocus()
         sizerMainH.Add(self.PanelOption, 1, wx.EXPAND)
         self.panel.SetSizer(sizerMainH)
