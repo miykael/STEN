@@ -1162,45 +1162,6 @@ def inputTest(self):
         else:
             self.SpaceFile = self.AnovaIS.Spi
 
-    # Manova wave
-    elif self.AnalyseType == 'MANOVA on Wave/GFP':
-        # self.Param =parmetric ou non / bool
-        # self.PostHoc = posthoc ou/non / bool
-        # self.Type = type of analysis wave, gfp, both / String
-        # self.Alpha= Alpha value / Float
-
-        if self.ManovaWave.Param == 0:
-            self.Param = True
-        else:
-            self.Param = False
-        self.PostHoc = self.ManovaWave.PostHoc
-        if self.ManovaWave.Analyse is None:
-            error = "Choose an Analyse (GFP, all electrodes or both)"
-            text.append(error)
-        else:
-            self.Type = self.ManovaWave.Analyse
-
-        if self.ManovaWave.Alpha < 0 and self.ManovaWave.Alpha > 1:
-            error = "Alpha must be between 0 and 1"
-            text.append(error)
-        else:
-            self.Alpha = self.ManovaWave.Alpha
-
-    # Manova IS
-    elif self.AnalyseType == 'MANOVA  on Brain Space':
-        # self.Param =parmetric ou non / bool
-        # self.PostHoc = posthoc ou/non / bool
-        # self.Alpha= Alpha value / Float
-        if self.ManovaIS.Param == 0:
-            self.Param = True
-        else:
-            self.Param = False
-        self.PostHoc = self.ManovaIS.PostHoc
-        if self.ManovaIS.Alpha < 0 and self.ManovaIS.Alpha > 1:
-            error = "Alpha must be between 0 and 1"
-            text.append(error)
-        else:
-            self.Alpha = self.ManovaIS.Alpha
     self.InputError = text
 
 
