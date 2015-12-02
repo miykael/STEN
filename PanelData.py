@@ -155,6 +155,7 @@ class CreateDataset(wx.Panel):
 
     def modifyData(self, event):
         """Opens DataEntry Panel with existing dataset"""
+        self.MainFrame.saved = False
         self.DataWindow = PanelTable.DataEntry(self.MainFrame)
         self.DataWindow.Show(True)
         self.MainFrame.Show(False)
@@ -214,6 +215,7 @@ class CreateDataset(wx.Panel):
                 self.MainFrame.Dataset = datatable.inputTable
                 self.MainFrame.ButtonDataSave.Enable()
                 self.MainFrame.ButtonDataModify.Enable()
+                self.MainFrame.saved = True
 
 #                # TODO: Check what panels should be accesable
 #                if info.CovariatePresent:
