@@ -1,7 +1,8 @@
 import tables
+import numpy as np
 
 
-class WriteDataset:
+class WriteDatatable:
 
     """
     Write the dataset content to H5 file
@@ -45,7 +46,7 @@ class WriteDataset:
 
         # Create H5 File to store dataset information
         with tables.open_file(name, mode='w', title='Test file') as h5file:
-            table = h5file.create_table('/', 'Info', Information,
+            table = h5file.create_table('/', 'Datatable', Information,
                                         'Dataset Information')
 
             # Write dataset content into H5 file
@@ -81,7 +82,7 @@ class WriteDataset:
             table.flush()
 
 
-class ReadDataset:
+class ReadDatatable:
 
     """
     Read the dataset from an H5 file
@@ -91,8 +92,8 @@ class ReadDataset:
 
         # Load the dataset information
         with tables.openFile(name, 'r') as h5file:
-            datatable = dict(zip(h5file.root.Info.colnames,
-                                 h5file.root.Info.read()[0]))
+            datatable = dict(zip(h5file.root.Datatable.colnames,
+                                 h5file.root.Datatable.read()[0]))
 
             # Reformat the data content
             dataset = {}
@@ -123,3 +124,21 @@ class ReadDataset:
                                            for l in datatable['tableContent']]
 
             self.inputTable = dataset
+
+
+class ReadEPH:
+
+    """
+    Read an EPH file
+    """
+
+    def __init__(self, filename):
+
+        with open(filename, 'r') as ephfile:
+            tmp = ephfile.readlines()
+            header = tmp[0].split()
+            self.electrodes = int(header[0])
+            self.tf = int(header[1])
+            self.fs = float(header[2])
+        self.data = np.loadtxt(filename, skiprows=1)
+        self.GFP = self.data.std(axis=1)
