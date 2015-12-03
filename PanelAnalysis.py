@@ -11,8 +11,8 @@ class AnovaWave(wx.Panel):
 
         # Specify relevant variables
         self.Mainframe = Mainframe
-        self.AnovaPerform = True
-        self.PostHoc = False
+        self.AnovaCheck = True
+        self.PostHocCheck = False
         self.Param = True
         self.ParamPostHoc = True
         self.nIteration = 1000
@@ -33,7 +33,7 @@ class AnovaWave(wx.Panel):
 
         # Add "Perform ANOVA" checkbox
         self.AnovaCheckBox = wx.CheckBox(self, wx.ID_ANY, "Perform ANOVA")
-        self.AnovaCheckBox.SetValue(self.AnovaPerform)
+        self.AnovaCheckBox.SetValue(self.AnovaCheck)
 
         # Parametric / Non-Parametric Test Section
         PanelParam = wx.Panel(self.PanelAnova, wx.ID_ANY)
@@ -135,7 +135,7 @@ class AnovaWave(wx.Panel):
         titlePostHocText += " - only on ANOVA, not on ANCOVA"
         # TODO: check that field is disabled if there is a covariate
         self.PostHocCheckBox = wx.CheckBox(self, wx.ID_ANY, titlePostHocText)
-        self.PostHocCheckBox.SetValue(self.PostHoc)
+        self.PostHocCheckBox.SetValue(self.PostHocCheck)
 
         # Parametric / Non-Parametric Test Section
         PanelParam = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
@@ -300,16 +300,16 @@ class AnovaWave(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonSPI.Id, self.chooseSPI)
 
     def checkAnova(self, event):
-        self.AnovaPerform = self.AnovaCheckBox.GetValue()
-        if self.AnovaCheckBox.GetValue():
+        self.AnovaCheck = self.AnovaCheckBox.GetValue()
+        if self.AnovaCheck:
             self.PanelAnova.Enable()
         else:
             self.PanelAnova.Disable()
         event.Skip()
 
     def checkPostHoc(self, event):
-        self.PostHoc = self.PostHocCheckBox.GetValue()
-        if self.PostHoc:
+        self.PostHocCheck = self.PostHocCheckBox.GetValue()
+        if self.PostHocCheck:
             self.PanelPostHoc.Enable()
             self.AnalyseType = self.BoxAnalyse.GetValue()
             if self.AnalyseType == 'GFP Only':
@@ -414,7 +414,6 @@ class AnovaWave(wx.Panel):
                 self.AlphaInputPostHoc.SetValue(output.rstrip('0'))
             else:
                 self.AlphaInputPostHoc.SetValue(str(self.AlphaPostHoc))
-        print self.AlphaPostHoc
         event.Skip()
 
     def choosePtsConseq(self, event):
@@ -507,8 +506,8 @@ class AnovaIS(wx.Panel):
 
         # Specify relevant variables
         self.Mainframe = Mainframe
-        self.AnovaPerform = True
-        self.PostHoc = False
+        self.AnovaCheck = True
+        self.PostHocCheck = False
         self.Param = True
         self.ParamPostHoc = True
         self.nIteration = 1000
@@ -528,7 +527,7 @@ class AnovaIS(wx.Panel):
 
         # Add "Perform ANOVA" checkbox
         self.AnovaCheckBox = wx.CheckBox(self, wx.ID_ANY, "Perform ANOVA")
-        self.AnovaCheckBox.SetValue(self.AnovaPerform)
+        self.AnovaCheckBox.SetValue(self.AnovaCheck)
 
         # Parametric / Non-Parametric Test Section
         PanelParam = wx.Panel(self.PanelAnova, wx.ID_ANY)
@@ -630,7 +629,7 @@ class AnovaIS(wx.Panel):
         titlePostHocText += " - only on ANOVA, not on ANCOVA"
         # TODO: check that field is disabled if there is a covariate
         self.PostHocCheckBox = wx.CheckBox(self, wx.ID_ANY, titlePostHocText)
-        self.PostHocCheckBox.SetValue(self.PostHoc)
+        self.PostHocCheckBox.SetValue(self.PostHocCheck)
 
         # Parametric / Non-Parametric Test Section
         PanelParam = wx.Panel(self.PanelPostHoc, wx.ID_ANY)
@@ -781,16 +780,16 @@ class AnovaIS(wx.Panel):
         wx.EVT_BUTTON(self, self.ButtonSPI.Id, self.chooseSPI)
 
     def checkAnova(self, event):
-        self.AnovaPerform = self.AnovaCheckBox.GetValue()
-        if self.AnovaCheckBox.GetValue():
+        self.AnovaCheck = self.AnovaCheckBox.GetValue()
+        if self.AnovaCheck:
             self.PanelAnova.Enable()
         else:
             self.PanelAnova.Disable()
         event.Skip()
 
     def checkPostHoc(self, event):
-        self.PostHoc = self.PostHocCheckBox.GetValue()
-        if self.PostHoc:
+        self.PostHocCheck = self.PostHocCheckBox.GetValue()
+        if self.PostHocCheck:
             self.PanelPostHoc.Enable()
             if self.ParamPostHoc:
                 self.PanelIterPostHoc.Disable()
@@ -889,7 +888,6 @@ class AnovaIS(wx.Panel):
                 self.AlphaInputPostHoc.SetValue(output.rstrip('0'))
             else:
                 self.AlphaInputPostHoc.SetValue(str(self.AlphaPostHoc))
-        print self.AlphaPostHoc
         event.Skip()
 
     def choosePtsConseq(self, event):

@@ -102,17 +102,26 @@ class CreateDataset(wx.Panel):
 
         # Panel: Select Result Folder
         PanelResult = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
-        PanelResultSizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizerPanelResult = wx.BoxSizer(wx.HORIZONTAL)
         self.TextResult = wx.TextCtrl(
             PanelResult, wx.ID_ANY, size=(500, 21),
             value=os.path.join(os.getcwd(), 'STEN'))
-        PanelResultSizer.Add(self.TextResult, 0, wx.EXPAND)
+        sizerPanelResult.Add(self.TextResult, 0, wx.EXPAND)
         self.MainFrame.ButtonResult = wx.Button(
             PanelResult, wx.ID_ANY, label="&Result Folder", size=(110, 28))
-        PanelResultSizer.Add(self.MainFrame.ButtonResult, 0, wx.EXPAND)
-        PanelResult.SetSizer(PanelResultSizer)
+        sizerPanelResult.Add(self.MainFrame.ButtonResult, 0, wx.EXPAND)
+        PanelResult.SetSizer(sizerPanelResult)
         sizerPanelDataHandler.Add(PanelResult, 0, wx.EXPAND)
-        sizerPanelDataHandler.AddSpacer(15)
+        sizerPanelDataHandler.AddSpacer(40)
+
+        # Panel: Calculation Progression
+        PanelCalculation = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
+        sizerCalculation = wx.BoxSizer(wx.HORIZONTAL)
+        self.TxtProgress = wx.StaticText(
+            PanelCalculation, wx.ID_ANY, label='', style=wx.ALIGN_LEFT)
+        sizerCalculation.Add(self.TxtProgress, 0, wx.EXPAND)
+        PanelCalculation.SetSizer(sizerCalculation)
+        sizerPanelDataHandler.Add(PanelCalculation, 0, wx.EXPAND)
 
         # Create vertical structure of Data Handler Frame
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
@@ -177,7 +186,7 @@ class CreateDataset(wx.Panel):
         if answer == wx.ID_OK:
             # TODO: this function doesn't consider additional H5 file content
             # (e.g. from previous analysis)
-            H5Tables.WriteDataset(filename, self.MainFrame.Dataset)
+            H5Tables.WriteDatatable(filename, self.MainFrame.Dataset)
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
 
@@ -211,25 +220,11 @@ class CreateDataset(wx.Panel):
             filepath = dlg.GetPath()
             dlg.Destroy()
             if answer == wx.ID_OK:
-                datatable = H5Tables.ReadDataset(filepath)
+                datatable = H5Tables.ReadDatatable(filepath)
                 self.MainFrame.Dataset = datatable.inputTable
                 self.MainFrame.ButtonDataSave.Enable()
                 self.MainFrame.ButtonDataModify.Enable()
                 self.MainFrame.saved = True
-
-#                # TODO: Check what panels should be accesable
-#                if info.CovariatePresent:
-#                    self.MainFrame.AnovaWave.PostHocCheckBox.Disable()
-#                    self.MainFrame.AnovaIS.PostHocCheckBox.Disable()
-#                    self.MainFrame.AnovaWave.PostHocCheckBox.SetValue(False)
-#                    self.MainFrame.AnovaIS.PostHocCheckBox.SetValue(False)
-#                else:
-#                    self.MainFrame.AnovaWave.PostHocCheckBox.Enable()
-#                    self.MainFrame.AnovaIS.PostHocCheckBox.Enable()
-#
-#            else:
-#                self.MainFrame.H5 = []
-#                self.DataLoadFile.SetLabel('')
 
     def resultFolder(self, event):
         """Opens the DataResult Panel"""
