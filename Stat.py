@@ -1,4 +1,4 @@
-﻿import rpy2.robjects as robjects
+import rpy2.robjects as robjects
 import rpy2.robjects.numpy2ri
 import numpy as np
 from scipy import stats
@@ -57,9 +57,12 @@ class Anova:
         # Extracting GFP or All Data
         if DataGFP:
             Data=self.file.getNode('/Data/GFP')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            ShapeOriginalData[1]=1
         else:
             Data=self.file.getNode('/Data/All')
-        ShapeOriginalData=self.file.getnode('/Shape').read()
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+        
             
         # Calculating the number of Annova percycle to avoid Memory problem
         NbAnova = int(Data.shape[0])
@@ -103,7 +106,7 @@ class Anova:
         while fin1 < NbAnova:
             start = n * NbAnovaCycle
             end = (n + 1) * NbAnovaCycle
-            n += 1
+            
             if fin1 > NbAnova:
                 fin1 = NbAnova
             # Calculating Anovas
@@ -115,6 +118,7 @@ class Anova:
             else:
                 PValue=np.append(PValue,P,axis=0)
                 FValue=np.append(FValue,F,axis=0)
+            n += 1
             #Dialog box for timing
             pourcent = str(100.0 * end / (NbAnova))
             pourcent = pourcent[0:pourcent.find('.') + 3]
@@ -140,17 +144,35 @@ class Anova:
             Res=self.file.getNode('/Result/All/Anova')
         PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
         FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+        # writing result into H5 as a dictionnary
+        if DataGFP:
+            Res=self.file.getNode('/Result/GFP/Anova')
+        else:
+            Res=self.file.getNode('/Result/All/Anova')
+        NewRow=Res.row
+        for i,t in enumerate(Terms):
+            if t.find(':')!=-1: # interaction Term
+                ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
+            else:# Main Effect
+		ConditionName="_".join(['Main Effect',t])
+	    NewRow['StatEffect']=ConditionName
+            NewRow['P']=PValue[:,:,i]
+	    NewRow['F']=FValue[:,:,i]
+	    NewRow.append()
         dlg.Close()
         dlg.Destroy()
+        self.file.close()
         
     def NonParam(self, Iter, DataGFP=False):
         Iter=int(Iter)
         # Extracting GFP or All Data
         if DataGFP:
             Data=self.file.getNode('/Data/GFP')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            ShapeOriginalData[1]=1
         else:
             Data=self.file.getNode('/Data/All')
-        ShapeOriginalData=self.file.getnode('/Shape').read()
+            ShapeOriginalData=self.file.getNode('/Shape').read()
         # Calculating the number of Annova percycle to avoid Memory problem
         NbAnova = int(Data.shape[0])
         Byte = np.array(Data.shape).prod()
@@ -194,7 +216,7 @@ class Anova:
             #Originla Order Data                 
             start = n * NbAnovaCycle
             end = (n + 1) * NbAnovaCycle
-            n += 1
+            
             if fin1 > NbAnova:
                 fin1 = NbAnova
             # Calculating Anovas
@@ -218,6 +240,7 @@ class Anova:
             else:
                 PValue=np.append(PValue,P,axis=0)
                 FValue=np.append(FValue,F,axis=0)
+            n += 1
             #Dialog box for timing
             pourcent = str(100.0 * end / (NbAnova))
             pourcent = pourcent[0:pourcent.find('.') + 3]
@@ -243,9 +266,25 @@ class Anova:
             Res=self.file.getNode('/Result/All/Anova')
         PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
         FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+        # writing result into H5 as a dictionnary
+        if DataGFP:
+            Res=self.file.getNode('/Result/GFP/Anova')
+        else:
+            Res=self.file.getNode('/Result/All/Anova')
+        NewRow=Res.row
+        for i,t in enumerate(Terms):
+            if t.find(':')!=-1: # interaction Term
+                ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
+            else:# Main Effect
+		ConditionName="_".join(['Main Effect',t])
+	    NewRow['StatEffect']=ConditionName
+            NewRow['P']=PValue[:,:,i]
+	    NewRow['F']=FValue[:,:,i]
+	    NewRow.append()
         dlg.Close()
-        dlg.Destroy()  
-
+        dlg.Destroy()
+        self.file.close()
+# Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
     def ExtractingStat(Raw):
         for i,r in enumerate(Raw):
             Dat=np.array(r)
@@ -286,645 +325,260 @@ class Anova:
 
 ###Done until this part I have to test on real Data Need to check PostHoc
 
-
+import itertools
 
 class PostHoc:
 
     def __init__(self, H5, Parent):
-        self.Parent = Parent
-        self.file = tables.openFile(H5, mode='r+')
-        # models
-        Between = self.file.getNode('/Model/Between')
-        self.Between = np.array(Between.read())
-        Within = self.file.getNode('/Model/Within')
-        self.Within = np.array(Within.read())
-        Subject = self.file.getNode('/Model/Subject')
-        self.Subject = Subject.read()
-        # Names
-        NameBetween = self.file.getNode('/Names/Between')
-        self.NameBetween = NameBetween.read()
-        NameWithin = self.file.getNode('/Names/Within')
-        self.NameWithin = NameWithin.read()
+
+        """ Reading H5 Files to extract Factor infrmations and creating R formula"""
+        # Reading H5 File
+        rpy2.robjects.numpy2ri.activate()
         self.Cancel = False
+        self.parent = parent
+        self.file = tables.openFile(H5, mode='a')
+        # TableFactor is a vector with n dimenssion wher n = number of Terms incuding Subject
+        TableFactor=self.file.getNode('/Model').read()
+        #exporting information (name of Factor, type of factor, create the Formula)
+        Between={}
+        Within={}
+        BetweenName=[]
+        WithinName=[]
+        for t in TableFactor:
+            FactorName=t[0]
+            FactorType=t[1]
+            FactorData=t[2]
+            # Generating Within and Between Dictionary with condition Name
+            if FactorType=='Between':
+                Between[FactorName]=FactorData
+                BetweenName.append(FactorName)
+            elif FactorType=='Within':
+                Within[FactorName]=FactorData
+                WithinName.append(FactorName)
+            elif FactorType=='Subject':
+                Subject=FactorData
+        # Extract all within subject possibilities using subject 1
+        # transform Dict into matrix easy to use
+        self.Within=np.array(Within.values())
+        WithinCombi=Within[:,Subject==1].T
+        self.Between=np.array(Between.values())
+        # extracting different levels for each Between Subject factor
+        LevelsBetween=self.Between.max(axis=1)
+        # cacluate all possible Combination using the max number of levels
+        AllCombinationBetween=itertools.product(range(1,LevelsBetween.max()+1),repeat=len(LevelsBetween))
+        # reduce combination with only existing one 
+        ExistingCombi=[]
+        for c in AllCombinationBetween:
+            Combi=np.array(c)
+            if (LevelsBetween-Combi<0).sum()==0: # existing combination
+                ExistingCombi.append(Combi)
+        ExistingCombi=np.array(ExistingCombi)
+        BetweenCombi=ExistingCombi
+        AllCombiBool={}
+        CondName=[]
+        # create all arrangement and extract the booleaan coresponding to the arrangement
+        # us a Ductionary that containe bool value correcponding to the condition
+        # the key of the dictionary correspond to the arrangement 
+        for b in BetweenCombi:
+            BoolBetween=[]
+            NameBetweentmp=[]
+            for c,l in enumerate(b):
+                BoolBetween.append(Between[c,:]==l)
+                NameBetweentmp.append("-".join([BetweenName[c],str(int(l))]))
+            BoolBetween=np.array(BoolBetween)
+            for w in WithinCombi:
+                BoolWithin=[]
+                NameWithintmp=[]
+                for c,l in enumerate(w):
+                    BoolWithin.append(Within[c,:]==l)
+                    NameWithintmp.append("-".join([WithinName[c],str(int(l))]))
+                BoolWithin=np.array(BoolWithin)
+                Bool=np.append(BoolBetween,BoolWithin,axis=0)
+                # name of the arrangement
+                Nametmp=".".join([".".join(NameBetweentmp),".".join(NameWithintmp)])
+                CondName.append(Nametmp)
+                AllCombiBool[NameTmp]=Bool.prod(axis=0)==1
+        #Creation of all the combination with the 2 arrangements for the t-test
+        AllCombiName=itertools.combinations(CondName,2)
+        # number of test using combinatory calculation use for the progression bar
+        sefl.Nbtest=int(np.math.factorial(len(CondName))/(np.math.factorial(len(CondName)-2)*np.math.factorial(2)))
+        # Keep subject Factor to determine if it will be paired on un paired t-test
+        self.Subject=Subject
+        # Dictionary of boolean correcponding to alla arangement
+        self.Arrangement=AllCombiBool
+        # all combinasion of T-test 2 by 2
+        self.Combi=AllCombiName
+    def CalculationTTest(Data,Combination,SubjectFactor,Arrangement,NonParam=False):
+        # H5 array don't be acces with bool
+        Cond=np.arange(0,Data.shape[1])
+        Value1= Arrangement[Combination[0]]
+        Value2= Arrangement[Combination[1]]
+        # extracted the subject lable for the 2 condtions
+        Subj1=SubjectFactor[Value1]
+        Subj2=SubjectFactor[Value2]
+        #sort the subject label to be sure they are in a same way for comparison
+        Subj1.sort()
+        Subj2.sort()
+        # if the subjects are the same = Paired esls unpaired 
+        TestPaired=SubjectFactor[Value1]-SubjectFactor[Value2]==0
+        if TestPaired.all():
+            if NonParam:
+                # extracting the label of each condition
+                C1=Cond[Value1]
+                C2=Cond[Value2]
+                # C1 and C2 as same size
+                NbC=len(C1)
+                Label=np.arange(0,NbC)
+                C1Boot=[]
+                C2Boot=[]
+                for r in Label:
+                    np.random.shuffle(Label)
+                    Sbj=Label[0]
+                    if np.random.rand()<=0.5:# permutation between 2
+                        C1Boot.append(C1[Sbj])
+                        C2Boot.append(C2[Sbj])
+                    else:
+                        # c1 became C1 adn vice and vera
+                        C2Boot.append(C1[Sbj])
+                        C1Boot.append(C2[Sbj])
+                # Randomization procidure (Paired) (Bootstrapping Subject then permutation within subject)
+                t,p=stats.ttest_rel(Data[:,C1Boot],Data[:,C2Boot],axis=1)
+                
+            else:
+                t,p=stats.ttest_rel(Data[:,Cond[Value1]],Data[:,Cond[Value2]],axis=1)
+        else:
+            if NonParam:
+                # extracting the label of each condition
+                C1=Cond[Value1]
+                C2=Cond[Value2]
+                NbC1=len(C1)
+                NbC2=len(C2)
+                AllC=np.append(C1,C2)
+                Label=np.arange(0,NbC1+NbC2)
+                # Randomization procidure (Un Paired)(Bootstraping)
+                BootLabel=[]
+                for r in Label:
+                    np.random.shuffle(Label)
+                    BootLabel.append(Label[0])
+                C1Boot=BootLabel[0:NbC1]
+                C2Boot=BootLabel[NbC1:NbC1+NbC2]
+                
+                t,p=stats.ttest_ind(Data[:,C1Boot],Data[:,C2Boot],axis=1)
+            else:
+               t,p=stats.ttest_ind(Data[:,Cond[Value1]],Data[:,Cond[Value2]],axis=1)
+        return t,p
 
     def Param(self, DataGFP=False):
+        # Extracting GFP or All Data
         if DataGFP:
-            shape = self.file.getNode('/Info/ShapeGFP')
+            Data=self.file.getNode('/Data/GFP')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            Res=self.file.getNode('/Result/GFP/PostHoc')
+            ShapeOriginalData[1]=1
         else:
-            shape = self.file.getNode('/Info/Shape')
-        shape = shape.read()
-        # Mettre le veteur sujet en 2 dimentions, afin d'etre sur que la
-        # deuxième dimention existe
-        if len(self.Subject.shape) == 1:
-            self.Subject = self.Subject.reshape((self.Subject.shape[0], 1))
-        NbSubject = self.Subject.max()
-        LevelWithin = self.file.getNode('/Info/Level')
-        LevelWithin = LevelWithin.read()
-        NbConditionWithin = LevelWithin.prod()
-        # test il y a un facteur Within
-        if self.Within.any():
-            ConditionNumber = np.array([])
-            for i in range(NbConditionWithin):
-                tmp = np.ones((NbSubject))
-                tmp = tmp * (i + 1)
-                ConditionNumber = np.concatenate((ConditionNumber, tmp))
-            ConditionNumber = ConditionNumber.reshape(
-                (ConditionNumber.shape[0], 1))
-        else:
-            # il n'y a pas de facteur Within
-            ConditionNumber = np.ones((NbSubject))
-        # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
-        # deuxième dimention existe
-        if self.Between.any():
-            if len(self.Between.shape) == 1:
-                self.Between = self.Between.reshape((self.Between.shape[0], 1))
-
-        fs = self.file.getNode('/Info/FS')
-        fs = fs.read()
-
-        # cree la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
-        # creation de la liste level contenant le niveau de chaque facteur
-        # d'abord within puis between
-        ConditionTxt = []
-        Level = []
-        if self.Within.any():
-            for i, w in enumerate(self.NameWithin):
-                try:
-                    NbLevel = int(self.Within[:, i].max())
-                except:
-                    NbLevel = int(self.Within.max())
-                Level.append(NbLevel)
-                for j in range(NbLevel):
-                    text = [w, str(j + 1), '=0']
-                    exec("".join(text))
-                ConditionTxt.append(w)
-        if self.Between.any():
-            for i, w in enumerate(self.NameBetween):
-                try:
-                    NbLevel = int(self.Between[:, i].max())
-                except:
-                    NbLevel = int(self.Between.max())
-                Level.append(NbLevel)
-                for j in range(NbLevel):
-                    text = [w, str(j + 1), '=0']
-                    exec("".join(text))
-                ConditionTxt.append(w)
-
-        Level = np.array(Level)
-        NbCondition = Level.prod()
-        # creation de la list combinaison regroupant toute les combinaison
-        # possible aves les facteurs within et between
-        Combinaison = np.zeros((NbCondition, len(Level)))
-        for k, i in enumerate(Level):
-            repet = NbCondition / i
-            NbCondition = repet
-            for j in range(i):
-                fact = np.ones((repet, 1)) * j + 1
-                debut = j * repet
-                fin = (j + 1) * repet
-                Combinaison[debut:fin, k] = fact[:, 0]
-            n = j
-            while Combinaison[Level.prod() - 1, k] == 0:
-                for j in range(i):
-                    n += 1
-                    fact = np.ones((repet, 1)) * j + 1
-                    debut = n * repet
-                    fin = (n + 1) * repet
-                    Combinaison[debut:fin, k] = fact[:, 0]
-
-        # creation de la matrice condition avec les veteurs/matrice within et/ou between.
-        # Ces matrice sont composer de valeur 1,2, nb niveau par niveau matrice utiliser pour le model dans R
-        # facteur within et Between
-        if self.Within.any() and self.Between.any():
-            Condition = np.concatenate((self.Within, self.Between), axis=1)
-        # Pas de facteur Between
-        elif self.Within.any():
-            Condition = self.Within
-        # Pas de facteur within que Between
-        elif self.Between.any():
-            Condition = self.Between
-
-        NbTest = np.array(range(len(Combinaison))).sum()
+            Data=self.file.getNode('/Data/All')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(NbTest)]),
+                                          str(sefl.Nbtest)]),
                                 NbTest,
                                 parent=self.Parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
-        # lecture des donnees dans le H5 pour cree les matrices permettant le
-        # calcul des t-test
-        NbFactorWithin = self.Within.shape[1]
-        Name = []
-        n = 0
-        if DataGFP:  # c'est sur le GFP
-            ResultP = self.file.createEArray('/Result/PostHoc/GFP',
-                                             'P',
-                                             tables.Float64Atom(),
-                                             (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray(
-                '/Result/PostHoc/GFP',
-                'T',
-                tables.Float64Atom(),
-                (shape[0] * shape[1], 0))
-        else:  # c'est sur toutes les electrodes
-            ResultP = self.file.createEArray(
-                '/Result/PostHoc/All',
-                'P',
-                tables.Float64Atom(),
-                (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray(
-                '/Result/PostHoc/All',
-                'T',
-                tables.Float64Atom(),
-                (shape[0] * shape[1], 0))
-        for Nbc, c1 in enumerate(Combinaison):
-            tmp = (Condition == c1).sum(axis=1) == len(c1)
-            SubjectTmp = self.Subject[tmp]
-            ConditionTmp = ConditionNumber[tmp]
-            Data1 = []
-            for i, s in enumerate(SubjectTmp):
-                if DataGFP:
-                    text = ['/DataGFP/Subject',
-                            str(int(s - 1)),
-                            '/Condition',
-                            str(int(ConditionTmp[i] - 1))]
-                    DataTmp = self.file.getNode("".join(text))
-                    DataTmp = DataTmp.read()
-                    Data1.append(DataTmp)
-                else:
-                    text = ['/Data/Subject',
-                            str(int(s - 1)),
-                            '/Condition',
-                            str(int(ConditionTmp[i] - 1))]
-                    DataTmp = self.file.getNode("".join(text))
-                    DataTmp = DataTmp.read()
-                    Data1.append(DataTmp)
-            Data1 = np.array(Data1)
-            EphFile = []
-            for i, combi in enumerate(c1):
-                txt = [ConditionTxt[i], str(int(combi))]
-                EphFile.append("-".join(txt))
-            EphFile.append('vs')
-            for c in range(Nbc + 1, len(Combinaison)):
-                c2 = Combinaison[c]
-                tmp = (Condition == c2).sum(axis=1) == len(c2)
-                SubjectTmp = self.Subject[tmp]
-                ConditionTmp = ConditionNumber[tmp]
-                Data2 = []
-                for i, s in enumerate(SubjectTmp):
-                    if DataGFP:
-                        text = ['/DataGFP/Subject',
-                                str(int(s - 1)),
-                                '/Condition',
-                                str(int(ConditionTmp[i] - 1))]
-                        DataTmp = self.file.getNode("".join(text))
-                        DataTmp = DataTmp.read()
-                        Data2.append(DataTmp)
-                    else:
-                        text = ['/Data/Subject',
-                                str(int(s - 1)),
-                                '/Condition',
-                                str(int(ConditionTmp[i] - 1))]
-                        DataTmp = self.file.getNode("".join(text))
-                        DataTmp = DataTmp.read()
-                        Data2.append(DataTmp)
-                Data2 = np.array(Data2)
-                for i, combi in enumerate(c2):
-                    txt = [ConditionTxt[i], str(int(combi))]
-                    EphFile.append("-".join(txt))
-
-                # que des paired T-test car pas de facteur Bewtween
-                if self.NameBetween == []:
-                    EphFile.insert(0, 'Paired-Ttest')
-                    res = stats.ttest_rel(Data1, Data2, axis=0)
-                    Name.append("".join(EphFile))
-                    EphFile.remove('Paired-Ttest')
-                # que des unpaired T-test car pas de facteur Within
-                elif self.NameWithin == []:
-                    EphFile.insert(0, 'UnPaired-Ttest')
-                    res = stats.ttest_ind(Data1, Data2, axis=0)
-                    Name.append(".".join(EphFile))
-                    EphFile.remove('UnPaired-Ttest')
-                # parend et un paired dependant du facteur between
-                else:
-                    # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
-                    # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale
-                    # au nombre total de condtions - nb de facteur within
-                    # (nombre de facteur between) alos paired
-                    # if true = paired
-                    if (c2[NbFactorWithin:len(c2)] == c1[NbFactorWithin:len(c2)]).sum() == len(c1) - NbFactorWithin:
-                        EphFile.insert(0, 'Paired-Ttest')
-                        res = stats.ttest_rel(Data1, Data2, axis=0)
-                        Name.append(".".join(EphFile))
-                        EphFile.remove('Paired-Ttest')
-                    else:
-                        EphFile.insert(0, 'UnPaired-Ttest')
-                        res = stats.ttest_ind(Data1, Data2, axis=0)
-                        Name.append(".".join(EphFile))
-                        EphFile.remove('UnPaired-Ttest')
-                if len(res[1].shape) == 1:
-                    taille = res[1].shape[0]
-                    P = res[1].reshape((taille, 1))
-                    T = res[0].reshape((taille, 1))
-                else:
-                    P = res[1]
-                    T = res[0]
-
-                ShapeData = P.shape
-                ShapeData = np.array(ShapeData)
-                P = P.reshape((ShapeData.prod(), 1))
-                T = T.reshape((ShapeData.prod(), 1))
-                ResultP.append(P)
-                ResultT.append(T)
-                n += 1
-                EphFile = EphFile[0:EphFile.index('vs')]
-                EphFile.append('vs')
-                prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
-                Cancel = dlg.Update(n, prog)
-                if Cancel[0] == False:
-                    dlgQuest = wx.MessageDialog(None,
+        n=0
+        NewRow=Res.row
+        for Combination in self.Combi:
+            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+            # Reshaping Data
+            t=t.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
+            p=p.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
+            # Saving Result into the H5
+            NewRow['Name']=Combination
+            NewRow['P']=p
+	    NewRow['T']=t
+	    NewRow.append()
+            # update the remaing time dilog box
+            
+            n+=1
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+            Cancel = dlg.Update(n, prog)
+            if Cancel[0] == False:
+                dlgQuest = wx.MessageDialog(None,
                                                 "Do you really want to cancel?",
                                                 "Confirm Cancel",
                                                 wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-                    result = dlgQuest.ShowModal()
-                    dlgQuest.Destroy()
-                    if result == wx.ID_OK:
-                        self.Cancel = True
+                result = dlgQuest.ShowModal()
+                dlgQuest.Destroy()
+                if result == wx.ID_OK:
+                    self.Cancel = True
                         break
-
                     else:
                         self.Cancel = False
                         dlg.Resume()
+        dlg.Close()
+        dlg.Destroy()
+        self.file.close()
 
+    def NonParam(self, Iter, DataGFP=False):
+         # Extracting GFP or All Data
         if DataGFP:
-            self.file.createArray('/Result/PostHoc/GFP', 'Terms', Name)
+            Data=self.file.getNode('/Data/GFP')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            Res=self.file.getNode('/Result/GFP/PostHoc')
+            ShapeOriginalData[1]=1
         else:
-            self.file.createArray('/Result/PostHoc/All', 'Terms', Name)
-
-    def NonParam(self, iter, DataGFP=False):
-        if DataGFP:
-            shape = self.file.getNode('/Info/ShapeGFP')
-        else:
-            shape = self.file.getNode('/Info/Shape')
-        shape = shape.read()
-        # Mettre le veteur sujet en 2 dimentions, afin d'etre sur que la
-        # deuxième dimention existe
-        if len(self.Subject.shape) == 1:
-            self.Subject = self.Subject.reshape((self.Subject.shape[0], 1))
-        NbSubject = self.Subject.max()
-        LevelWithin = self.file.getNode('/Info/Level')
-        LevelWithin = LevelWithin.read()
-        NbConditionWithin = LevelWithin.prod()
-        # test il y a un facteur Within
-        if self.Within.any():
-            ConditionNumber = np.array([])
-            for i in range(NbConditionWithin):
-                tmp = np.ones((NbSubject))
-                tmp = tmp * (i + 1)
-                ConditionNumber = np.concatenate((ConditionNumber, tmp))
-            ConditionNumber = ConditionNumber.reshape(
-                (ConditionNumber.shape[0], 1))
-        else:
-            # il n'y a pas de facteur Within
-            ConditionNumber = np.ones((NbSubject))
-        # Mettre le veteur Between en 2 dimentions, afin d'etre sur que la
-        # deuxième dimention existe
-        if self.Between.any():
-            if len(self.Between.shape) == 1:
-                self.Between = self.Between.reshape((self.Between.shape[0], 1))
-
-        fs = self.file.getNode('/Info/FS')
-        fs = fs.read()
-
-        # cree la list CondionTxt, contenant le nom des facteurs within puis between pour les noms en sortie
-        # creation de la liste level contenant le niveau de chaque facteur
-        # d'abord within puis between
-        ConditionTxt = []
-        Level = []
-        if self.Within.any():
-            for i, w in enumerate(self.NameWithin):
-                try:
-                    NbLevel = int(self.Within[:, i].max())
-                except:
-                    NbLevel = int(self.Within.max())
-                Level.append(NbLevel)
-                for j in range(NbLevel):
-                    text = [w, str(j + 1), '=0']
-                    exec("".join(text))
-                ConditionTxt.append(w)
-        if self.Between.any():
-            for i, w in enumerate(self.NameBetween):
-                try:
-                    NbLevel = int(self.Between[:, i].max())
-                except:
-                    NbLevel = int(self.Between.max())
-                Level.append(NbLevel)
-                for j in range(NbLevel):
-                    text = [w, str(j + 1), '=0']
-                    exec("".join(text))
-                ConditionTxt.append(w)
-
-        Level = np.array(Level)
-        NbCondition = Level.prod()
-        # creation de la list combinaison regroupant toute les combinaison
-        # possible aves les facteurs within et between
-        Combinaison = np.zeros((NbCondition, len(Level)))
-        for k, i in enumerate(Level):
-            repet = NbCondition / i
-            NbCondition = repet
-            for j in range(i):
-                fact = np.ones((repet, 1)) * j + 1
-                debut = j * repet
-                fin = (j + 1) * repet
-                Combinaison[debut:fin, k] = fact[:, 0]
-            n = j
-            while Combinaison[Level.prod() - 1, k] == 0:
-                for j in range(i):
-                    n += 1
-                    fact = np.ones((repet, 1)) * j + 1
-                    debut = n * repet
-                    fin = (n + 1) * repet
-                    Combinaison[debut:fin, k] = fact[:, 0]
-
-        # creation de la matrice condition avec les veteurs/matrice within et/ou between.
-        # Ces matrice sont composer de valeur 1,2, nb niveau par niveau matrice utiliser pour le model dans R
-        # facteur within et Between
-        if self.Within.any() and self.Between.any():
-            Condition = np.concatenate((self.Within, self.Between), axis=1)
-        # Pas de facteur Between
-        elif self.Within.any():
-            Condition = self.Within
-        # Pas de facteur within que Between
-        elif self.Between.any():
-            Condition = self.Between
-
-        NbTest = np.array(range(len(Combinaison))).sum()
-        dlg = wx.ProgressDialog('Non-Parametric T-test',
+            Data=self.file.getNode('/Data/All')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            Res=self.file.getNode('/Result/All/PostHoc')
+        dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(NbTest)]),
+                                          str(sefl.Nbtest)]),
                                 NbTest,
                                 parent=self.Parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
         dlg.SetSize((200, 175))
-        # lecture des donnees dans le H5 pour cree les matrices permettant le
-        # calcul des t-test
-        NbFactorWithin = self.Within.shape[1]
-        Name = []
-        n = 0
-        if DataGFP:  # c'est sur le GFP
-            ResultP = self.file.createEArray('/Result/PostHoc/GFP',
-                                             'P',
-                                             tables.Float64Atom(),
-                                             (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray('/Result/PostHoc/GFP',
-                                             'T',
-                                             tables.Float64Atom(),
-                                             (shape[0] * shape[1], 0))
-        else:  # c'est sur toutes les electrodes
-            ResultP = self.file.createEArray('/Result/PostHoc/All',
-                                             'P',
-                                             tables.Float64Atom(),
-                                             (shape[0] * shape[1], 0))
-            ResultT = self.file.createEArray('/Result/PostHoc/All',
-                                             'T',
-                                             tables.Float64Atom(),
-                                             (shape[0] * shape[1], 0))
-        for Nbc, c1 in enumerate(Combinaison):
-            tmp = (Condition == c1).sum(axis=1) == len(c1)
-            SubjectTmp = self.Subject[tmp]
-            ConditionTmp = ConditionNumber[tmp]
-            Data1 = []
-            text1 = []
-            for i, s in enumerate(SubjectTmp):
-                if DataGFP:
-                    text = ['/DataGFP/Subject',
-                            str(int(s - 1)),
-                            '/Condition',
-                            str(int(ConditionTmp[i] - 1))]
-                    DataTmp = self.file.getNode("".join(text))
-                    DataTmp = DataTmp.read()
-                    Data1.append(DataTmp)
-                else:
-                    text = ['/Data/Subject',
-                            str(int(s - 1)),
-                            '/Condition',
-                            str(int(ConditionTmp[i] - 1))]
-                    DataTmp = self.file.getNode("".join(text))
-                    DataTmp = DataTmp.read()
-                    Data1.append(DataTmp)
-                text1.append(text)
-            Data1 = np.array(Data1)
-            EphFile = []
-            for i, combi in enumerate(c1):
-                txt = [ConditionTxt[i], str(int(combi))]
-                EphFile.append("-".join(txt))
-            EphFile.append('vs')
-            for c in range(Nbc + 1, len(Combinaison)):
-                c2 = Combinaison[c]
-                tmp = (Condition == c2).sum(axis=1) == len(c2)
-                SubjectTmp = self.Subject[tmp]
-                ConditionTmp = ConditionNumber[tmp]
-                text2 = []
-                Data2 = []
-                for i, s in enumerate(SubjectTmp):
-                    if DataGFP:
-                        text = ['/DataGFP/Subject',
-                                str(int(s - 1)),
-                                '/Condition',
-                                str(int(ConditionTmp[i] - 1))]
-                        DataTmp = self.file.getNode("".join(text))
-                        DataTmp = DataTmp.read()
-                        Data2.append(DataTmp)
-                    else:
-                        text = ['/Data/Subject',
-                                str(int(s - 1)),
-                                '/Condition',
-                                str(int(ConditionTmp[i] - 1))]
-                        DataTmp = self.file.getNode("".join(text))
-                        DataTmp = DataTmp.read()
-                        Data2.append(DataTmp)
-                    text2.append(text)
-                Data2 = np.array(Data2)
-
-                for i, combi in enumerate(c2):
-                    txt = [ConditionTxt[i], str(int(combi))]
-                    EphFile.append("-".join(txt))
-
-                # que des paired T-test car pas de facteur Bewtween
-                if self.NameBetween == []:
-                    EphFile.insert(0, 'Paired-Ttest')
-                    res = stats.ttest_rel(Data1, Data2, axis=0)
-                    Name.append("".join(EphFile))
-                    EphFile.remove('Paired-Ttest')
-                # que des unpaired T-test car pas de facteur Within
-                elif self.NameWithin == []:
-                    EphFile.insert(0, 'UnPaired-Ttest')
-                    res = stats.ttest_ind(Data1, Data2, axis=0)
-                    Name.append(".".join(EphFile))
-                    EphFile.remove('UnPaired-Ttest')
-                # parend et un paired dependant du facteur between
-                else:
-                    # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
-                    # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale
-                    # au nombre total de condtions - nb de facteur within
-                    # (nombre de facteur between) alos paired
-                    # if true = paired
-                    if (c2[NbFactorWithin:len(c2)] == c1[NbFactorWithin:len(c2)]).sum() == len(c1) - NbFactorWithin:
-                        EphFile.insert(0, 'Paired-Ttest')
-                        res = stats.ttest_rel(Data1, Data2, axis=0)
-                        Name.append(".".join(EphFile))
-                        EphFile.remove('Paired-Ttest')
-                    else:
-                        EphFile.insert(0, 'UnPaired-Ttest')
-                        res = stats.ttest_ind(Data1, Data2, axis=0)
-                        Name.append(".".join(EphFile))
-                        EphFile.remove('UnPaired-Ttest')
-                EphFile = EphFile[0:EphFile.index('vs')]
-                EphFile.append('vs')
-                TReal = res[0]
-                Count = np.zeros(TReal.shape)
-                iter = int(iter)
-                for i in range(iter):
-                    Data1 = []
-                    Data2 = []
-                    if self.NameBetween == []:
-                        for s in range(len(text1)):
-                            Subject = [random.randint(0, (len(text1)) - 1)]
-                            if random.randint(0, 1) == 0:
-                                DataTmp = self.file.getNode(
-                                    "".join(text1[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data1.append(DataTmp)
-                                DataTmp = self.file.getNode(
-                                    "".join(text2[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data2.append(DataTmp)
-                            else:
-                                DataTmp = self.file.getNode(
-                                    "".join(text2[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data1.append(DataTmp)
-                                DataTmp = self.file.getNode(
-                                    "".join(text1[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data2.append(DataTmp)
-                        Data1 = np.array(Data1)
-                        Data2 = np.array(Data2)
-                        res = stats.ttest_rel(Data1, Data2, axis=0)
-                    # que des unpaired T-test car pas de facteur Within
-                    elif self.NameWithin == []:
-                        text = []
-                        text.extend(text1)
-                        text.extend(text2)
-                        for s in range(len(text1)):
-                            Subject = [random.randint(0, (len(text)) - 1)]
-                            DataTmp = self.file.getNode(
-                                "".join(text[Subject[0]]))
-                            DataTmp = DataTmp.read()
-                            Data1.append(DataTmp)
-                        for s in range(len(text2)):
-                            Subject = [random.randint(0, (len(text)) - 1)]
-                            DataTmp = self.file.getNode(
-                                "".join(text[Subject[0]]))
-                            DataTmp = DataTmp.read()
-                            Data2.append(DataTmp)
-                        Data1 = np.array(Data1)
-                        Data2 = np.array(Data2)
-                        res = stats.ttest_ind(Data1, Data2, axis=0)
-                    # paired and un paired dependant du facteur between
-                    else:
-                        # on test que tout les niveau des facteurs between soit les meme si c'est le cas on a du paired sinon unpaired
-                        # on compare si les conditions between on les même niveau, on somme pui si cette somme est strictement egale
-                        # au nombre total de condtions - nb de facteur within
-                        # (nombre de facteur between) alos paired
-                        # if true = paired
-                        if (c2[NbFactorWithin:len(c2)] == c1[NbFactorWithin:len(c2)]).sum() == len(c1) - NbFactorWithin:
-                            for s in range(len(text1)):
-                                Subject = [random.randint(0, (len(text1)) - 1)]
-                                if random.randint(0, 1) == 0:
-                                    DataTmp = self.file.getNode(
-                                        "".join(text1[Subject[0]]))
-                                    DataTmp = DataTmp.read()
-                                    Data1.append(DataTmp)
-                                    DataTmp = self.file.getNode(
-                                        "".join(text2[Subject[0]]))
-                                    DataTmp = DataTmp.read()
-                                    Data2.append(DataTmp)
-                                else:
-                                    DataTmp = self.file.getNode(
-                                        "".join(text2[Subject[0]]))
-                                    DataTmp = DataTmp.read()
-                                    Data1.append(DataTmp)
-                                    DataTmp = self.file.getNode(
-                                        "".join(text1[Subject[0]]))
-                                    DataTmp = DataTmp.read()
-                                    Data2.append(DataTmp)
-                            Data1 = np.array(Data1)
-                            Data2 = np.array(Data2)
-                            res = stats.ttest_rel(Data1, Data2, axis=0)
-                        else:
-                            text = []
-                            text.extend(text1)
-                            text.extend(text2)
-                            for s in range(len(text1)):
-                                Subject = [random.randint(0, (len(text)) - 1)]
-                                DataTmp = self.file.getNode(
-                                    "".join(text[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data1.append(DataTmp)
-                            for s in range(len(text2)):
-                                Subject = [random.randint(0, (len(text)) - 1)]
-                                DataTmp = self.file.getNode(
-                                    "".join(text[Subject[0]]))
-                                DataTmp = DataTmp.read()
-                                Data2.append(DataTmp)
-                            Data1 = np.array(Data1)
-                            Data2 = np.array(Data2)
-                            res = stats.ttest_ind(Data1, Data2, axis=0)
-                    TBoot = res[0]
-                    diff = TBoot - TReal
-                    CountTmp = np.zeros(diff.shape)
-                    CountTmp[diff > 0] = 1
-                    Count += CountTmp
-                P = Count / iter
-
-                if len(res[1].shape) == 1:
-                    taille = res[1].shape[0]
-                    P = res[1].reshape((taille, 1))
-                    T = res[0].reshape((taille, 1))
-                else:
-                    P = res[1]
-                    T = res[0]
-                ShapeData = P.shape
-                ShapeData = np.array(ShapeData)
-                P = P.reshape((ShapeData.prod(), 1))
-                T = T.reshape((ShapeData.prod(), 1))
-                ResultP.append(P)
-                ResultT.append(T)
-                n += 1
-                prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
-                Cancel = dlg.Update(n, prog)
-                if Cancel[0] == False:
-                    dlgQuest = wx.MessageDialog(None,
+        n=0
+        NewRow=Res.row
+        
+        for Combination in self.Combi:
+            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+            TReal=t
+            Count=np.zeros(TReal.shape)
+            for i in range(Iter):
+                t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement,NonParam=True)
+                TBoot=t
+                Diff=TBoot-TReal
+                Count[Diff>0]+=1
+            p=Count/flot(Iter)
+            # Reshaping Data
+            t=TReal.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
+            p=p.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
+            # Saving Result into the H5
+            NewRow['Name']=Combination
+            NewRow['P']=p
+            NewRow['T']=t
+            NewRow.append()
+            # update the remaing time dilog box
+            
+            n+=1
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+            Cancel = dlg.Update(n, prog)
+            if Cancel[0] == False:
+                dlgQuest = wx.MessageDialog(None,
                                                 "Do you really want to cancel?",
                                                 "Confirm Cancel",
                                                 wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-                    result = dlgQuest.ShowModal()
-                    dlgQuest.Destroy()
-                    if result == wx.ID_OK:
-                        self.Cancel = True
+                result = dlgQuest.ShowModal()
+                dlgQuest.Destroy()
+                if result == wx.ID_OK:
+                    self.Cancel = True
                         break
-
                     else:
                         self.Cancel = False
                         dlg.Resume()
-
-        if DataGFP:
-            self.file.createArray('/Result/PostHoc/GFP', 'Terms', Name)
-        else:
-            self.file.createArray('/Result/PostHoc/All', 'Terms', Name)
-
-       
+        dlg.Close()
+        dlg.Destroy()
+        self.file.close()
