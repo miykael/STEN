@@ -8,8 +8,11 @@
 ##/Info # using a tables that contain all the information in the "ExcelSheet"
 ##/Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
 ##/Result/All/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...),Data Corresponding in Type}
+##/Result/All/PostHoc # Tabes with Col = {Name,P,T}
 ##/Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
 ##/Result/GFP/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...)}
+##/Result/GFP/PostHoc # Tabes with Col = {Name,P,T}
+
 
 ##/Result/GPF/PostHoc
 import tables
@@ -77,6 +80,8 @@ for c in InfoDict:
 
 AnovaAllParticle={'StatEffect':tables.StringCol(40),'P':tables.Float64Col(shape=(TF,Electrodes)),'F':tables.Float64Col(shape=(TF,Electrodes))}
 AnovaGFPParticle={'StatEffect':tables.StringCol(40),'P':tables.Float64Col(shape=(TF,1)),'F':tables.Float64Col(shape=(TF,1))}
+PostHocAllParticle={'Name':tables.StringCol(60),'P':tables.Float64Col(shape=(TF,Electrodes)),'T':tables.Float64Col(shape=(TF,Electrodes))}
+PostHocGFPParticle={'Name':tables.StringCol(60),'P':tables.Float64Col(shape=(TF,1)),'T':tables.Float64Col(shape=(TF,1))}
 
 IntermediateResultAllParticle={'CondName':tables.StringCol(40),'Type':tables.StringCol(40),'Data':tables.Float64Col(shape=(TF,Electrodes))}
 IntermediateResultGFPParticle={'CondName':tables.StringCol(40),'Type':tables.StringCol(40),'Data':tables.Float64Col(shape=(TF,1))}
@@ -104,7 +109,9 @@ TablesInfo.flush()
 # Creating allResultTables
 TablesRes=H5.createTable(AllRes,'Anova',AnovaAllParticle)
 TablesRes=H5.createTable(AllRes,'IntermediateResult',AnovaGFPParticle)
+TablesRes=H5.createTable(AllRes,'PostHoc',PostHocAllParticle)
 TablesRes=H5.createTable(GFPRes,'Anova',IntermediateResultAllParticle)
 TablesRes=H5.createTable(GFPRes,'IntermediateResult',IntermediateResultGFPParticle)
+TablesRes=H5.createTable(GFPRes,'PostHoc',PostHocGFPParticle)
 H5.close()
 H5=tables.openFile(H5File,'a')
