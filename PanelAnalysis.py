@@ -23,7 +23,7 @@ class AnovaWave(wx.Panel):
         self.PtsConseqPostHoc = 1
         self.Clust = 1
         self.ClustPostHoc = 1
-        self.AnalyseType = ''
+        self.AnalyseType = 'GFP Only'
         self.SPIFile = ''
         self.SPIPath = ''
 
