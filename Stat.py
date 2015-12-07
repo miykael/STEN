@@ -48,9 +48,9 @@ class Anova:
                 FormulaModel.append(FactorName)
         # Wrting Formula
         if FormulaErrorTerm!=[]:
-            self.Formule = "".join(["DataR~","*".join(FormulaModel),'+ Error(',SubjectName,'/(',"*".join(FormulaErrorTerm),'))'])
-        else:
-            self.Formule = "".join(["DataR~","*".join(FormulaModel)]) 
+            self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))^M
+         else:
+            self.Formula = 'DataR~%s' % "*".join(FormulaModel)^M
 
 
     def Param(self, DataGFP=False):
@@ -74,7 +74,7 @@ class Anova:
             NbAnovaCycle = NbAnova
   
         # Performed one Anova to Extract Terms Names
-        Raw=self.CalculatingAovR(Data[0,:],Formule)
+        Raw=self.CalculatingAovR(Data[0,:],self.Formula)
         # Terms Extraction
         Terms=[]
         # Len(Raw)=1 if not repeated measur !=2 if repeated Measure
@@ -98,19 +98,19 @@ class Anova:
                                 maximum=Maximum,
                                 parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n = 0
         end = 0
         # Calculation Separated into part to ovoid out of memory
-        while fin1 < NbAnova:
+        while end < NbAnova:
             start = n * NbAnovaCycle
             end = (n + 1) * NbAnovaCycle
             
-            if fin1 > NbAnova:
-                fin1 = NbAnova
+            if end >= NbAnova:
+                end = NbAnova
             # Calculating Anovas
-            Raw=self.CalculatingAovR(Data[start:end,:],Formule)
+            Raw=self.CalculatingAovR(Data[start:end,:],self.Formula)
             P,F=self.ExtractingStat(Raw)
             if n==0:
                 PValue=P
@@ -142,8 +142,16 @@ class Anova:
             Res=self.file.getNode('/Result/GFP/Anova')
         else:
             Res=self.file.getNode('/Result/All/Anova')
-        PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-        FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
+        if DataGFP:
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+        else:
+            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
+        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+
         # writing result into H5 as a dictionnary
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
@@ -183,7 +191,7 @@ class Anova:
             NbAnovaCycle = NbAnova
   
         # Performed one Anova to Extract Terms Names
-        Raw=self.CalculatingAovR(Data[0,:],Formule)
+        Raw=self.CalculatingAovR(Data[0,:],self.Formula)
         # Terms Extraction
         Terms=[]
         # Len(Raw)=1 if not repeated measur !=2 if repeated Measure
@@ -207,20 +215,20 @@ class Anova:
                                 maximum=Maximum,
                                 parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n = 0
         end = 0
         # Calculation Separated into part to ovoid out of memory
-        while fin1 < NbAnova:
+        while end < NbAnova:
             #Originla Order Data                 
             start = n * NbAnovaCycle
             end = (n + 1) * NbAnovaCycle
             
-            if fin1 > NbAnova:
-                fin1 = NbAnova
+            if end >= NbAnova:
+                end = NbAnova
             # Calculating Anovas
-            Raw=self.CalculatingAovR(Data[start:end,:],Formule)
+            Raw=self.CalculatingAovR(Data[start:end,:],self.Formula)
             P,FReal=self.ExtractingStat(Raw)
             Count=np.zeros(FReal.shape)
             # BootStraping Data
@@ -228,7 +236,7 @@ class Anova:
                 # Creating Bootstraping and permutation Data
                 DataBoot=BootstrapedData(Data[start:end,:],FactorSubject)
                 # Calculating F Value with Bootstraping Data
-                Raw=self.CalculatingAovR(DataBoot,Formule)
+                Raw=self.CalculatingAovR(DataBoot,self.Formula)
                 P,FBoot=self.ExtractingStat(Raw)
                 # Count Anova by Anova if Fboot is bigger than FReal To difine PValue
                 Diff=FBoot-FReal
@@ -264,8 +272,16 @@ class Anova:
             Res=self.file.getNode('/Result/GFP/Anova')
         else:
             Res=self.file.getNode('/Result/All/Anova')
-        PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-        FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
+        if DataGFP:
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+        else:
+            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
+        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+
         # writing result into H5 as a dictionnary
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
@@ -285,7 +301,7 @@ class Anova:
         dlg.Destroy()
         self.file.close()
 # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
-    def ExtractingStat(Raw):
+    def ExtractingStat(self, Raw):
         for i,r in enumerate(Raw):
             Dat=np.array(r)
             if i==0:
@@ -298,11 +314,11 @@ class Anova:
         F[np.isnan(F)]=0
         return P,F
 
-    def CalculatingAovR(Data,Formula):
+    def CalculatingAovR(self, Data,Formula):
         DataR = robjects.Matrix(Data.T)
         robjects.globalenv["DataR"] = DataR
-        TextR = ['aov(', Formula, ')']
-        express = rpy2.robjects.r.parse(text="".join(TextR))
+        TextR = 'aov(%s)' % Formula
+        express = rpy2.robjects.r.parse(text=TextR)
         Fit = rpy2.robjects.r.eval(express)
         robjects.globalenv["Fit"] = Fit
         # calcul Anova
@@ -485,7 +501,7 @@ class PostHoc:
                                 NbTest,
                                 parent=self.Parent,
                                 style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
@@ -538,7 +554,7 @@ class PostHoc:
                                 NbTest,
                                 parent=self.Parent,
                                 style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
+                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
