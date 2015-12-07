@@ -529,10 +529,10 @@ class PostHoc:
                 dlgQuest.Destroy()
                 if result == wx.ID_OK:
                     self.Cancel = True
-                        break
-                    else:
-                        self.Cancel = False
-                        dlg.Resume()
+                    break
+                else:
+                    self.Cancel = False
+                    dlg.Resume()
         dlg.Close()
         dlg.Destroy()
         self.file.close()
@@ -591,10 +591,10 @@ class PostHoc:
                 dlgQuest.Destroy()
                 if result == wx.ID_OK:
                     self.Cancel = True
-                        break
-                    else:
-                        self.Cancel = False
-                        dlg.Resume()
+                    break
+                else:
+                    self.Cancel = False
+                    dlg.Resume()
         dlg.Close()
         dlg.Destroy()
         self.file.close()
