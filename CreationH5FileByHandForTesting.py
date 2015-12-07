@@ -1,14 +1,17 @@
 ##Tables definition
 ##
 ##tables:
+##/Shape # Keep the shape of the Data, to reshape after calculation # simple array
 ##/Data/All #using createEArray('/','AllData',tables.Float64Atom(),(TF,Electrodes,0))
 ##/Data/GFP #using createEArray('/','AllData',tables.Float64Atom(),(TF,1,0))
 ##/Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)
 ##/Info # using a tables that contain all the information in the "ExcelSheet"
-##/Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
+##/Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
 ##/Result/All/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...),Data Corresponding in Type}
-##/Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
+##/Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
 ##/Result/GFP/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...)}
+
+##/Result/GPF/PostHoc
 import tables
 import CartoolFiles as cf
 import glob
@@ -18,7 +21,7 @@ import xlrd
 Path='C:\Users\jknebel\Documents\NAC\Article Std Only\Data-GM'
 XlsFile='C:\Users\jknebel\Documents\NAC\Article Std Only\Data-GM\\Data.xls'
 H5File='C:\Users\jknebel\Documents\python\PyProject\STEN\\TestData\SimulatedData.h5'
-EphFile=np.array(glob.glob("\\".join([Path,'*.eph'])))
+EphFile=np.array(glob.glob("\\".join([Path,'*.avg.eph'])))
 wb=xlrd.open_workbook(XlsFile)
 sh=wb.sheet_by_name('feuille 1')
 Ratio=np.float64(sh.col_values(1))
@@ -48,7 +51,7 @@ SubjectName={'Subject':SubjectFactor}
 BetweeName={'Group':Between}
 CovariateName={'Ratio':Covariate}
 WithinName={'Cond':Within}
-AllFactor={'Subject':SubjectName,'BetweenFactor':BetweeName,'Covariate':CovariateName,'Within':WithinName}
+AllFactor={'Subject':SubjectName,'Between':BetweeName,'Covariate':CovariateName,'Within':WithinName}
 # Creation H5 File and differnt group
 H5=tables.openFile(H5File,'w')
 DataGroup=H5.createGroup('/','Data')
@@ -58,13 +61,15 @@ GFPRes=H5.createGroup(ResultGrp,'GFP')
 # read one file to extract TF and Electrod info
 TF=cf.Eph(AllEph[0]).TF
 Electrodes=cf.Eph(AllEph[0]).Electrodes
-AllData=H5.createEArray(DataGroup,'All',tables.Float64Atom(),(TF,Electrodes,0))
-GFPData=H5.createEArray(DataGroup,'GFP',tables.Float64Atom(),(TF,1,0))
+AllData=H5.createEArray(DataGroup,'All',tables.Float64Atom(),(TF*Electrodes,0))
+GFPData=H5.createEArray(DataGroup,'GFP',tables.Float64Atom(),(TF,0))
 # Reading EphFile dans store into Tables with EArray
 for e in AllEph:
     dat=cf.Eph(e)
-    AllData.append(dat.Data.reshape((dat.TF,dat.Electrodes,1)))
-    GFPData.append(dat.GFP.reshape((dat.TF,1,1)))
+    AllData.append(dat.Data.reshape(np.array(dat.Data.shape).prod(),1))
+    GFPData.append(dat.GFP.reshape(TF,1))
+ShapeOriginalData=H5.createArray('/','Shape',np.array(dat.Data.shape))
+
 ModelParticle = {'Name': tables.StringCol(40),'Value': tables.Int32Col(shape=len(SubjectFactor)),'Type':tables.StringCol(40)}
 InfoParticle={}
 for c in InfoDict:
