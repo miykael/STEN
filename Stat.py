@@ -49,7 +49,7 @@ class Anova:
         # Wrting Formula
         if FormulaErrorTerm!=[]:
             self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))
-         else:
+        else:
             self.Formula = 'DataR~%s' % "*".join(FormulaModel)
 
 
