@@ -118,7 +118,8 @@ class CreateDataset(wx.Panel):
         PanelCalculation = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
         sizerCalculation = wx.BoxSizer(wx.HORIZONTAL)
         self.TxtProgress = wx.StaticText(
-            PanelCalculation, wx.ID_ANY, label='', style=wx.ALIGN_LEFT)
+            PanelCalculation, wx.ID_ANY, label='', style=wx.ALIGN_LEFT,
+            size=(150, 200))
         sizerCalculation.Add(self.TxtProgress, 0, wx.EXPAND)
         PanelCalculation.SetSizer(sizerCalculation)
         sizerPanelDataHandler.Add(PanelCalculation, 0, wx.EXPAND)
@@ -187,6 +188,7 @@ class CreateDataset(wx.Panel):
             # TODO: this function doesn't consider additional H5 file content
             # (e.g. from previous analysis)
             H5Tables.WriteDatatable(filename, self.MainFrame.Dataset)
+            H5Tables.ReadDataset(filename, self.MainFrame.Dataset)
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
 

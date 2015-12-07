@@ -5,7 +5,7 @@ import numpy as np
 class WriteDatatable:
 
     """
-    Write the dataset content to H5 file
+    Write the datatable content to H5 file
     """
 
     def __init__(self, name, dataset):
@@ -85,7 +85,7 @@ class WriteDatatable:
 class ReadDatatable:
 
     """
-    Read the dataset from an H5 file
+    Read the datatable from an H5 file
     """
 
     def __init__(self, name):
@@ -138,7 +138,166 @@ class ReadEPH:
             tmp = ephfile.readlines()
             header = tmp[0].split()
             self.electrodes = int(header[0])
-            self.tf = int(header[1])
-            self.fs = float(header[2])
+            self.TF = int(header[1])
+            self.FS = float(header[2])
         self.data = np.loadtxt(filename, skiprows=1)
         self.GFP = self.data.std(axis=1)
+
+
+class ReadDataset:
+
+    """
+    Read complet dataset from H5 file, including content of EPH files
+
+    # /Data/All #using createEArray('/','AllData',tables.Float32Atom(),(TF,electrodes,0))
+    # /Data/GFP #using createEArray('/','AllData',tables.Float32Atom(),(TF,1,0))
+    # /Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)
+    # /Info # using a tables that contain all the information in the "ExcelSheet"
+    # /Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
+    # /Result/All/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...),Data Corresponding in Type}
+    # /Result/All/PostHoc # Tabes with Col = {Name,P,T}
+    # /Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
+    # /Result/GFP/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...)}
+    # /Result/GFP/PostHoc # Tabes with Col = {Name,P,T}
+    """
+
+    def __init__(self, name, dataset):
+        
+        # Simulation of reading grid
+        subjectName = dataset['Subject'][0]
+        subjectID = dataset['Subject'][1]
+        groupName = dataset['BetweenFactor'][0][0]  # TODO: make sure that multiple variables are considered
+        groupID = dataset['BetweenFactor'][0][1]
+        covariateName = dataset['Covariate'][0][0]  # TODO: make sure that multiple variables are considered
+        covariateID = dataset['Covariate'][0][1]
+
+        # Geneating a Dict containing the grid info with artifical col name coming from grid
+        InfoDict = {subjectName: subjectID,
+                    groupName: groupID,
+                    covariateName: covariateID}
+        
+        for i, e in enumerate(dataset['WithinFactor']):
+            fName = e[0].replace('.', '_').replace(' ', '')
+            InfoDict[fName] = e[2]
+
+        NbLine = len(subjectID)
+
+        AllEph = np.ravel([e[2] for e in dataset['WithinFactor']])
+
+        SubjectFactor = np.ravel([subjectID] * NbLine)
+        Covariate = np.ravel([covariateID] * NbLine)
+        Between = np.ravel([groupID] * NbLine)
+        Within = np.ravel([[int(e[1][1:-1])] * NbLine for i,e in enumerate(dataset['WithinFactor'])]) # TODO: not sure if this is the right way
+
+        # factor Name coming from selecting factor
+        SubjectName = {subjectName: SubjectFactor}
+        BetweeName = {groupName: Between}
+        CovariateName = {covariateName: Covariate}
+        WithinName = {'Cond': Within}
+        AllFactor = {subjectName: SubjectName, 'Between': BetweeName,
+                     'Covariate': CovariateName, 'Within': WithinName}
+
+
+        # Creation H5 File and differnt group
+        H5 = tables.openFile(name, 'r+')
+        DataGroup = H5.createGroup('/', 'Data')
+        ResultGrp = H5.createGroup('/', 'Result')
+        AllRes = H5.createGroup(ResultGrp, 'All')
+        GFPRes = H5.createGroup(ResultGrp, 'GFP')
+
+        # Read EPH files
+        ephData = [ReadEPH(eph) for eph in AllEph]
+        electrodes = np.stack([eph.electrodes for eph in ephData]).astype('uint16')
+        FS = np.stack([eph.FS for eph in ephData]).astype('uint16')
+        TF = np.stack([eph.TF for eph in ephData]).astype('uint16')
+
+        # make sure that all eph files have the same dimension and frequency
+        # TODO: Have warning message to aborts the whole thing instead of print
+        if len(np.unique(electrodes)) == 1:
+            electrodes = electrodes[0]
+        else:
+            print 'Number of electrodes is unequal in EPH files.'
+        if len(np.unique(FS)) == 1:
+            FS = FS[0]
+        else:
+            print 'Sampling rate is unequal in EPH files.'
+        if len(np.unique(TF)) == 1:
+            TF = TF[0]
+        else:
+            print 'Number of sampling points is unequal in EPH files.'
+
+        AllData = H5.createEArray(DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
+        GFPData = H5.createEArray(DataGroup, 'GFP', tables.Float32Atom(), (TF, 0))
+
+        # Reading EphFile dans store into Tables with EArray
+        for e in ephData:
+            AllData.append(e.data.reshape(np.array(e.data.shape).prod(), 1))
+            GFPData.append(e.GFP.reshape(TF, 1))
+
+        ShapeOriginalData = H5.createArray('/', 'Shape', np.array(e.data.shape))
+
+        ModelParticle = {'Name': tables.StringCol(40),
+                         'Value': tables.Float32Col(shape=len(SubjectFactor)),
+                         'Type': tables.StringCol(40)}
+
+
+        InfoParticle = {}
+        for c in InfoDict:
+            InfoParticle[c] = tables.StringCol(256)
+
+        AnovaAllParticle = {'StatEffect': tables.StringCol(40),
+                            'P': tables.Float32Col(shape=(TF, electrodes)),
+                            'F': tables.Float32Col(shape=(TF, electrodes))}
+        AnovaGFPParticle = {'StatEffect': tables.StringCol(40),
+                            'P': tables.Float32Col(shape=(TF, 1)),
+                            'F': tables.Float32Col(shape=(TF, 1))}
+
+        PostHocAllParticle = {'Name': tables.StringCol(60),
+                              'P': tables.Float32Col(shape=(TF, electrodes)),
+                              'T': tables.Float32Col(shape=(TF, electrodes))}
+        PostHocGFPParticle = {'Name': tables.StringCol(60),
+                              'P': tables.Float32Col(shape=(TF, 1)),
+                              'T': tables.Float32Col(shape=(TF, 1))}
+
+
+        IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
+                                         'Type': tables.StringCol(40),
+                                         'Data': tables.Float32Col(shape=(TF,
+                                                                          electrodes))}
+        IntermediateResultGFPParticle = {'CondName': tables.StringCol(40),
+                                         'Type': tables.StringCol(40),
+                                         'Data': tables.Float32Col(shape=(TF, 1))}
+
+        # crating tables for model
+        TablesModel = H5.createTable('/', 'Model', ModelParticle)
+
+        # writing Model informations
+        NewRow = TablesModel.row
+        for t in AllFactor:
+            for n in AllFactor[t]:
+                NewRow['Name'] = n
+                NewRow['Value'] = AllFactor[t][n]
+                NewRow['Type'] = t
+                NewRow.append()
+        TablesModel.flush()
+
+        # Creating info Table
+        TablesInfo = H5.createTable('/', 'Info', InfoParticle)
+
+        # writing Model informations
+        NewRow = TablesInfo.row
+        for l in range(NbLine):
+            for c in InfoDict:
+                NewRow[c] = InfoDict[c][l]
+            NewRow.append()
+        TablesInfo.flush()
+
+        # Creating allResultTables
+        TablesRes = H5.createTable(AllRes, 'Anova', AnovaAllParticle)
+        TablesRes = H5.createTable(AllRes, 'IntermediateResult', AnovaGFPParticle)
+        TablesRes = H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
+        TablesRes = H5.createTable(GFPRes, 'Anova', IntermediateResultAllParticle)
+        TablesRes = H5.createTable(GFPRes, 'IntermediateResult',
+                                   IntermediateResultGFPParticle)
+        TablesRes = H5.createTable(GFPRes, 'PostHoc', PostHocGFPParticle)
+        H5.close()
