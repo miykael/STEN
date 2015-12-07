@@ -220,6 +220,7 @@ class CreateDataset(wx.Panel):
             filepath = dlg.GetPath()
             dlg.Destroy()
             if answer == wx.ID_OK:
+                self.DataLoadFile.SetValue(filepath)
                 datatable = H5Tables.ReadDatatable(filepath)
                 self.MainFrame.Dataset = datatable.inputTable
                 self.MainFrame.ButtonDataSave.Enable()
