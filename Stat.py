@@ -48,9 +48,9 @@ class Anova:
                 FormulaModel.append(FactorName)
         # Wrting Formula
         if FormulaErrorTerm!=[]:
-            self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))^M
+            self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))
          else:
-            self.Formula = 'DataR~%s' % "*".join(FormulaModel)^M
+            self.Formula = 'DataR~%s' % "*".join(FormulaModel)
 
 
     def Param(self, DataGFP=False):
