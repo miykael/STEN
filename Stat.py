@@ -419,6 +419,7 @@ class PostHoc:
     def CalculationTTest(Data,Combination,SubjectFactor,Arrangement,NonParam=False):
         # H5 array don't be acces with bool
         Cond=np.arange(0,Data.shape[1])
+        # Value1 and Value2 = Bolean vector correponding to the condition for the t-test based on name in Combination
         Value1= Arrangement[Combination[0]]
         Value2= Arrangement[Combination[1]]
         # extracted the subject lable for the 2 condtions
@@ -427,8 +428,13 @@ class PostHoc:
         #sort the subject label to be sure they are in a same way for comparison
         Subj1.sort()
         Subj2.sort()
-        # if the subjects are the same = Paired esls unpaired 
-        TestPaired=SubjectFactor[Value1]-SubjectFactor[Value2]==0
+        # if number of element in Condition1 != number of element in Condition2 => unpaired, if Subject Value are identical Paired
+        if Value1.sum()==Value2.sum():
+            TestPaired=SubjectFactor[Value1]-SubjectFactor[Value2]==0
+        else:
+            # a numpy array with Tue and false because the test is on TestPaired.all()
+            TestPaired=np.array([True,False])
+        
         if TestPaired.all():
             if NonParam:
                 # extracting the label of each condition
