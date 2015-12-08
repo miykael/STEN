@@ -163,6 +163,8 @@ class ReadDataset:
 
     def __init__(self, name, dataset):
         
+        # TODO: check and rewrite this section
+
         # Simulation of reading grid
         subjectName = dataset['Subject'][0]
         subjectID = dataset['Subject'][1]
@@ -200,7 +202,6 @@ class ReadDataset:
 
         # Creation H5 File and differnt group
         H5 = tables.openFile(name, 'r+')
-        DataGroup = H5.createGroup('/', 'Data')
         ResultGrp = H5.createGroup('/', 'Result')
         AllRes = H5.createGroup(ResultGrp, 'All')
         GFPRes = H5.createGroup(ResultGrp, 'GFP')
@@ -226,6 +227,7 @@ class ReadDataset:
         else:
             print 'Number of sampling points is unequal in EPH files.'
 
+        DataGroup = H5.createGroup('/', 'Data')
         AllData = H5.createEArray(DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
         GFPData = H5.createEArray(DataGroup, 'GFP', tables.Float32Atom(), (TF, 0))
 
@@ -249,15 +251,15 @@ class ReadDataset:
                             'P': tables.Float32Col(shape=(TF, electrodes)),
                             'F': tables.Float32Col(shape=(TF, electrodes))}
         AnovaGFPParticle = {'StatEffect': tables.StringCol(40),
-                            'P': tables.Float32Col(shape=(TF, 1)),
-                            'F': tables.Float32Col(shape=(TF, 1))}
+                            'P': tables.Float32Col(shape=(TF)),
+                            'F': tables.Float32Col(shape=(TF))}
 
         PostHocAllParticle = {'Name': tables.StringCol(60),
                               'P': tables.Float32Col(shape=(TF, electrodes)),
                               'T': tables.Float32Col(shape=(TF, electrodes))}
         PostHocGFPParticle = {'Name': tables.StringCol(60),
-                              'P': tables.Float32Col(shape=(TF, 1)),
-                              'T': tables.Float32Col(shape=(TF, 1))}
+                              'P': tables.Float32Col(shape=(TF)),
+                              'T': tables.Float32Col(shape=(TF))}
 
 
         IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
@@ -266,7 +268,7 @@ class ReadDataset:
                                                                           electrodes))}
         IntermediateResultGFPParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
-                                         'Data': tables.Float32Col(shape=(TF, 1))}
+                                         'Data': tables.Float32Col(shape=(TF))}
 
         # crating tables for model
         TablesModel = H5.createTable('/', 'Model', ModelParticle)
@@ -279,7 +281,6 @@ class ReadDataset:
                 NewRow['Value'] = AllFactor[t][n]
                 NewRow['Type'] = t
                 NewRow.append()
-        TablesModel.flush()
 
         # Creating info Table
         TablesInfo = H5.createTable('/', 'Info', InfoParticle)
@@ -290,14 +291,17 @@ class ReadDataset:
             for c in InfoDict:
                 NewRow[c] = InfoDict[c][l]
             NewRow.append()
-        TablesInfo.flush()
 
-        # Creating allResultTables
-        TablesRes = H5.createTable(AllRes, 'Anova', AnovaAllParticle)
-        TablesRes = H5.createTable(AllRes, 'IntermediateResult', AnovaGFPParticle)
-        TablesRes = H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
-        TablesRes = H5.createTable(GFPRes, 'Anova', IntermediateResultAllParticle)
-        TablesRes = H5.createTable(GFPRes, 'IntermediateResult',
-                                   IntermediateResultGFPParticle)
-        TablesRes = H5.createTable(GFPRes, 'PostHoc', PostHocGFPParticle)
+        # Creating Result Tables
+        H5.createTable(AllRes, 'Anova', AnovaAllParticle)
+        H5.createTable(AllRes, 'IntermediateResult', IntermediateResultAllParticle)
+        H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
+        H5.createTable(GFPRes, 'Anova', AnovaGFPParticle)
+        H5.createTable(GFPRes, 'IntermediateResult', IntermediateResultGFPParticle)
+        H5.createTable(GFPRes, 'PostHoc', PostHocGFPParticle)
+
+        # Create Progress Table
+        H5.createTable('/', 'Progress', {'Text': tables.StringCol(256)})
+
+        # Close H5 file
         H5.close()
