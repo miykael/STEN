@@ -254,14 +254,6 @@ class ReadDataset:
                             'P': tables.Float32Col(shape=(TF)),
                             'F': tables.Float32Col(shape=(TF))}
 
-        PostHocAllParticle = {'Name': tables.StringCol(60),
-                              'P': tables.Float32Col(shape=(TF, electrodes)),
-                              'T': tables.Float32Col(shape=(TF, electrodes))}
-        PostHocGFPParticle = {'Name': tables.StringCol(60),
-                              'P': tables.Float32Col(shape=(TF)),
-                              'T': tables.Float32Col(shape=(TF))}
-
-
         IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
                                          'Data': tables.Float32Col(shape=(TF,
@@ -269,6 +261,13 @@ class ReadDataset:
         IntermediateResultGFPParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
                                          'Data': tables.Float32Col(shape=(TF))}
+
+        PostHocAllParticle = {'Name': tables.StringCol(60),
+                              'P': tables.Float32Col(shape=(TF, electrodes)),
+                              'T': tables.Float32Col(shape=(TF, electrodes))}
+        PostHocGFPParticle = {'Name': tables.StringCol(60),
+                              'P': tables.Float32Col(shape=(TF)),
+                              'T': tables.Float32Col(shape=(TF))}
 
         # crating tables for model
         TablesModel = H5.createTable('/', 'Model', ModelParticle)
@@ -294,10 +293,10 @@ class ReadDataset:
 
         # Creating Result Tables
         H5.createTable(AllRes, 'Anova', AnovaAllParticle)
-        H5.createTable(AllRes, 'IntermediateResult', IntermediateResultAllParticle)
-        H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
         H5.createTable(GFPRes, 'Anova', AnovaGFPParticle)
+        H5.createTable(AllRes, 'IntermediateResult', IntermediateResultAllParticle)
         H5.createTable(GFPRes, 'IntermediateResult', IntermediateResultGFPParticle)
+        H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
         H5.createTable(GFPRes, 'PostHoc', PostHocGFPParticle)
 
         # Create Progress Table

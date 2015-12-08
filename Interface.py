@@ -136,6 +136,6 @@ class MainFrame(wx.Frame):
         if startCalculation:
             self.ButtonStart.Disable()
             calc = Calculation_new.Start(self)
-            self.PanelData.TxtProgress.SetLabel('\n'.join(calc.ProgressTxt))
+            self.PanelData.TxtProgress.SetLabel('\n'.join(calc.progressTxt))
             self.ButtonStart.Enable()
         event.Skip()
