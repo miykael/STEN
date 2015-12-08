@@ -1,5 +1,5 @@
 import wx
-import Stat as Stat
+import Stat
 import tables
 import PostStat
 import os
@@ -75,7 +75,7 @@ class Start:
             self.calcAnovaIS()
 
         # Write progressTxt to H5 file
-        with tables.openFile(self.H5, mode='a') as h5file:
+        with tables.openFile(self.H5, mode='r+') as h5file:
 
             # Delete previous content
             description = h5file.getNode('/Progress').description
@@ -87,6 +87,10 @@ class Start:
             for i, e in enumerate(self.progressTxt):
                 progRow['Text']= e
                 progRow.append()
+
+
+        # Write Verbose File
+        self.writeVrb()
 
         # TODO: Delete following line
         print 'DONE'
@@ -134,30 +138,7 @@ class Start:
                 if not os.path.exists(PathResultAnova):
                     os.makedirs(PathResultAnova)
 
-                if self.AnalyseType == "Both":
-                    start = time.clock()
-                    self.WavePostStat = PostStat.Data(self.H5, self, Anova=True, DataGFP=False, Param=self.AnovaParam)
-                    self.WavePostStat.MathematicalMorphology(self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=self.AnovaClust, SpaceFile=self.SpaceFile)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Multiple Test Correction (All electrodes): %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteData(PathResultAnova)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing EPH Results : %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteIntermediateResult(self.PathResult)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing intermediater EPH Results : %s' % self.TimeTxt)
-
-                    self.WavePostStat.file.close()
+                if self.AnalyseType in ["GFP Only", "Both"]:
                     start = time.clock()
                     self.WavePostStat = PostStat.Data(self.H5, self, Anova=True, DataGFP=True, Param=self.AnovaParam)
                     self.WavePostStat.MathematicalMorphology(self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=1, SpaceFile=None)
@@ -180,31 +161,7 @@ class Start:
                     self.extractTime(elapsed)
                     self.progressTxt.append('Writing intermediater EPH Results : %s' % self.TimeTxt)
                     self.WavePostStat.file.close()
-
-                elif self.AnalyseType == "GFP Only":
-                    start = time.clock()
-                    self.WavePostStat = PostStat.Data(self.H5, self, Anova=True, DataGFP=True, Param=self.AnovaParam)
-                    self.WavePostStat.MathematicalMorphology(self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=1, SpaceFile=None)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Multiple Test Correction (GFP): %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteData(PathResultAnova)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing EPH Results : %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteIntermediateResult(self.PathResult, DataGFP=True)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing intermediater EPH Results : %s' % self.TimeTxt)
-                    self.WavePostStat.file.close()
-                elif self.AnalyseType == "All Electrodes":
+                if self.AnalyseType in ["All Electrodes", "Both"]:
                     start = time.clock()
                     self.WavePostStat = PostStat.Data(self.H5, self, Anova=True, DataGFP=False, Param=self.AnovaParam)
                     self.WavePostStat.MathematicalMorphology(self.AnovaAlpha, TF=self.AnovaPtsConsec, SpaceCriteria=self.AnovaClust, SpaceFile=self.SpaceFile)
@@ -267,23 +224,7 @@ class Start:
                 if not os.path.exists(PathResultPostHoc):
                     os.makedirs(PathResultPostHoc)
 
-                if self.AnalyseType == "Both":
-
-                    start = time.clock()
-                    self.WavePostStat = PostStat.Data(self.H5, self, Anova=False, DataGFP=False, Param=self.PostHocParam)
-                    self.WavePostStat.MathematicalMorphology(self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Multiple Test Correction on PostHoc (All electrodes): %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteData(PathResultPostHoc)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing EPH Results on PostHoc(All electrodes) : %s' % self.TimeTxt)
-                    self.WavePostStat.file.close()
+                if self.AnalyseType in ["GFP Only", "Both"]:
 
                     start = time.clock()
                     self.WavePostStat = PostStat.Data(self.H5, self, Anova=False, DataGFP=True, Param=self.PostHocParam)
@@ -301,25 +242,7 @@ class Start:
                     self.progressTxt.append('Writing EPH Results on PostHoc(GFP) : %s' % self.TimeTxt)
                     self.WavePostStat.file.close()
 
-                elif self.AnalyseType == "GFP Only":
-
-                    start = time.clock()
-                    self.WavePostStat = PostStat.Data(self.H5, self, Anova=False, DataGFP=True, Param=self.PostHocParam)
-                    self.WavePostStat.MathematicalMorphology(self.PostHocAlpha, TF=self.PostHocPtsConsec, SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Multiple Test Correction on PostHoc (GFP): %s' % self.TimeTxt)
-
-                    start = time.clock()
-                    self.WavePostStat.WriteData(PathResultPostHoc)
-                    end = time.clock()
-                    elapsed = end - start
-                    self.extractTime(elapsed)
-                    self.progressTxt.append('Writing EPH Results on PostHoc(GFP) : %s' % self.TimeTxt)
-                    self.WavePostStat.file.close()
-
-                elif self.AnalyseType == "All Electrodes":
+                if self.AnalyseType in ["All Electrodes", "Both"]:
 
                     start = time.clock()
                     self.WavePostStat = PostStat.Data(self.H5, self, Anova=False, DataGFP=False, Param=self.PostHocParam)
@@ -467,250 +390,194 @@ class Start:
             dlg.Destroy()
         
 
-    def writeVrb(self, H5, ResultFolder):
-        # ecrire le VRB
-        file = tables.openFile(H5, 'r')
-        Title = ['Analysis : \n']
-        Param = ['Parameter :', '\n', '-----------', '\n']
+    def checkForRerun(self):
+
+        h5file = tables.openFile(self.H5, mode='a')
+
+        self.progressTxt = [e[0] for e in h5file.getNode('/Progress').read()]
+
+        if self.progressTxt == []:
+            self.progressTxt = ['Calculation Time :']
+
+        # Make sure to only run the ones that were selected
+        if self.AnalyseType in ["GFP Only", "Both"]:
+            self.doAnovaParamGFP = True
+            self.doAnovaNonParamGFP = True
+            self.doPostHocParamGFP = True
+            self.doPostHocNonParamGFP = True
+        if self.AnalyseType in ["All Electrodes", "Both"]:
+            self.doAnovaParamElect = True
+            self.doAnovaNonParamElect = True
+            self.doPostHocParamElect = True
+            self.doPostHocNonParamElect = True
+
+        # Check if Process was already done and ask for rerun
+        calcMode = 'Parametric Anova (GFP)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doAnovaParamGFP = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Parametric Anova (All Electrodes)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doAnovaParamElect = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Non-Parametric Anova (GFP)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doAnovaNonParamGFP = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Non-Parametric Anova (All Electrodes)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doAnovaNonParamElect = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Parametric PostHoc (GFP)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doPostHocParamGFP = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Parametric PostHoc (All Electrodes)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doPostHocParamElect = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Non-Parametric PostHoc (GFP)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doPostHocNonParamGFP = self.rerunMessage(h5file, calcMode)
+
+        calcMode = 'Non-Parametric PostHoc (All Electrodes)'
+        if np.any([calcMode in p for p in self.progressTxt]):
+            self.doPostHocNonParamElect = self.rerunMessage(h5file, calcMode)
+
+        h5file.close()
+
+    def rerunMessage(self, h5file, calcMode):
+
+        """Checks if a specific calculation mode was already computed
+        and asks if it should be run again or not
+        """
+
+        progTxt = self.progressTxt[np.where(
+            [calcMode in p for p in self.progressTxt])[0]]
+
+        message = ['%s\nResults were already computed.\n\n' % progTxt,
+                   'Do you want to recalculate them (YES) or \n',
+                   'continue with the already computed results (NO)?']
+
+        dlg = wx.MessageDialog(
+            None, style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION,
+            caption='%s already computed' % calcMode,
+            message=''.join(message))
+        answer = dlg.ShowModal()
+        dlg.Destroy()
+
+        if answer == wx.ID_YES:
+
+            nodePath = '/Result'
+            if 'All' in calcMode:
+                nodePath += '/All'
+            else:
+                nodePath += '/GFP'
+            if 'PostHoc' in calcMode:
+                node = 'PostHoc'
+            else:
+                node = 'Anova'
+
+            # Cleares Node that should be rerun
+            description = h5file.getNode(nodePath+'/'+node).description
+            h5file.removeNode(nodePath+'/'+node, recursive=True)
+            h5file.createTable(nodePath, node, description)
+
+            # Delete progress Text from already computed step
+            self.progressTxt.pop(np.where(np.asarray(self.progressTxt)==progTxt)[0])
+
+            doRerun = True
+
+        else:
+            doRerun = False
+
+        return doRerun
+
+
+    def writeVrb(self):
+
+        with tables.openFile(self.H5, 'r') as h5file:
+            shape = h5file.getNode('/Shape').read()
+
+        CalcProg = '%s\n------------------\n' % self.progressTxt[0]
+        CalcProg += '\t%s' % '\n\t'.join(self.progressTxt[1:])
+
+        Title = 'Analysis :\n----------\n'
+        Param = 'Parameter :\n-----------\n'
+
         if self.AnovaCheck:
-            # Anova
-            Param.append('ANOVA :\n')
-            Param.append('\tAlpha = ')
-            Param.append(str(self.AnovaAlpha))
-            Param.append('\n')
-            Param.append('\tConsecutive Time Frame Criteria = ')
-            Param.append(str(self.AnovaPtsConsec))
-            Param.append('\n')
+            Param += 'ANOVA :\n'
+            Param += '\tAlpha = %s\n' % self.AnovaAlpha
+            Param += '\tConsecutive Time Frame = %s\n' % self.AnovaPtsConsec
 
             if self.AnovaParam:
-                if self.AnalyseType == "Both":
-                    Title.append('All electrodes Waveform Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
-                    Title.append('\n')
-                    Title.append('GFP Parametric Repeated Measure ANOVA across')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-
-                elif self.AnalyseType == "GFP Only":
-                    Title.append('GFP Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/ShapeGFP')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                elif self.AnalyseType == "All Electrodes":
-                    Title.append('All electrodes Waveform Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-                elif self.AnalyseType is None:
-                    Title.append('All electrodes Waveform Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Voxels')
-
-                    Param.append('\tCluster Criteria (Voxels) = ')
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
+                Title += 'Parametric Repeated Measure ANOVA\n'
             else:
-                if self.AnalyseType == "Both":
-                    Title.append('All electrodes Waveform Non-Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
-                    Title.append('\n')
-                    Title.append('GFP Non-Parametric Repeated Measure ANOVA across')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
+                Title += 'Non-Parametric Repeated Measure ANOVA\n'
 
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-                elif self.AnalyseType == "GFP Only":
-                    Title.append('GFP Non-Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/ShapeGFP')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                elif self.AnalyseType == "All Electrodes":
-                    Title.append('All electrodes Waveform Non-Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
+            if self.AnalyseType in ["GFP Only", "Both"]:
+                Title += '\tGFP            - Time Frames = %s\n' % shape[0]
+            if self.AnalyseType in ["All Electrodes", "Both"]:
+                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Title += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
 
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-                elif self.AnalyseType is None:
-                    Title.append('All electrodes Waveform Non-Parametric Repeated Measure ANOVA across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Voxels')
+                Param += '\tCluster Size (Electrodes) = %s\n' % self.AnovaClust
+                if self.AnovaClust > 1:
+                    Param += '\tXYZ File = %s\n' % self.SpaceFile
 
-                    Param.append('\tCluster Criteria (Voxels) = ')
-                    Param.append(str(self.AnovaClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
+            if self.AnalyseType is None:
+                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Title += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
 
-                Param.append('\tIteraction Value = ')
-                Param.append(str(self.AnovaIteration))
-                Param.append('\n')
+                Param += '\tCluster Size (Voxels) = %s\n' % self.AnovaClust
+                if self.AnovaClust > 1:
+                    Param += '\tSPI File = %s\n' % self.SpaceFile
+
+            if not self.AnovaParam:
+                Param += '\tNumber of Bootstrap Iterations = %s\n' % self.AnovaIteration
 
         if self.AnovaCheck and self.PostHocCheck:
-            Title.append('\n')
+            Title += '\n'
+            Param += '\n'
+
         if self.PostHocCheck:
-            Param.append('Post-Hoc :\n')
-            Param.append('\tAlpha = ')
-            Param.append(str(self.PostHocAlpha))
-            Param.append('\n')
-            Param.append('\tConsecutive Time Frame Criteria = ')
-            Param.append(str(self.PostHocPtsConsec))
-            Param.append('\n')
+            Param += 'Post hoc :\n'
+            Param += '\tAlpha = %s\n' % self.PostHocAlpha
+            Param += '\tConsecutive Time Frame = %s\n' % self.PostHocPtsConsec
+
             if self.PostHocParam:
-                if self.AnalyseType == "Both":
-                    Title.append('All electrodes Waveform Parametric POST-HOC across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frames and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
-                    Title.append('\n')
-                    Title.append('GFP Parametric POST-HOC across')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frames')
+                Title += 'Parametric Post hoc\n'
+            else:
+                Title += 'Non-Parametric Post hoc\n'
 
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-                    Param.append(str(self.PostHocClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
+            if self.AnalyseType in ["GFP Only", "Both"]:
+                Title += '\tGFP            - Time Frames = %s\n' % shape[0]
+            if self.AnalyseType in ["All Electrodes", "Both"]:
+                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Title += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
 
-                elif self.AnalyseType == "GFP Only":
-                    Title.append('GFP Parametric POST-HOC across')
-                    shape = file.getNode('/Info/ShapeGFP')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frames')
-                elif self.AnalyseType == "All Electrodes":
-                    Title.append('All electrodes Waveform Parametric POST-HOC across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frame and')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Electrodes')
+                Param += '\tCluster Size (Electrodes) = %s\n' % self.PostHocClust
+                if self.PostHocClust > 1:
+                    Param += '\tXYZ File = %s\n' % self.SpaceFile
 
-                    Param.append('\tCluster Criteria (Electrodes) = ')
-                    Param.append(str(self.PostHocClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-                elif self.AnalyseType is None:
-                    Title.append('All electrodes Waveform Parametric POST-HOC across')
-                    shape = file.getNode('/Info/Shape')
-                    Title.append(str(shape.read()[0]))
-                    Title.append('Time Frames and ')
-                    Title.append(str(shape.read()[1]))
-                    Title.append('Voxels')
+            if self.AnalyseType is None:
+                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Title += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
 
-                    Param.append('\tCluster Criteria (Voxels) = ')
-                    Param.append(str(self.PostHocClust))
-                    Param.append('\n')
-                    Param.append('\tCluster Criteria (File) = ')
-                    Param.append(str(self.SpaceFile))
-                    Param.append('\n')
-                else:
-                    if self.AnalyseType == "Both":
-                        Title.append('All electrodes Waveform Non-Parametric POST-HOC across')
-                        shape = file.getNode('/Info/Shape')
-                        Title.append(str(shape.read()[0]))
-                        Title.append('Time Frames and')
-                        Title.append(str(shape.read()[1]))
-                        Title.append('Electrodes')
-                        Title.append('\n')
-                        Title.append('GFP Non-Parametric POST-HOC across')
-                        Title.append(str(shape.read()[0]))
-                        Title.append('Time Frames ')
+                Param += '\tCluster Size (Voxels) = %s\n' % self.PostHocClust
+                if self.PostHocClust > 1:
+                    Param += '\tSPI File = %s\n' % self.SpaceFile
 
-                        Param.append('\tCluster Criteria (Electrodes) = ')
-                        Param.append(str(self.PostHocClust))
-                        Param.append('\n')
-                        Param.append('\tCluster Criteria (File) = ')
-                        Param.append(str(self.SpaceFile))
-                        Param.append('\n')
-                    elif self.AnalyseType == "GFP Only":
-                        Title.append('GFP Non-Parametric POST-HOC across')
-                        shape = file.getNode('/Info/ShapeGFP')
-                        Title.append(str(shape.read()[0]))
-                        Title.append('Time Frames')
-                    elif self.AnalyseType == "All Electrodes":
-                        Title.append('All electrodes Waveform Non-Parametric POST-HOC across')
-                        shape = file.getNode('/Info/Shape')
-                        Title.append(str(shape.read()[0]))
-                        Title.append('Time Frames and')
-                        Title.append(str(shape.read()[1]))
-                        Title.append('Electrodes')
+            if not self.PostHocParam:
+                Param += '\tNumber of Bootstrap Iterations = %s\n' % self.PostHocIteration
 
-                        Param.append('\tCluster Criteria (Electrodes) = ')
-                        Param.append(str(self.PostHocClust))
-                        Param.append('\n')
-                        Param.append('\tCluster Criteria (File) = ')
-                        Param.append(str(self.SpaceFile))
-                        Param.append('\n')
-                    elif self.AnalyseType is None:
-                        Title.append('All electrodes Waveform Non-Parametric POST-HOC across')
-                        shape = file.getNode('/Info/Shape')
-                        Title.append(str(shape.read()[0]))
-                        Title.append('Time Frames and')
-                        Title.append(str(shape.read()[1]))
-                        Title.append('Voxels')
 
-                        Param.append('\tCluster Criteria (Voxels) = ')
-                        Param.append(str(self.PostHocClust))
-                        Param.append('\n')
-                        Param.append('\tCluster Criteria (File) = ')
-                        Param.append(str(self.SpaceFile))
-                        Param.append('\n')
+        """
+        TODO: Check the following section for Verbose file
 
         Factor = ['Factor Names and Levels :\n', '-------------------------\n']
-        file.close()
-        StatData = Stat.Anova(H5, self)
+
+        StatData = Stat.Anova(self.H5, self)
         Sheet = StatData.file.getNode('/Sheet/Value')
         InputFile = ['Input File in relation to factors :\n',
                      '-----------------------------------\n']
@@ -837,129 +704,17 @@ class Start:
                     Condition.append(d)
                     Condition.append('\n')
             InputFile.append("".join(Condition))
-        Title = " ".join(Title)
-        Title = Title.split('\n')
-        MaxLength = 0
-        for p in Title:
-            if len(p) > MaxLength:
-                MaxLength = len(p)
-        Mark = []
-        for i in range(MaxLength):
-            Mark.append('=')
-        Mark.insert(0, '\t\t')
-        Mark.append('\n')
-        Title = "\n\t\t".join(Title)
-        Param = "".join(Param)
+
         if StatData.NameCovariate:
             Title.replace('ANOVA', 'ANCOVA')
             Param.replace('ANOVA', 'ANCOVA')
 
-        os.chdir(ResultFolder)
-        VrbFile = open('info.vrb', "w")
-        VrbFile.write("".join(Mark))
-        VrbFile.write('\t\t')
-        VrbFile.write(Title)
-        VrbFile.write('\n')
-        VrbFile.write("".join(Mark))
-        VrbFile.write('\n')
-        VrbFile.write(Param)
-        VrbFile.write('\n')
-        VrbFile.write(" ".join(Factor))
-        VrbFile.write('\n')
-        VrbFile.write("".join(InputFile))
-        VrbFile.write('\n')
-        VrbFile.close()
-        file.close()
-        StatData.file.close()
+        """
 
-    def checkForRerun(self):
-
-        h5file = tables.openFile(self.H5, mode='a')
-
-        self.progressTxt = [e[0] for e in h5file.getNode('/Progress').read()]
-
-        if self.progressTxt == []:
-            self.progressTxt = ['Calculation Step :']
-
-        self.doAnovaParamGFP = True
-        self.doAnovaParamElect = True
-        self.doAnovaNonParamGFP = True
-        self.doAnovaNonParamElect = True
-        self.doPostHocParamGFP = True
-        self.doPostHocParamElect = True
-        self.doPostHocNonParamGFP = True
-        self.doPostHocNonParamElect = True
-
-        calcMode = 'Parametric Anova (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Parametric Anova (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaParamElect = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric Anova (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaNonParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric Anova (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaNonParamElect = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Parametric PostHoc (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Parametric PostHoc (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocParamElect = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric PostHoc (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocNonParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric PostHoc (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocNonParamElect = self.rerunMessage(h5file, calcMode)
-
-        h5file.close()
-
-    def rerunMessage(self, h5file, calcMode):
-
-        progTxt = self.progressTxt[np.where(
-            [calcMode in p for p in self.progressTxt])[0]]
-
-        message = ['%s\nResults were already computed.\n\n' % progTxt,
-                   'Do you want to recalculate them (YES) or \n',
-                   'continue with the already computed results (NO)?']
-
-        dlg = wx.MessageDialog(
-            None, style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION,
-            caption='%s already computed' % calcMode,
-            message=''.join(message))
-        answer = dlg.ShowModal()
-        dlg.Destroy()
-        if answer == wx.ID_YES:
-
-            nodePath = '/Result'
-            if 'All' in calcMode:
-                nodePath += '/All'
-            else:
-                nodePath += '/GFP'
-            if 'PostHoc' in calcMode:
-                node = 'PostHoc'
-            else:
-                node = 'Anova'
-
-            description = h5file.getNode(nodePath+'/'+node).description
-            h5file.removeNode(nodePath+'/'+node, recursive=True)
-            h5file.createTable(nodePath, node, description)
-
-            # Delete progress Text from already computed step
-            self.progressTxt.pop(np.where(np.asarray(self.progressTxt)==progTxt)[0])
-
-            doRerun = True
-        else:
-            doRerun = False
-
-        return doRerun
+        # Write everything into a verbose file
+        with open('%s/info.vrb' % self.PathResult, 'w') as vrbFile:
+            vrbFile.write(Param)
+            vrbFile.write('\n\n')
+            vrbFile.write(Title)
+            vrbFile.write('\n\n')
+            vrbFile.write(CalcProg)
