@@ -137,40 +137,36 @@ class Anova:
                 else:
                     self.Cancel = False
                     dlg.Resume()
-        # Saving Results
-        if DataGFP:
-            Res=self.file.getNode('/Result/GFP/Anova')
-        else:
-            Res=self.file.getNode('/Result/All/Anova')
-
-        if DataGFP:
-            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
-        else:
-            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
 
         self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
-        # writing result into H5 as a dictionnary
+        # Saving Results
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
         else:
             Res=self.file.getNode('/Result/All/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
         NewRow=Res.row
         for i,t in enumerate(Terms):
             if t.find(':')!=-1: # interaction Term
                 ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
             else:# Main Effect
-		ConditionName="_".join(['Main Effect',t])
-	    NewRow['StatEffect']=ConditionName
-            NewRow['P']=PValue[:,:,i]
-	    NewRow['F']=FValue[:,:,i]
-	    NewRow.append()
+                ConditionName="_".join(['Main Effect',t])
+            NewRow['StatEffect']=ConditionName
+            if DataGFP:
+                NewRow['P']=PValue[:,i]
+                NewRow['F']=FValue[:,i]
+            else:
+                NewRow['P']=PValue[:,:,i]
+                NewRow['F']=FValue[:,:,i]
+            NewRow.append()
         dlg.Close()
         dlg.Destroy()
-        self.file.close()
-        
+                
     def NonParam(self, Iter, DataGFP=False):
         Iter=int(Iter)
         # Extracting GFP or All Data
@@ -234,7 +230,7 @@ class Anova:
             # BootStraping Data
             for i in range(Iter):
                 # Creating Bootstraping and permutation Data
-                DataBoot=BootstrapedData(Data[start:end,:],FactorSubject)
+                DataBoot=self.BootstrapedData(Data[start:end,:],self.FactorSubject)
                 # Calculating F Value with Bootstraping Data
                 Raw=self.CalculatingAovR(DataBoot,self.Formula)
                 P,FBoot=self.ExtractingStat(Raw)
@@ -267,39 +263,35 @@ class Anova:
                 else:
                     self.Cancel = False
                     dlg.Resume()
-        # Saving Results
-        if DataGFP:
-            Res=self.file.getNode('/Result/GFP/Anova')
-        else:
-            Res=self.file.getNode('/Result/All/Anova')
-
-        if DataGFP:
-            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
-        else:
-            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
 
         self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
-        # writing result into H5 as a dictionnary
+        # Saving Results
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
         else:
             Res=self.file.getNode('/Result/All/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
+
         NewRow=Res.row
         for i,t in enumerate(Terms):
             if t.find(':')!=-1: # interaction Term
                 ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
             else:# Main Effect
-		ConditionName="_".join(['Main Effect',t])
-	    NewRow['StatEffect']=ConditionName
-            NewRow['P']=PValue[:,:,i]
-	    NewRow['F']=FValue[:,:,i]
-	    NewRow.append()
+                ConditionName="_".join(['Main Effect',t])
+            NewRow['StatEffect']=ConditionName
+            if DataGFP:
+                NewRow['P']=PValue[:,i]
+                NewRow['F']=FValue[:,i]
+            else:
+                NewRow['P']=PValue[:,:,i]
+                NewRow['F']=FValue[:,:,i]
+            NewRow.append()
         dlg.Close()
         dlg.Destroy()
-        self.file.close()
 # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
     def ExtractingStat(self, Raw):
         for i,r in enumerate(Raw):
@@ -324,7 +316,7 @@ class Anova:
         # calcul Anova
         Raw = robjects.r.summary(Fit)
         return Raw
-    def BootstrapedData(Data,FactorSubject):
+    def BootstrapedData(self, Data,FactorSubject):
         NbSubject=FactorSubject.max()
         SubjectLabel=np.arange(1,NbSubject+1)
         Order=[]
@@ -345,7 +337,7 @@ import itertools
 
 class PostHoc:
 
-    def __init__(self, H5, Parent):
+    def __init__(self, H5, parent):
 
         """ Reading H5 Files to extract Factor infrmations and creating R formula"""
         # Reading H5 File
@@ -513,8 +505,8 @@ class PostHoc:
             # Saving Result into the H5
             NewRow['Name']=Combination
             NewRow['P']=p
-	    NewRow['T']=t
-	    NewRow.append()
+            NewRow['T']=t
+            NewRow.append()
             # update the remaing time dilog box
             
             n+=1
@@ -533,9 +525,11 @@ class PostHoc:
                 else:
                     self.Cancel = False
                     dlg.Resume()
+
+        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+
         dlg.Close()
         dlg.Destroy()
-        self.file.close()
 
     def NonParam(self, Iter, DataGFP=False):
          # Extracting GFP or All Data
@@ -597,4 +591,3 @@ class PostHoc:
                     dlg.Resume()
         dlg.Close()
         dlg.Destroy()
-        self.file.close()
