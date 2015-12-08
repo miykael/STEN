@@ -428,8 +428,8 @@ class PostHoc:
         #sort the subject label to be sure they are in a same way for comparison
         Subj1.sort()
         Subj2.sort()
-        # if Length Value1 != length Value 2 => unpaired, if Subject Value are identical Paired
-        if len(Value1)==len(Value2):
+        # if number of element in Condition1 != number of element in Condition2 => unpaired, if Subject Value are identical Paired
+        if Value1.sum()==Value2.sum():
             TestPaired=SubjectFactor[Value1]-SubjectFactor[Value2]==0
         else:
             # a numpy array with Tue and false because the test is on TestPaired.all()
