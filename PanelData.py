@@ -191,6 +191,7 @@ class CreateDataset(wx.Panel):
             H5Tables.ReadDataset(filename, self.MainFrame.Dataset)
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
+            self.MainFrame.H5 = filename
 
     def loadData(self, event):
         """Load a dataset from an H5 file"""
@@ -228,6 +229,7 @@ class CreateDataset(wx.Panel):
                 self.MainFrame.ButtonDataSave.Enable()
                 self.MainFrame.ButtonDataModify.Enable()
                 self.MainFrame.saved = True
+                self.MainFrame.H5 = filepath
 
     def resultFolder(self, event):
         """Opens the DataResult Panel"""
