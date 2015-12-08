@@ -729,7 +729,7 @@ class AnovaIS(wx.Panel):
         self.PanelSPI = wx.Panel(self, wx.ID_ANY)
 
         TxtSPI = wx.StaticText(
-            self.PanelSPI, wx.ID_ANY, label="Select XYZ File",
+            self.PanelSPI, wx.ID_ANY, label="Select SPI File",
             style=wx.ALIGN_CENTER)
         self.FieldSPIFile = wx.TextCtrl(
             self.PanelSPI, wx.ID_ANY, value=self.SPIFile, style=wx.TE_READONLY)
