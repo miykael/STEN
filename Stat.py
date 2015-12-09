@@ -48,7 +48,7 @@ class Anova:
                 FormulaModel.append(FactorName)
         # Wrting Formula
         if FormulaErrorTerm!=[]:
-            self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))
+            self.Formula = 'DataR~%s+Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))
         else:
             self.Formula = 'DataR~%s' % "*".join(FormulaModel)
 
@@ -285,8 +285,8 @@ class Anova:
         dlg.Close()
         dlg.Destroy()
 
-# Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
     def ExtractingStat(self, Raw):
+        """Extracts P and F values from Raw R output"""
         for i,r in enumerate(Raw):
             Dat=np.array(r)
             if i==0:
@@ -299,16 +299,17 @@ class Anova:
         F[np.isnan(F)]=0
         return P,F
 
-    def CalculatingAovR(self, Data,Formula):
+    def CalculatingAovR(self, Data, Formula):
+        """Computes and fits an Analysis of Variance Model"""
         DataR = robjects.Matrix(Data.T)
         robjects.globalenv["DataR"] = DataR
         TextR = 'aov(%s)' % Formula
         express = rpy2.robjects.r.parse(text=TextR)
         Fit = rpy2.robjects.r.eval(express)
         robjects.globalenv["Fit"] = Fit
-        # calcul Anova
         Raw = robjects.r.summary(Fit)
         return Raw
+
     def BootstrapedData(self, Data,FactorSubject):
         NbSubject=FactorSubject.max()
         SubjectLabel=np.arange(1,NbSubject+1)
