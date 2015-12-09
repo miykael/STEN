@@ -143,8 +143,8 @@ class Anova:
         # Saving Results
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
-            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+            PValue=PValue.reshape((ShapeOriginalData[0], 1, len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], 1, len(Terms)))
         else:
             Res=self.file.getNode('/Result/All/Anova')
             PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
@@ -157,12 +157,8 @@ class Anova:
             else:# Main Effect
                 ConditionName="_".join(['Main Effect',t])
             NewRow['StatEffect']=ConditionName
-            if DataGFP:
-                NewRow['P']=PValue[:,i]
-                NewRow['F']=FValue[:,i]
-            else:
-                NewRow['P']=PValue[:,:,i]
-                NewRow['F']=FValue[:,:,i]
+            NewRow['P']=PValue[:,:,i]
+            NewRow['F']=FValue[:,:,i]
             NewRow.append()
         dlg.Close()
         dlg.Destroy()
@@ -240,10 +236,10 @@ class Anova:
             P=Count/float(Iter)
             if n==0:
                 PValue=P
-                FValue=F
+                FValue=FReal
             else:
                 PValue=np.append(PValue,P,axis=0)
-                FValue=np.append(FValue,F,axis=0)
+                FValue=np.append(FValue,FReal,axis=0)
             n += 1
             #Dialog box for timing
             pourcent = str(100.0 * end / (NbAnova))
@@ -269,8 +265,8 @@ class Anova:
         # Saving Results
         if DataGFP:
             Res=self.file.getNode('/Result/GFP/Anova')
-            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
-            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+            PValue=PValue.reshape((ShapeOriginalData[0], 1, len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0], 1, len(Terms)))
         else:
             Res=self.file.getNode('/Result/All/Anova')
             PValue=PValue.reshape((ShapeOriginalData[0], ShapeOriginalData[1],len(Terms)))
@@ -283,15 +279,12 @@ class Anova:
             else:# Main Effect
                 ConditionName="_".join(['Main Effect',t])
             NewRow['StatEffect']=ConditionName
-            if DataGFP:
-                NewRow['P']=PValue[:,i]
-                NewRow['F']=FValue[:,i]
-            else:
-                NewRow['P']=PValue[:,:,i]
-                NewRow['F']=FValue[:,:,i]
+            NewRow['P']=PValue[:,:,i]
+            NewRow['F']=FValue[:,:,i]
             NewRow.append()
         dlg.Close()
         dlg.Destroy()
+
 # Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
     def ExtractingStat(self, Raw):
         for i,r in enumerate(Raw):

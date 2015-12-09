@@ -251,8 +251,8 @@ class ReadDataset:
                             'P': tables.Float32Col(shape=(TF, electrodes)),
                             'F': tables.Float32Col(shape=(TF, electrodes))}
         AnovaGFPParticle = {'StatEffect': tables.StringCol(40),
-                            'P': tables.Float32Col(shape=(TF)),
-                            'F': tables.Float32Col(shape=(TF))}
+                            'P': tables.Float32Col(shape=(TF, 1)),
+                            'F': tables.Float32Col(shape=(TF, 1))}
 
         IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
@@ -260,14 +260,14 @@ class ReadDataset:
                                                                           electrodes))}
         IntermediateResultGFPParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
-                                         'Data': tables.Float32Col(shape=(TF))}
+                                         'Data': tables.Float32Col(shape=(TF, 1))}
 
         PostHocAllParticle = {'Name': tables.StringCol(60),
                               'P': tables.Float32Col(shape=(TF, electrodes)),
                               'T': tables.Float32Col(shape=(TF, electrodes))}
         PostHocGFPParticle = {'Name': tables.StringCol(60),
-                              'P': tables.Float32Col(shape=(TF)),
-                              'T': tables.Float32Col(shape=(TF))}
+                              'P': tables.Float32Col(shape=(TF, 1)),
+                              'T': tables.Float32Col(shape=(TF, 1))}
 
         # crating tables for model
         TablesModel = H5.createTable('/', 'Model', ModelParticle)
