@@ -362,10 +362,10 @@ class PostHoc:
         # Extract all within subject possibilities using subject 1
         # transform Dict into matrix easy to use
         self.Within=np.array(Within.values())
-        WithinCombi=Within[:,Subject==1].T
+        WithinCombi=self.Within[:,Subject==1].T
         self.Between=np.array(Between.values())
         # extracting different levels for each Between Subject factor
-        LevelsBetween=self.Between.max(axis=1)
+        LevelsBetween=self.Between.max(axis=1).astype('int')
         # cacluate all possible Combination using the max number of levels
         AllCombinationBetween=itertools.product(range(1,LevelsBetween.max()+1),repeat=len(LevelsBetween))
         # reduce combination with only existing one 
@@ -385,32 +385,33 @@ class PostHoc:
             BoolBetween=[]
             NameBetweentmp=[]
             for c,l in enumerate(b):
-                BoolBetween.append(Between[c,:]==l)
+                BoolBetween.append(self.Between[c,:]==l)
                 NameBetweentmp.append("-".join([BetweenName[c],str(int(l))]))
             BoolBetween=np.array(BoolBetween)
             for w in WithinCombi:
                 BoolWithin=[]
                 NameWithintmp=[]
                 for c,l in enumerate(w):
-                    BoolWithin.append(Within[c,:]==l)
+                    BoolWithin.append(self.Within[c,:]==l)
                     NameWithintmp.append("-".join([WithinName[c],str(int(l))]))
                 BoolWithin=np.array(BoolWithin)
                 Bool=np.append(BoolBetween,BoolWithin,axis=0)
                 # name of the arrangement
-                Nametmp=".".join([".".join(NameBetweentmp),".".join(NameWithintmp)])
-                CondName.append(Nametmp)
+                NameTmp=".".join([".".join(NameBetweentmp),".".join(NameWithintmp)])
+                CondName.append(NameTmp)
                 AllCombiBool[NameTmp]=Bool.prod(axis=0)==1
         #Creation of all the combination with the 2 arrangements for the t-test
         AllCombiName=itertools.combinations(CondName,2)
         # number of test using combinatory calculation use for the progression bar
-        sefl.Nbtest=int(np.math.factorial(len(CondName))/(np.math.factorial(len(CondName)-2)*np.math.factorial(2)))
+        self.NbTest=int(np.math.factorial(len(CondName))/(np.math.factorial(len(CondName)-2)*np.math.factorial(2)))
         # Keep subject Factor to determine if it will be paired on un paired t-test
         self.Subject=Subject
         # Dictionary of boolean correcponding to alla arangement
         self.Arrangement=AllCombiBool
         # all combinasion of T-test 2 by 2
         self.Combi=AllCombiName
-    def CalculationTTest(Data,Combination,SubjectFactor,Arrangement,NonParam=False):
+
+    def CalculationTTest(self, Data,Combination,SubjectFactor,Arrangement,NonParam=False):
         # H5 array don't be acces with bool
         Cond=np.arange(0,Data.shape[1])
         # Value1 and Value2 = Bolean vector correponding to the condition for the t-test based on name in Combination
@@ -489,16 +490,16 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(sefl.Nbtest)]),
-                                NbTest,
-                                parent=self.Parent,
+                                          str(self.NbTest)]),
+                                self.NbTest,
+                                parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
         for Combination in self.Combi:
-            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+            t,p=self.CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
             # Reshaping Data
             t=t.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
             p=p.reshape((ShapeOriginalData[0], ShapeOriginalData[1]))
@@ -510,7 +511,7 @@ class PostHoc:
             # update the remaing time dilog box
             
             n+=1
-            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.NbTest)])
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
@@ -544,9 +545,9 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(sefl.Nbtest)]),
-                                NbTest,
-                                parent=self.Parent,
+                                          str(self.NbTest)]),
+                                self.NbTest,
+                                parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
@@ -554,11 +555,11 @@ class PostHoc:
         NewRow=Res.row
         
         for Combination in self.Combi:
-            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+            t,p=self.CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
             TReal=t
             Count=np.zeros(TReal.shape)
             for i in range(Iter):
-                t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement,NonParam=True)
+                t,p=self.CalculationTTest(Data,Combination,self.Subject,self.Arrangement,NonParam=True)
                 TBoot=t
                 Diff=TBoot-TReal
                 Count[Diff>0]+=1
@@ -574,7 +575,7 @@ class PostHoc:
             # update the remaing time dilog box
             
             n+=1
-            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.NbTest)])
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
