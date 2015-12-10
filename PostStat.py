@@ -1,272 +1,152 @@
 import numpy as np
 import tables
 import wx
-import os as pwd
+import os
 
-# Stat=scipy.stats.ttest_ind(DataAppris,DataNonAppris,axis=0)# unpaired
-# Stat=scipy.stats.ttest_rel(DataAppris,DataNonAppris,axis=0) # paired
-# Class de traitement des test multiple.
+# ClassMultiple testing correction using mathematical morphology
+##Tables definition
+##
+##tables:
+##/Shape # Keep the shape of the Data, to reshape after calculation # simple array
+##/Data/All #using createEArray('/','AllData',tables.Float64Atom(),(TF,Electrodes,0))
+##/Data/GFP #using createEArray('/','AllData',tables.Float64Atom(),(TF,1,0))
+##/Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)
+##/Info # using a tables that contain all the information in the "ExcelSheet"
+##/Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
+##/Result/All/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...),Data Corresponding in Type}
+##/Result/All/PostHoc # Tabes with Col = {Name,P,T}
+##/Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
+##/Result/GFP/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...)}
+##/Result/GFP/PostHoc # Tabes with Col = {Name,P,T}
 
-
-# /Result/Anova/All/P # P value for All electrodes and IS
-# /Result/Anova/All/F # F value only in parametric
-# /Result/Anova/GFP/P # P value for GFP
-# /Result/Anova/GFP/F # F value only in parametric
-# /Result/PostHoc/All/P # P value for All electrodes and IS
-# /Result/PostHoc/All/F # F value only in parametric
-# /Result/PostHoc/GFP/P # P value for GFP
-# /Result/PostHoc/GFP/F # F value only in parametric
-class Data:
-
-    def __init__(self, H5, parent, Anova=True, DataGFP=False, Param=True):
+class MultipleTestingCorrection:
+    def __init__(self, H5, parent,Anova=True,DataGFP=False,TF=1,Alpha=0.05,SpaceCont=1,SpaceFile=None):
+        """ Initialisation for multiple testing correction analysis
+            H5 = H5 File
+            Parent = Parent windows
+            Anova = True extracting Anova Result, False = Extracting PastHoc Result
+            We need this because Criteria (Time or Space) Could be different between Anova and PostHoc
+            DataGFP = is it performing on GFP Data
+            TF = Number of consecutive Time frame entered by usr
+            Alpha = Statistical Thesjold Difine by usr
+            SpaceCont = Contigous space point define by usr
+            SpaceFiel File with 3d coodonate to determine distance
+        """
         self.parent = parent
-        self.file = tables.openFile(H5, mode='r+')
-        text = ['/Result/']
-        if Anova:
-            text.append('Anova/')
-        else:
-            text.append('PostHoc/')
-
+        self.file = tables.openFile(H5, mode='a')
         if DataGFP:
-            text.append('GFP/')
-            shape = self.file.getNode('/Info/ShapeGFP')
-        else:
-            shape = self.file.getNode('/Info/Shape')
-            text.append('All/')
-        self.shape = shape.read()
-        for node in self.file.listNodes("".join(text)):
-            if node.name == 'Mask':
-                self.file.removeNode("".join(["".join(text), '/Mask']))
-        self.Mask = self.file.createEArray("".join(text), 'Mask',
-                                           tables.Float64Atom(),
-                                           (shape[0], shape[1], 0))
-        text.append('P')
-        self.P = self.file.getNode("".join(text))
-        if len(self.P.read().shape) > 1:
-            self.NbTerms = self.P.read().shape[1]
-        else:
-            self.NbTerms = 1
-        # P Data before multiple test treatement
-        text.remove('P')
-        if Anova:
-            text.append('F')
-        else:
-            text.append('T')
-        self.F = self.file.getNode("".join(text))
-        if Anova:
-            if DataGFP:
-                Terms = self.file.getNode('/Result/Anova/GFP/Terms')
+            if Anova:
+                self.Data=self.file.getNode('/Result/GFP/Anova')
             else:
-                Terms = self.file.getNode('/Result/Anova/All/Terms')
+                self.Data=self.file.getNode('/Result/GFP/PostHoc')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+            ShapeOriginalData[1]=1
         else:
-            if DataGFP:
-                Terms = self.file.getNode('/Result/PostHoc/GFP/Terms')
+            if Anova:
+                self.Data=self.file.getNode('/Result/All/Anova')
             else:
-                Terms = self.file.getNode('/Result/PostHoc/All/Terms')
-        self.Terms = Terms.read()
-        self.Param = Param
-        self.Anova = Anova
-        self.GFP = DataGFP
-
-    def MathematicalMorphology(self, alpha, TF=1,
-                               SpaceCriteria=1, SpaceFile=None):
-        # Erosition suivit de dilatation = ouverture
-
-        if self.shape[0] == 1:  # test nnumber of time frame
-            TF = 1
-        if self.shape[1] == 1:  # test number of space point
-            SpaceCriteria = 1
+                self.Data=self.file.getNode('/Result/All/PostHoc')
+            ShapeOriginalData=self.file.getNode('/Shape').read()
+        # extrating infromion usefull
+        self.TF=TF
+        self.SpaceCont=SpaceCont
         if SpaceFile is not None:
             self.MatrixDist(SpaceFile)
-            Distance = self.Distance
-        if TF == 1 and SpaceCriteria == 1:  # aucun crtitere
-            for i in range(self.NbTerms):
-                P = np.zeros((self.shape[0], self.shape[1]))
-                P = self.P.read()[:, i].reshape((self.shape[0], self.shape[1]))
-                Data = np.zeros(P.shape)
-                Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                Data[P < alpha] = 1
-                Mask[:, :, 0] = Data
-                self.Mask.append(Mask)
-        else:  # morphologie mathematique
-            if SpaceCriteria == 1:  # time criteria only
-                NbCaclul = (self.NbTerms * self.shape[0] * 2)
-                dlg = wx.ProgressDialog(
+        self.Alpha=Alpha
+        # used for user interface feed back
+        # number of terms in Anova or in PostHoc mulipled by the number of TF* number of space point muliply * 2(Erosion/Dilatation)
+        self.NbCalcul=len(Data)*ShapeOriginalData.prod()*2
+    def MathematicalMorphology(self,Dilate=True):
+        """Calulation of the Mathematical Morphology (Erosion and Dilatation)
+            The infromation like BinaryData, Number on Conseq TF , Number of Contigouis points, and the Amtrix Distance are in self
+         """
+        # Definition of problematic time point that correspond to time border
+        TimeStart = (self.TF - 1) / 2
+        TimeEnd = self.TF - TimeStart
+        # creation of a Mask of 0 and size of the Bianary Data
+        Mask = np.zeros(self.BinaryData)
+        # erosion
+        if self.BinaryData.sum() != 0:# if their is no significant point we don't need mathematical morphology
+            #loop over all time point
+            for time in range(sefl.BinaryData.shape[0]):
+                # checking if the times of interest (composed of the time value +/- TF) exist Border problem
+                BeginTime = time - TimeStart
+                EndTime = time + TimeEnd
+                if BeginTime < 0:
+                    BeginTime = 0
+                    EndTime = self.TF
+                elif EndTime > self.BinaryData.shape[0]:
+                    BeginTime = self.BinaryData.shape[0] - self.TF
+                    EndTime = self.BinaryData.shape[0]
+                # Loop over all space points
+                for dim in range(self.BinaryData.shape[1]):
+                    # Extract the Distance of the point in space of interest in the matrix of all Distance
+                    # Space is a mvector containting all the distance between the point dim to the other point
+                    space = self.Distance[dim, :]
+                    # sort these distance and extract the index from the colser (itself) to the farer
+                    space = space.argsort()
+                    # keep only the pn poitns correcponding to the criteria choosen by the user
+                    space = space[0:SpaceCriteria]
+                    # element is a subset of interest containting the time and the sapce of interest
+                    # element is a boolean subset where true means significatif points and 0 means no significative points
+                    element = self.BinaryData[BeginTime:EndTime, space] ==1
+                    if Dilate:# dilatatioon
+                        if element.any():
+                            # if at least one point in element is significant mask at time =time and space =dim => 1 else leave 0
+                            Mask[time, dim]=1
+                    else: #Erosion
+                        if element.all():
+                            # if all poitns of element = 1 mask at time =time and space =dim => 1  else leave a 0
+                            Mask[time, dim]=1
+                    self.n += 1
+                    pourcent = str(100.0 * (n) / (self.NbCaclul))
+                    pourcent = pourcent[0:pourcent.find('.') + 3]
+                    self.dlg.Update(self.n, " ".join(['Progression  :',
+                                           pourcent, ' %']))
+        self.Mask=Mask
+
+    def Calculation(self):
+        """ Calucualtion of mathematical morpholgy on all results anova and PostHoc"""
+        #Dictionary Correction Anova Contain the mask of All Anova Mask Keys = statistical Condition name
+        self.dlg = wx.ProgressDialog(
                     'Multiple Test Correction',
                     'Calculation in progress : 0 %',
                     NbCaclul, parent=self.parent,
                     style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
                 dlg.SetSize((200, 130))
-                TimeStart = (TF - 1) / 2
-                TimeEnd = TF - TimeStart
-                n = 0
-                for i in range(self.NbTerms):
-                    P = np.zeros((self.shape[0], self.shape[1]))
-                    P = self.P.read()[:, i].reshape(
-                        (self.shape[0], self.shape[1]))
-                    Data = np.zeros(P.shape)
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    Data[P < alpha] = 1
-                    # erosion
-                    if Data.sum() != 0:
-                        for time in range(Data.shape[0]):
-                            BeginTime = time - TimeStart
-                            EndTime = time + TimeEnd
-                            if BeginTime < 0:
-                                BeginTime = 0
-                                EndTime = TF
-                            elif EndTime > Data.shape[0]:
-                                BeginTime = Data.shape[0] - TF
-                                EndTime = Data.shape[0]
-                            element = Data[BeginTime:EndTime, :]
-                            NbElement = np.array(element.shape[0])
-                            Mask[time, element.sum(0) == NbElement, 0] = 1
-                            n += 1
-                            pourcent = str(100.0 * (n) / (NbCaclul))
-                            pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(n, " ".join(['Progression  :',
-                                                    pourcent, ' %']))
+        self.n=0
+        CorrectedMask={}
+        # applaying test on Data (Anova or PostHoc)
+        for a in self.Data:
+            P=a[1]
+            Name=a[2]
+            # adapt the conseutive number of time frame and the contigous criteria to the length o Data
+            # in case of the user made a mistake.
+            # if their is only one TF we cannot have a TF value !=1
+            # same remark for the contigous criteria
+            if P.shape[0]==1:
+                self.TF=1
+            if P.shape[1] == 1: 
+                SpaceCriteria = 1
+            # we compute an openning more restrictive that means errosion folwed by a dilatation
+            # the BinaryData is all the pvalue lower than Alpha
+            self.BinaryData=np.zeros(P.shape)
+            self.BinaryData[P<self.Alpha]=1
+            # Erosion
+            self.MathematicalMorphology(self,Dilate=False)
+            # the BinaryData is the Mask the come from the errosion
+            self.BinaryData=self.Mask
+            # Dilatation
+            self.MathematicalMorphology(self,Dilate=True)
+            CorrectedMask[Name]=self.Mask
+        # Corrected Mask is a Dicionary tha containe all the binarymask
+        self.CorrectedMask=CorrectedMask
 
-                    # dilataion
-                    Data = Mask[:, :, 0]
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    if Data.sum() != 0:
-                        for time in range(Data.shape[0]):
-                            BeginTime = time - TimeStart
-                            EndTime = time + TimeEnd
-                            if BeginTime < 0:
-                                BeginTime = 0
-                                EndTime = TF
-                            elif EndTime > Data.shape[0]:
-                                BeginTime = Data.shape[0] - TF
-                                EndTime = Data.shape[0]
-                            element = Data[BeginTime:EndTime, :]
-                            NbElement = np.array(element.shape).prod()
-                            Mask[time, element.sum(0) != 0, 0] = 1
-                            n += 1
-                            pourcent = str(100.0 * (n) / (NbCaclul))
-                            pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(n, " ".join(['Progression  :',
-                                                    pourcent, ' %']))
-                    self.Mask.append(Mask)
-
-            # sapcial criterai only
-            elif TF == 1:
-                NbCaclul = (self.NbTerms * self.shape[1] * 2)
-                dlg = wx.ProgressDialog(
-                    'Multiple Test Correction',
-                    'Calculation in progress : 0 %',
-                    NbCaclul, parent=self.parent,
-                    style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
-                dlg.SetSize((200, 130))
-                n = 0
-                for i in range(self.NbTerms):
-                    P = np.zeros((self.shape[0], self.shape[1]))
-                    P = self.P.read()[:, i].reshape(
-                        (self.shape[0], self.shape[1]))
-                    Data = np.zeros(P.shape)
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    Data[P < alpha] = 1
-                    # erosion
-                    if Data.sum() != 0:
-                        for dim in range(Data.shape[1]):
-                            space = Distance[dim, :]
-                            space = space.argsort()
-                            space = space[0:SpaceCriteria]
-                            element = Data[:, space]
-                            Mask[element.sum(1) == SpaceCriteria, dim, 0] = 1
-                            n += 1
-                            pourcent = str(100.0 * (n) / (NbCaclul))
-                            pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(n, " ".join(['Progression  :',
-                                                    pourcent, ' %']))
-                    # dilataion
-                    Data = Mask[:, :, 0]
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    if Data.sum() != 0:
-                        for dim in range(Data.shape[1]):
-                            space = Distance[dim, :]
-                            space = space.argsort()
-                            space = space[0:SpaceCriteria]
-                            element = Data[:, space]
-                            NbElement = np.array(element.shape[0])
-                            Mask[element.sum(1) != 0, dim, 0] = 1
-                            n += 1
-                            pourcent = str(100.0 * (n) / (NbCaclul))
-                            pourcent = pourcent[0:pourcent.find('.') + 3]
-                            dlg.Update(n, " ".join(['Progression  :',
-                                                    pourcent, ' %']))
-                    self.Mask.append(Mask)
-            else:
-                NbCaclul = (self.NbTerms * self.shape[1] * self.shape[0] * 2)
-                dlg = wx.ProgressDialog(
-                    'Multiple Test Correction',
-                    'Calculation in progress : 0 %',
-                    NbCaclul, parent=self.parent,
-                    style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
-                dlg.SetSize((200, 130))
-                n = 0
-                TimeStart = (TF - 1) / 2
-                TimeEnd = TF - TimeStart
-                for i in range(self.NbTerms):
-                    P = np.zeros((self.shape[0], self.shape[1]))
-                    P = self.P.read()[:, i].reshape(
-                        (self.shape[0], self.shape[1]))
-                    Data = np.zeros(P.shape)
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    Data[P < alpha] = 1
-                    # erosion
-                    if Data.sum() != 0:
-                        for time in range(Data.shape[0]):
-                            for dim in range(Data.shape[1]):
-                                BeginTime = time - TimeStart
-                                EndTime = time + TimeEnd
-                                if BeginTime < 0:
-                                    BeginTime = 0
-                                    EndTime = TF
-                                elif EndTime > Data.shape[0]:
-                                    BeginTime = Data.shape[0] - TF
-                                    EndTime = Data.shape[0]
-                                space = Distance[dim, :]
-                                space = space.argsort()
-                                space = space[0:SpaceCriteria]
-                                element = Data[BeginTime:EndTime, space]
-                                NbElement = np.array(element.shape).prod()
-                                if NbElement == element.sum():
-                                    Mask[time, dim, 0] = 1
-                                n += 1
-                                pourcent = str(100.0 * (n) / (NbCaclul))
-                                pourcent = pourcent[0:pourcent.find('.') + 3]
-                                dlg.Update(n, " ".join(['Progression  :',
-                                                        pourcent, ' %']))
-                    # dilatation
-                    Data = Mask[:, :, 0]
-                    Mask = np.zeros((self.shape[0], self.shape[1], 1))
-                    if Data.sum() != 0:
-                        for time in range(Data.shape[0]):
-                            for dim in range(Data.shape[1]):
-                                BeginTime = time - TimeStart
-                                EndTime = time + TimeEnd
-                                if BeginTime < 0:
-                                    BeginTime = 0
-                                elif EndTime > Data.shape[0]:
-                                    EndTime = Data.shape[0]
-                                space = Distance[dim, :]
-                                space = space.argsort()
-                                space = space[0:SpaceCriteria]
-                                element = Data[BeginTime:EndTime, space]
-                                if element.sum() != 0:
-                                    Mask[time, dim, 0] = 1
-                                n += 1
-                                pourcent = str(100.0 * (n) / (NbCaclul))
-                                pourcent = pourcent[0:pourcent.find('.') + 3]
-                                dlg.Update(n, " ".join(['Progression  :',
-                                                        pourcent, ' %']))
-                    self.Mask.append(Mask)
-            dlg.Close()
-            dlg.Destroy()
-
-    def WriteIntermediateResult(self, ResultFolder, DataGFP=False):
+       
+##############            
+class WriteData:
+    # Writing Intermediate Result and Result
+    def write(self, ResultFolder, DataGFP=False):
         """ Write Estimator, not real slope and
         real mean depending on design"""
 
@@ -522,9 +402,6 @@ class Data:
                         tmp = CovData.pop(-1)
         IntermediateResults = self.file.listNodes(
             '/Result/IntermediateResult/')
-        print(DataGFP)
-        print(self.shape)
-        print(IntermediateResults)
         for i in IntermediateResults:
             Name = i.Name.read()
             Name.append('eph')
@@ -845,35 +722,3 @@ class Data:
 
         self.OutPutFiles = OutPutFiles
 
-    def MatrixDist(self, file):
-        if file.find('.spi') != -1:
-            # un spi file
-            tmp = np.loadtxt(file, dtype='string')
-            tmp = tmp[:, 0:3]
-            Coordonnee = np.zeros(tmp.shape)
-            for i, row in enumerate(tmp):
-                for j, n in enumerate(row):
-                    try:
-                        Coordonnee[i, j] = float(n)
-                    except:
-                        pass
-        elif file.find('.xyz') != -1:
-            # xyz file
-            tmp = np.loadtxt(file, dtype='string', skiprows=1)
-            tmp = tmp[:, 0:3]
-            Coordonnee = np.zeros(tmp.shape)
-            for i, row in enumerate(tmp):
-                for j, n in enumerate(row):
-                    try:
-                        Coordonnee[i, j] = float(n)
-                    except:
-                        pass
-        NbPoint = Coordonnee.shape[0]
-        MatrixDist = np.zeros((NbPoint, NbPoint))
-        for v in range(NbPoint):
-            dist = Coordonnee - Coordonnee[v, :]
-            dist = dist * dist
-            dist = dist.sum(1)
-            dist = np.sqrt(dist)
-            MatrixDist[v, :] = dist
-        self.Distance = MatrixDist
