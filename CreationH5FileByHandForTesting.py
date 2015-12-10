@@ -108,9 +108,9 @@ for l in range(NbLine):
 TablesInfo.flush()
 # Creating allResultTables
 TablesRes=H5.createTable(AllRes,'Anova',AnovaAllParticle)
-TablesRes=H5.createTable(AllRes,'IntermediateResult',AnovaGFPParticle)
+TablesRes=H5.createTable(AllRes,'IntermediateResult',IntermediateResultAllParticle)
 TablesRes=H5.createTable(AllRes,'PostHoc',PostHocAllParticle)
-TablesRes=H5.createTable(GFPRes,'Anova',IntermediateResultAllParticle)
+TablesRes=H5.createTable(GFPRes,'Anova',AnovaGFPParticle)
 TablesRes=H5.createTable(GFPRes,'IntermediateResult',IntermediateResultGFPParticle)
 TablesRes=H5.createTable(GFPRes,'PostHoc',PostHocGFPParticle)
 H5.close()
