@@ -113,7 +113,7 @@ class MultipleTestingCorrection:
                     'Calculation in progress : 0 %',
                     NbCaclul, parent=self.parent,
                     style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
-                dlg.SetSize((200, 130))
+        self.dlg.SetSize((200, 130))
         self.n=0
         CorrectedMask={}
         # applaying test on Data (Anova or PostHoc)
