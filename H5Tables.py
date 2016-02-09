@@ -149,35 +149,56 @@ class ReadDataset:
     """
     Read complet dataset from H5 file, including content of EPH files
 
-    # /Data/All #using createEArray('/','AllData',tables.Float32Atom(),(TF,electrodes,0))
-    # /Data/GFP #using createEArray('/','AllData',tables.Float32Atom(),(TF,1,0))
-    # /Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)
-    # /Info # using a tables that contain all the information in the "ExcelSheet"
-    # /Result/All/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
-    # /Result/All/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...),Data Corresponding in Type}
-    # /Result/All/PostHoc # Tabes with Col = {Name,P,T}
-    # /Result/GFP/Anova # Tables with col ={Name of the effect (i.e main effect, interaction, ..),P Data(Without any threshold (alpha, consecpoits, ...),F Data}
-    # /Result/GFP/IntermediateResult # Tabes with Col = {Condition name, Type (Mean,pearson correaltion,Sandard error,...)}
-    # /Result/GFP/PostHoc # Tabes with Col = {Name,P,T}
+    # /Data/All
+    #       using createEArray('/','AllData',tables.Float32Atom(),
+    #       (TF,electrodes,0))
+    # /Data/GFP
+    #       using createEArray('/','AllData',tables.Float32Atom(),(TF,1,0))
+    # /Model
+    #       using a tables with col= {Name of the factor, Value of factor
+    #       (Vector), type of Factor (Within,between, covariate, subject)
+    # /Info
+    #       using a tables that contain all the information in the "ExcelSheet"
+    # /Result/All/Anova
+    #       Tables with col ={Name of the effect (i.e main effect,
+    #       interaction, ..), P Data(Without any threshold (alpha, consecpoits,
+    #       ...),F Data}
+    # /Result/All/IntermediateResult
+    #       Tabes with Col = {Condition name, Type (Mean, pearson correaltion,
+    #       Standard error,...),Data Corresponding in Type}
+    # /Result/All/PostHoc
+    #       Tabes with Col = {Name,P,T}
+    # /Result/GFP/Anova
+    #       Tables with col ={Name of the effect (i.e main effect,
+    #       interaction, ..),P Data(Without any threshold (alpha, consecpoits,
+    #       ...),F Data}
+    # /Result/GFP/IntermediateResult
+    #       Tabes with Col = {Condition name, Type (Mean,pearson correaltion,
+    #       Standard error,...)}
+    # /Result/GFP/PostHoc
+    #       Tabes with Col = {Name,P,T}
     """
 
     def __init__(self, name, dataset):
-        
+
         # TODO: check and rewrite this section
 
         # Simulation of reading grid
         subjectName = dataset['Subject'][0]
         subjectID = dataset['Subject'][1]
-        groupName = dataset['BetweenFactor'][0][0]  # TODO: make sure that multiple variables are considered
+        # TODO: make sure that multiple variables are considered
+        groupName = dataset['BetweenFactor'][0][0]
         groupID = dataset['BetweenFactor'][0][1]
-        covariateName = dataset['Covariate'][0][0]  # TODO: make sure that multiple variables are considered
+        # TODO: make sure that multiple variables are considered
+        covariateName = dataset['Covariate'][0][0]
         covariateID = dataset['Covariate'][0][1]
 
-        # Geneating a Dict containing the grid info with artifical col name coming from grid
+        # Geneating a Dict containing the grid info with artifical col name
+        # coming from grid
         InfoDict = {subjectName: subjectID,
                     groupName: groupID,
                     covariateName: covariateID}
-        
+
         for i, e in enumerate(dataset['WithinFactor']):
             fName = e[0].replace('.', '_').replace(' ', '')
             InfoDict[fName] = e[2]
@@ -189,7 +210,9 @@ class ReadDataset:
         SubjectFactor = np.ravel([subjectID] * NbLine)
         Covariate = np.ravel([covariateID] * NbLine)
         Between = np.ravel([groupID] * NbLine)
-        Within = np.ravel([[int(e[1][1:-1])] * NbLine for i,e in enumerate(dataset['WithinFactor'])]) # TODO: not sure if this is the right way
+        # TODO: not sure if this is the right way
+        Within = np.ravel([[int(e[1][1:-1])] * NbLine
+                           for i, e in enumerate(dataset['WithinFactor'])])
 
         # factor Name coming from selecting factor
         SubjectName = {subjectName: SubjectFactor}
@@ -199,7 +222,6 @@ class ReadDataset:
         AllFactor = {subjectName: SubjectName, 'Between': BetweeName,
                      'Covariate': CovariateName, 'Within': WithinName}
 
-
         # Creation H5 File and differnt group
         H5 = tables.openFile(name, 'r+')
         ResultGrp = H5.createGroup('/', 'Result')
@@ -208,7 +230,8 @@ class ReadDataset:
 
         # Read EPH files
         ephData = [ReadEPH(eph) for eph in AllEph]
-        electrodes = np.stack([eph.electrodes for eph in ephData]).astype('uint16')
+        electrodes = np.stack(
+            [eph.electrodes for eph in ephData]).astype('uint16')
         FS = np.stack([eph.FS for eph in ephData]).astype('uint16')
         TF = np.stack([eph.TF for eph in ephData]).astype('uint16')
 
@@ -228,20 +251,22 @@ class ReadDataset:
             print 'Number of sampling points is unequal in EPH files.'
 
         DataGroup = H5.createGroup('/', 'Data')
-        AllData = H5.createEArray(DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
-        GFPData = H5.createEArray(DataGroup, 'GFP', tables.Float32Atom(), (TF, 0))
+        AllData = H5.createEArray(
+            DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
+        GFPData = H5.createEArray(
+            DataGroup, 'GFP', tables.Float32Atom(), (TF, 0))
 
         # Reading EphFile dans store into Tables with EArray
         for e in ephData:
             AllData.append(e.data.reshape(np.array(e.data.shape).prod(), 1))
             GFPData.append(e.GFP.reshape(TF, 1))
 
-        ShapeOriginalData = H5.createArray('/', 'Shape', np.array(e.data.shape))
+        ShapeOriginalData = H5.createArray(
+            '/', 'Shape', np.array(e.data.shape))
 
         ModelParticle = {'Name': tables.StringCol(40),
                          'Value': tables.Float32Col(shape=len(SubjectFactor)),
                          'Type': tables.StringCol(40)}
-
 
         InfoParticle = {}
         for c in InfoDict:
@@ -256,11 +281,12 @@ class ReadDataset:
 
         IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
-                                         'Data': tables.Float32Col(shape=(TF,
-                                                                          electrodes))}
+                                         'Data': tables.Float32Col(
+            shape=(TF, electrodes))}
         IntermediateResultGFPParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
-                                         'Data': tables.Float32Col(shape=(TF, 1))}
+                                         'Data': tables.Float32Col(
+            shape=(TF, 1))}
 
         PostHocAllParticle = {'Name': tables.StringCol(60),
                               'P': tables.Float32Col(shape=(TF, electrodes)),
@@ -294,8 +320,10 @@ class ReadDataset:
         # Creating Result Tables
         H5.createTable(AllRes, 'Anova', AnovaAllParticle)
         H5.createTable(GFPRes, 'Anova', AnovaGFPParticle)
-        H5.createTable(AllRes, 'IntermediateResult', IntermediateResultAllParticle)
-        H5.createTable(GFPRes, 'IntermediateResult', IntermediateResultGFPParticle)
+        H5.createTable(
+            AllRes, 'IntermediateResult', IntermediateResultAllParticle)
+        H5.createTable(
+            GFPRes, 'IntermediateResult', IntermediateResultGFPParticle)
         H5.createTable(AllRes, 'PostHoc', PostHocAllParticle)
         H5.createTable(GFPRes, 'PostHoc', PostHocGFPParticle)
 
