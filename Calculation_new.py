@@ -388,7 +388,7 @@ class Start:
             dlg = wx.MessageDialog(self.Mainframe, style=wx.OK | wx.CANCEL, message='Work is done enjoy your results !!!! ;-)')
             retour = dlg.ShowModal()
             dlg.Destroy()
-        
+
 
     def checkForRerun(self):
 
@@ -405,44 +405,45 @@ class Start:
             self.doAnovaNonParamGFP = True
             self.doPostHocParamGFP = True
             self.doPostHocNonParamGFP = True
+
+            # Check if Process was already done and ask for rerun
+            calcMode = 'Parametric Anova (GFP)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaParamGFP = self.rerunMessage(h5file, calcMode)
+
+            calcMode = 'Non-Parametric Anova (GFP)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaNonParamGFP = self.rerunMessage(h5file, calcMode)
+
+            calcMode = 'Parametric PostHoc (GFP)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocParamGFP = self.rerunMessage(h5file, calcMode)
+
+            calcMode = 'Non-Parametric PostHoc (GFP)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocNonParamGFP = self.rerunMessage(h5file, calcMode)
+
         if self.AnalyseType in ["All Electrodes", "Both"]:
             self.doAnovaParamElect = True
             self.doAnovaNonParamElect = True
             self.doPostHocParamElect = True
             self.doPostHocNonParamElect = True
 
-        # Check if Process was already done and ask for rerun
-        calcMode = 'Parametric Anova (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaParamGFP = self.rerunMessage(h5file, calcMode)
+            calcMode = 'Parametric Anova (All Electrodes)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaParamElect = self.rerunMessage(h5file, calcMode)
 
-        calcMode = 'Parametric Anova (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaParamElect = self.rerunMessage(h5file, calcMode)
+            calcMode = 'Non-Parametric Anova (All Electrodes)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaNonParamElect = self.rerunMessage(h5file, calcMode)
 
-        calcMode = 'Non-Parametric Anova (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaNonParamGFP = self.rerunMessage(h5file, calcMode)
+            calcMode = 'Parametric PostHoc (All Electrodes)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocParamElect = self.rerunMessage(h5file, calcMode)
 
-        calcMode = 'Non-Parametric Anova (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doAnovaNonParamElect = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Parametric PostHoc (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Parametric PostHoc (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocParamElect = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric PostHoc (GFP)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocNonParamGFP = self.rerunMessage(h5file, calcMode)
-
-        calcMode = 'Non-Parametric PostHoc (All Electrodes)'
-        if np.any([calcMode in p for p in self.progressTxt]):
-            self.doPostHocNonParamElect = self.rerunMessage(h5file, calcMode)
+            calcMode = 'Non-Parametric PostHoc (All Electrodes)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocNonParamElect = self.rerunMessage(h5file, calcMode)
 
         h5file.close()
 
