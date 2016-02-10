@@ -456,8 +456,8 @@ class Start:
         progTxt = self.progressTxt[np.where(
             [calcMode in p for p in self.progressTxt])[0]]
 
-        message = ['%s\nResults were already computed.\n\n' % progTxt,
-                   'Do you want to recalculate them (YES) or \n',
+        message = ['Results were already computed for:\n%s\n\n' % progTxt,
+                   'Do you want to recalculate (YES) or \n',
                    'continue with the already computed results (NO)?']
 
         dlg = wx.MessageDialog(
