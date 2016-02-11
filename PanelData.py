@@ -1,5 +1,6 @@
 ﻿import wx
 import os
+import tables
 import PanelTable
 import H5Tables
 import wx.lib.sheet
@@ -114,6 +115,16 @@ class CreateDataset(wx.Panel):
         sizerPanelDataHandler.Add(PanelResult, 0, wx.EXPAND)
         sizerPanelDataHandler.AddSpacer(40)
 
+        # Panel: Model Information Panel
+        PanelModelInfo = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
+        sizerModelInfo = wx.BoxSizer(wx.HORIZONTAL)
+        self.TxtModelInfo = wx.StaticText(
+            PanelModelInfo, wx.ID_ANY, label='', style=wx.ALIGN_LEFT,
+            size=(100, 200))
+        sizerModelInfo.Add(self.TxtModelInfo, 0, wx.EXPAND)
+        PanelModelInfo.SetSizer(sizerModelInfo)
+        sizerPanelDataHandler.Add(PanelModelInfo, 0, wx.EXPAND)
+
         # Panel: Calculation Progression
         PanelCalculation = wx.Panel(self.PanelDataHandler, wx.ID_ANY)
         sizerCalculation = wx.BoxSizer(wx.HORIZONTAL)
@@ -162,6 +173,7 @@ class CreateDataset(wx.Panel):
             self.DataWindow = PanelTable.DataEntry(self.MainFrame)
             self.DataWindow.Show(True)
             self.MainFrame.Show(False)
+        event.Skip()
 
     def modifyData(self, event):
         """Opens DataEntry Panel with existing dataset"""
@@ -169,6 +181,7 @@ class CreateDataset(wx.Panel):
         self.DataWindow = PanelTable.DataEntry(self.MainFrame)
         self.DataWindow.Show(True)
         self.MainFrame.Show(False)
+        event.Skip()
 
     def saveData(self, event):
         """Save an already loaded or created dataset as an H5 file"""
@@ -192,6 +205,7 @@ class CreateDataset(wx.Panel):
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
             self.MainFrame.H5 = filename
+        event.Skip()
 
     def loadData(self, event):
         """Load a dataset from an H5 file"""
@@ -230,6 +244,8 @@ class CreateDataset(wx.Panel):
                 self.MainFrame.ButtonDataModify.Enable()
                 self.MainFrame.saved = True
                 self.MainFrame.H5 = filepath
+                self.extractFormula()
+        event.Skip()
 
     def resultFolder(self, event):
         """Opens the DataResult Panel"""
@@ -242,3 +258,57 @@ class CreateDataset(wx.Panel):
         if answer == wx.ID_OK:
             self.PathResult = resultPath
             self.TextResult.SetValue(self.PathResult)
+        event.Skip()
+
+    def extractFormula(self):
+        """
+        Extracts the model formula and other information from the data and
+        writes it in the information section of PanelData
+        """
+
+        # Collect model information from H5 file
+        with tables.open_file(self.MainFrame.H5, mode='a') as h5file:
+            TableFactor = h5file.getNode('/Model').read()
+            FormulaModel = []
+            FormulaErrorTerm = []
+            for t in TableFactor:
+                FactorName = t[0]
+                FactorType = t[1]
+
+                # Creating Fromula for for Within and between subject Factor
+                if FactorType == 'Subject':
+                    SubjectName = FactorName
+                elif FactorType == 'Within':
+                    FormulaModel.append(FactorName)
+                    FormulaErrorTerm.append(FactorName)
+                else:
+                    FormulaModel.append(FactorName)
+
+        # Create Formula
+        if FormulaErrorTerm != []:
+            self.Formula = 'DataR~%s+Error(%s/(%s))' % (
+                "*".join(FormulaModel),
+                SubjectName,
+                "*".join(FormulaErrorTerm))
+        else:
+            self.Formula = 'DataR~%s' % "*".join(FormulaModel)
+
+        # Collect relevant information
+        nameSubject = self.MainFrame.Dataset['Subject'][0]
+        nameCovariate = [e[0] for e in self.MainFrame.Dataset['Covariate']]
+        nameWithin = [' '.join(e[:2])
+                      for e in self.MainFrame.Dataset['WithinFactor']]
+        nameBetween = [e[0] for e in self.MainFrame.Dataset['BetweenFactor']]
+        factors = self.MainFrame.Dataset['Factors']
+        nameFactors = ['%s (%s)' % (factors[0][i], factors[1][i])
+                       for i, e in enumerate(factors[0])]
+
+        infoTxt = ['MODEL INFORMATION']
+        infoTxt.append("R-Formula:\t\taov(%s)" % self.Formula)
+        infoTxt.append("Subject:\t\t\t%s" % nameSubject)
+        infoTxt.append("Factor:\t\t\t%s" % ', '.join(nameFactors))
+        infoTxt.append("Within Factor:\t%s" % ', '.join(nameWithin))
+        infoTxt.append("Between Factor:\t%s" % ', '.join(nameBetween))
+        infoTxt.append("Covariate:\t\t%s" % ', '.join(nameCovariate))
+
+        self.TxtModelInfo.SetLabel('\n'.join(infoTxt))
