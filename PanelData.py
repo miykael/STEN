@@ -166,13 +166,13 @@ class CreateDataset(wx.Panel):
                 self.MainFrame.Dataset = {}
                 self.DataWindow = PanelTable.DataEntry(self.MainFrame)
                 self.DataWindow.Show(True)
-                self.MainFrame.Show(False)
+                self.MainFrame.Disable()
                 self.MainFrame.ButtonDataModify.Disable()
                 self.MainFrame.ButtonDataSave.Disable()
         else:
             self.DataWindow = PanelTable.DataEntry(self.MainFrame)
             self.DataWindow.Show(True)
-            self.MainFrame.Show(False)
+            self.MainFrame.Disable()
         event.Skip()
 
     def modifyData(self, event):
@@ -180,7 +180,7 @@ class CreateDataset(wx.Panel):
         self.MainFrame.saved = False
         self.DataWindow = PanelTable.DataEntry(self.MainFrame)
         self.DataWindow.Show(True)
-        self.MainFrame.Show(False)
+        self.MainFrame.Disable()
         event.Skip()
 
     def saveData(self, event):

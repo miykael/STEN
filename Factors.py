@@ -903,7 +903,7 @@ class FactorDefinition(wx.Frame):
             # Close Factor Within window
             self.Show(False)
             self.WithinFactor.DataPanel.Show(False)
-            self.WithinFactor.DataPanel.MainFrame.Show(True)
+            self.WithinFactor.DataPanel.MainFrame.Enable()
             self.WithinFactor.DataPanel.MainFrame.Dataset = self.Dataset
             self.WithinFactor.DataPanel.MainFrame.ButtonDataModify.Enable()
             self.WithinFactor.DataPanel.MainFrame.ButtonDataSave.Enable()

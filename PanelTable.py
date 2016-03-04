@@ -332,7 +332,7 @@ class DataEntry(wx.Frame):
         dataTable, errorMessage = self.readTable()
         if dataTable['content'] == []:
             self.Destroy()
-            self.MainFrame.Show(True)
+            self.MainFrame.Enable()
         # Show Popup Window before closing
         else:
             dlg = wx.MessageDialog(
@@ -343,7 +343,7 @@ class DataEntry(wx.Frame):
             dlg.Destroy()
             if answer == wx.ID_OK:
                 self.Destroy()
-                self.MainFrame.Show(True)
+                self.MainFrame.Enable()
         event.Skip()
 
     def modifyRow(self, event):
