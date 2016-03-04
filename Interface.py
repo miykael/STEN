@@ -1,7 +1,7 @@
 ﻿import wx
 import PanelData
 import PanelAnalysis
-import Calculation_new
+import Calculation
 
 
 class MainFrame(wx.Frame):
@@ -119,7 +119,8 @@ class MainFrame(wx.Frame):
             dlg.ShowModal()
             dlg.Destroy()
             self.PanelData.resultFolder(event)
-        elif self.AnovaWave.BoxAnalyse.GetSelection() == 0:
+        elif self.AnovaWave.BoxAnalyse.GetSelection() == 0 \
+                and self.PanelOption.GetSelection() == 0:
             dlg = wx.MessageDialog(
                 self, caption='No Analyse Type selected',
                 message='Please select one of the following analysis' +
@@ -144,7 +145,7 @@ class MainFrame(wx.Frame):
         # Start Calculation
         if startCalculation:
             self.ButtonStart.Disable()
-            calc = Calculation_new.Start(self)
+            calc = Calculation.Start(self)
             self.PanelData.TxtProgress.SetLabel('\n'.join(calc.progressTxt))
             self.ButtonStart.Enable()
         event.Skip()
