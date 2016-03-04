@@ -266,6 +266,8 @@ class CreateDataset(wx.Panel):
         writes it in the information section of PanelData
         """
 
+        # TODO: Perhaps put this part to Write and Load H5-files under H5Tables
+
         # Collect model information from H5 file
         with tables.open_file(self.MainFrame.H5, mode='a') as h5file:
             TableFactor = h5file.getNode('/Model').read()
@@ -303,12 +305,12 @@ class CreateDataset(wx.Panel):
         nameFactors = ['%s (%s)' % (factors[0][i], factors[1][i])
                        for i, e in enumerate(factors[0])]
 
-        infoTxt = ['MODEL INFORMATION']
-        infoTxt.append("R-Formula:\t\taov(%s)" % self.Formula)
-        infoTxt.append("Subject:\t\t\t%s" % nameSubject)
-        infoTxt.append("Factor:\t\t\t%s" % ', '.join(nameFactors))
-        infoTxt.append("Within Factor:\t%s" % ', '.join(nameWithin))
-        infoTxt.append("Between Factor:\t%s" % ', '.join(nameBetween))
-        infoTxt.append("Covariate:\t\t%s" % ', '.join(nameCovariate))
+        infoTxt = ['Model Information:']
+        infoTxt.append("Subject\t\t\t%s" % nameSubject)
+        infoTxt.append("Factor\t\t\t\t%s" % ', '.join(nameFactors))
+        infoTxt.append("Within Factor\t\t%s" % ', '.join(nameWithin))
+        infoTxt.append("Between Factor\t%s" % ', '.join(nameBetween))
+        infoTxt.append("Covariate\t\t\t%s" % ', '.join(nameCovariate))
+        infoTxt.append("R-Formula\t\taov(%s)" % self.Formula)
 
         self.TxtModelInfo.SetLabel('\n'.join(infoTxt))
