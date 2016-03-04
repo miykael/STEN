@@ -4,7 +4,6 @@ import tables
 import PostStat
 import os
 import time
-import H5Tables
 import numpy as np
 
 
@@ -89,7 +88,7 @@ class Start:
                 progRow.append()
 
         # Write Verbose File
-        self.writeVrb()
+        self.writeVrb(self.Mainframe.Dataset)
 
         # TODO: Delete following line
         print 'DONE'
@@ -498,10 +497,10 @@ class Start:
 
         return doRerun
 
-    def writeVrb(self):
+    def writeVrb(self, dataset):
 
         """
-        TODO: Description TEXT
+        Writes verbose file into result folder
         """
 
         with tables.openFile(self.H5, 'r') as h5file:
@@ -511,6 +510,7 @@ class Start:
         Analysis = 'Analysis :\n----------\n'
         Param = 'Parameter :\n-----------\n'
 
+        # TODO: update verbose for ANCOVA
         if self.AnovaCheck:
             Param += 'ANOVA :\n'
             Param += '\tAlpha = %s\n' % self.AnovaAlpha
@@ -580,162 +580,48 @@ class Start:
                 Param += '\tNumber of Bootstrap Iterations = %s\n' \
                     % self.PostHocIteration
 
-        # Get Model Information
-        ModelInfoTxt = 'Model Information\n------------------\n'
-        ModelTmp = self.Mainframe.PanelData.TxtModelInfo.GetLabel()[19:]
-        ModelInfo = []
-        for e in ModelTmp.split('\n'):
-            e = e.split('\t')
-            if e != '':
-                ModelInfo.append(e)
-
-        # TODO: stopped here
-
-        ModelInfo = self.Mainframe.PanelData.TxtModelInfo.GetLabel()
-        ModelInfoTxt += ModelInfo[18:]
-
         # Get Calculation Time information
         CalcProg = '%s\n------------------\n' % self.progressTxt[0]
         CalcProg += '\t%s' % '\n\t'.join(self.progressTxt[1:])
 
-        """
-        TODO: Check the following section for Verbose file
+        # Get Model Information
+        ModelInfoTxt = 'Model Information :\n-------------------\n'
+        ModelTmp = self.Mainframe.PanelData.TxtModelInfo.GetLabel()[19:]
+        ModelInfo = [e for e in ModelTmp.replace('\n', '\t').split('\t')
+                     if e != '']
+        ModelInfoTxt += 'Subject         %s\n' % ModelInfo[1]
+        ModelInfoTxt += 'Factor          %s\n' % ModelInfo[3]
+        ModelInfoTxt += 'Within Factor   %s\n' % ModelInfo[5]
+        ModelInfoTxt += 'Between Factor  %s\n' % ModelInfo[7]
+        ModelInfoTxt += 'Covariate       %s\n' % ModelInfo[9]
+        ModelInfoTxt += 'R-Formula       %s\n' % ModelInfo[11]
 
-        Factor = ['Factor Names and Levels :\n', '-------------------------\n']
+        # Get detailed model Information
+        ModelDetailTxt = 'Model Details :\n---------------\n'
+        length = len(dataset['Subject'][1])
+        tmp = '    {:<16}' + '{:>8}' * length + '\n'
+        ModelDetailTxt += 'Subject\n'
+        ModelDetailTxt += tmp.format(
+            dataset['Subject'][0], *dataset['Subject'][1])
+        ModelDetailTxt += 'Covariate\n'
+        for covariate in dataset['Covariate']:
+            ModelDetailTxt += tmp.format(covariate[0], *covariate[1])
+        ModelDetailTxt += 'BetweenFactor\n'
+        for beteenfactor in dataset['BetweenFactor']:
+            ModelDetailTxt += tmp.format(beteenfactor[0], *beteenfactor[1])
 
-        StatData = Stat.Anova(self.H5, self)
-        Sheet = StatData.file.getNode('/Sheet/Value')
-        InputFile = ['Input File in relation to factors :\n',
-                     '-----------------------------------\n']
-        Value = StatData.file.getNode('/Sheet/Value').read()
-        ColWithin = StatData.file.getNode('/Info/ColWithin').read()
-        ColFactor = StatData.file.getNode('/Info/ColFactor').read()
-        if StatData.NameWithin:
-            for i, w in enumerate(StatData.NameWithin):
-                Factor.append('Within Subject Factor Name (Levels) :')
-                InputFile.append('Within subject conditions :\n')
-                if i == 0:
-                    Factor.append(w)
-                    Factor.append('(')
-                    level = str(StatData.Within[:, i].max())
-                    level = level[0:level.find('.')]
-                    Factor.append(level)
-                    Factor.append(')')
-                else:
-                    Factor.append(',')
-                    Factor.append(w)
-                    Factor.append('(')
-                    level = str(StatData.Within[:, i].max())
-                    level = level[0:level.find('.')]
-                    Factor.append(level)
-                    Factor.append(')')
-            Factor.append('\n')
-            Condition = []
-            for f in ColFactor:
-                tmp = []
-                n = 0
-                f = f[f.find('(') + 1:f.find(')')]
-                for l in f:
-                    if l.isdigit():
-                        tmp.append('-')
-                        tmp.append(StatData.NameWithin[n])
-                        tmp.append(l)
-                        n += 1
-                tmp.remove('-')
-                Condition.append("".join(tmp))
-            for i, c in enumerate(Condition):
-                InputFile.append('\t')
-                InputFile.append(c)
-                InputFile.append(' Condition Files :\n')
-                Data = Value[ColWithin[i]]
-                for f in Data:
-                    InputFile.append('\t')
-                    InputFile.append(f)
-                    InputFile.append('\n')
-                InputFile.append('\n')
+        ModelDetailTxt += 'Factors\n'
+        factors = dataset['Factors']
+        factors = ['%s (%s)' % (factors[0][i], factors[1][i])
+                   for i in range(len(factors[0]))]
+        for fac in factors:
+            ModelDetailTxt += '    %s\n' % fac
 
-        if StatData.NameBetween:
-            Factor.append('Between Subject Factor Name (Levels) :')
-            for i, b in enumerate(StatData.NameBetween):
-                if i == 0:
-                    Factor.append(b)
-                    Factor.append('(')
-                    try:
-                        level = str(StatData.Between[:, i].max())
-                    except:
-                        level = str(StatData.Between.max())
-                    level = level[0:level.find('.')]
-                    Factor.append(level)
-                    Factor.append(')')
-                else:
-                    Factor.append(',')
-                    Factor.append(b)
-                    Factor.append('(')
-                    try:
-                        level = str(StatData.Between[:, i].max())
-                    except:
-                        level = str(StatData.Between.max())
-                    level = level[0:level.find('.')]
-                    Factor.append(level)
-                    Factor.append(')')
-            Factor.append('\n')
-            InputFile.append('Between subject conditions :\n')
-            ColBetween = StatData.file.getNode('/Info/ColBetween').read()
-            Condition = []
-            for i, c in enumerate(ColBetween):
-                Data = Value[c]
-                for j, d in enumerate(Data):
-                    text = [StatData.NameBetween[i]]
-                    text.append(d)
-                    text.append(':')
-                    text = " ".join(text)
-                    if Condition == []:
-                        Condition.append('\t')
-                        Condition.append(text)
-                        Condition.append('\n')
-                        Index = 1
-                    else:
-                        if Condition[Index] != text:
-                            Condition.append('\n\t')
-                            Condition.append(text)
-                            Condition.append('\n')
-                            Index = len(Condition) - 2
-
-                    for w in ColWithin:
-                        Condition.append('\t')
-                        Condition.append(Value[w][j])
-                        Condition.append('\n')
-            InputFile.append("".join(Condition))
-            InputFile.append('\n')
-        if StatData.NameCovariate:
-
-            Factor.append('Covariate Name :')
-            for i, c in enumerate(StatData.NameCovariate):
-                if i == 0:
-                    Factor.append(c)
-                else:
-                    Factor.append(',')
-                    Factor.append(c)
-            Factor.append('\n')
-            InputFile.append('Covariate Value(s) :\n')
-            ColCovariate = StatData.file.getNode('/Info/ColCovariate').read()
-            Condition = []
-            for i, c in enumerate(ColCovariate):
-                Condition.append('\t')
-                Condition.append(StatData.NameCovariate[i])
-                Condition.append('\n')
-                Data = Value[c]
-                for d in Data:
-                    Condition.append('\t')
-                    Condition.append(d)
-                    Condition.append('\n')
-            InputFile.append("".join(Condition))
-
-        if StatData.NameCovariate:
-            Analysis.replace('ANOVA', 'ANCOVA')
-            Param.replace('ANOVA', 'ANCOVA')
-
-        """
+        ModelDetailTxt += 'WithinFactor\n'
+        for i, e in enumerate(dataset['WithinFactor']):
+            ModelDetailTxt += '    %s %s\n' % (e[0], e[1])
+            for j, f in enumerate(e[2]):
+                ModelDetailTxt += '        %s\n' % (f)
 
         # Write everything into a verbose file
         with open('%s/info.vrb' % self.PathResult, 'w') as vrbFile:
@@ -743,6 +629,8 @@ class Start:
             vrbFile.write('\n\n')
             vrbFile.write(Param)
             vrbFile.write('\n\n')
+            vrbFile.write(CalcProg)
+            vrbFile.write('\n\n')
             vrbFile.write(ModelInfoTxt)
             vrbFile.write('\n\n')
-            vrbFile.write(CalcProg)
+            vrbFile.write(ModelDetailTxt)
