@@ -85,9 +85,8 @@ class Start:
             # Write new content
             progRow = h5file.getNode('/Progress').row
             for i, e in enumerate(self.progressTxt):
-                progRow['Text']= e
+                progRow['Text'] = e
                 progRow.append()
-
 
         # Write Verbose File
         self.writeVrb()
@@ -389,8 +388,11 @@ class Start:
             retour = dlg.ShowModal()
             dlg.Destroy()
 
-
     def checkForRerun(self):
+
+        """
+        TODO: Description TEXT
+        """
 
         h5file = tables.openFile(self.H5, mode='a')
 
@@ -443,7 +445,8 @@ class Start:
 
             calcMode = 'Non-Parametric PostHoc (All Electrodes)'
             if np.any([calcMode in p for p in self.progressTxt]):
-                self.doPostHocNonParamElect = self.rerunMessage(h5file, calcMode)
+                self.doPostHocNonParamElect = self.rerunMessage(h5file,
+                                                                calcMode)
 
         h5file.close()
 
@@ -485,7 +488,8 @@ class Start:
             h5file.createTable(nodePath, node, description)
 
             # Delete progress Text from already computed step
-            self.progressTxt.pop(np.where(np.asarray(self.progressTxt)==progTxt)[0])
+            self.progressTxt.pop(
+                np.where(np.asarray(self.progressTxt) == progTxt)[0])
 
             doRerun = True
 
@@ -494,16 +498,17 @@ class Start:
 
         return doRerun
 
-
     def writeVrb(self):
+
+        """
+        TODO: Description TEXT
+        """
 
         with tables.openFile(self.H5, 'r') as h5file:
             shape = h5file.getNode('/Shape').read()
 
-        CalcProg = '%s\n------------------\n' % self.progressTxt[0]
-        CalcProg += '\t%s' % '\n\t'.join(self.progressTxt[1:])
-
-        Title = 'Analysis :\n----------\n'
+        # Get Analysis and Parameter information
+        Analysis = 'Analysis :\n----------\n'
         Param = 'Parameter :\n-----------\n'
 
         if self.AnovaCheck:
@@ -512,33 +517,34 @@ class Start:
             Param += '\tConsecutive Time Frame = %s\n' % self.AnovaPtsConsec
 
             if self.AnovaParam:
-                Title += 'Parametric Repeated Measure ANOVA\n'
+                Analysis += 'Parametric Repeated Measure ANOVA\n'
             else:
-                Title += 'Non-Parametric Repeated Measure ANOVA\n'
+                Analysis += 'Non-Parametric Repeated Measure ANOVA\n'
 
             if self.AnalyseType in ["GFP Only", "Both"]:
-                Title += '\tGFP            - Time Frames = %s\n' % shape[0]
+                Analysis += '\tGFP            - Time Frames = %s\n' % shape[0]
             if self.AnalyseType in ["All Electrodes", "Both"]:
-                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
-                Title += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
+                Analysis += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Analysis += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
 
                 Param += '\tCluster Size (Electrodes) = %s\n' % self.AnovaClust
                 if self.AnovaClust > 1:
                     Param += '\tXYZ File = %s\n' % self.SpaceFile
 
             if self.AnalyseType is None:
-                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
-                Title += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
+                Analysis += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Analysis += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
 
                 Param += '\tCluster Size (Voxels) = %s\n' % self.AnovaClust
                 if self.AnovaClust > 1:
                     Param += '\tSPI File = %s\n' % self.SpaceFile
 
             if not self.AnovaParam:
-                Param += '\tNumber of Bootstrap Iterations = %s\n' % self.AnovaIteration
+                Param += '\tNumber of Bootstrap Iterations = %s\n' \
+                    % self.AnovaIteration
 
         if self.AnovaCheck and self.PostHocCheck:
-            Title += '\n'
+            Analysis += '\n'
             Param += '\n'
 
         if self.PostHocCheck:
@@ -547,31 +553,50 @@ class Start:
             Param += '\tConsecutive Time Frame = %s\n' % self.PostHocPtsConsec
 
             if self.PostHocParam:
-                Title += 'Parametric Post hoc\n'
+                Analysis += 'Parametric Post hoc\n'
             else:
-                Title += 'Non-Parametric Post hoc\n'
+                Analysis += 'Non-Parametric Post hoc\n'
 
             if self.AnalyseType in ["GFP Only", "Both"]:
-                Title += '\tGFP            - Time Frames = %s\n' % shape[0]
+                Analysis += '\tGFP            - Time Frames = %s\n' % shape[0]
             if self.AnalyseType in ["All Electrodes", "Both"]:
-                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
-                Title += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
+                Analysis += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Analysis += '\tAll Electrodes - Electrodes  = %s\n' % shape[1]
 
-                Param += '\tCluster Size (Electrodes) = %s\n' % self.PostHocClust
+                Param += '\tCluster Size (Electrodes) = %s\n' \
+                    % self.PostHocClust
                 if self.PostHocClust > 1:
                     Param += '\tXYZ File = %s\n' % self.SpaceFile
 
             if self.AnalyseType is None:
-                Title += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
-                Title += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
+                Analysis += '\tAll Electrodes - Time Frames = %s\n' % shape[0]
+                Analysis += '\tAll Electrodes - Voxels      = %s\n' % shape[1]
 
                 Param += '\tCluster Size (Voxels) = %s\n' % self.PostHocClust
                 if self.PostHocClust > 1:
                     Param += '\tSPI File = %s\n' % self.SpaceFile
 
             if not self.PostHocParam:
-                Param += '\tNumber of Bootstrap Iterations = %s\n' % self.PostHocIteration
+                Param += '\tNumber of Bootstrap Iterations = %s\n' \
+                    % self.PostHocIteration
 
+        # Get Model Information
+        ModelInfoTxt = 'Model Information\n------------------\n'
+        ModelTmp = self.Mainframe.PanelData.TxtModelInfo.GetLabel()[19:]
+        ModelInfo = []
+        for e in ModelTmp.split('\n'):
+            e = e.split('\t')
+            if e != '':
+                ModelInfo.append(e)
+
+        # TODO: stopped here
+
+        ModelInfo = self.Mainframe.PanelData.TxtModelInfo.GetLabel()
+        ModelInfoTxt += ModelInfo[18:]
+
+        # Get Calculation Time information
+        CalcProg = '%s\n------------------\n' % self.progressTxt[0]
+        CalcProg += '\t%s' % '\n\t'.join(self.progressTxt[1:])
 
         """
         TODO: Check the following section for Verbose file
@@ -707,15 +732,17 @@ class Start:
             InputFile.append("".join(Condition))
 
         if StatData.NameCovariate:
-            Title.replace('ANOVA', 'ANCOVA')
+            Analysis.replace('ANOVA', 'ANCOVA')
             Param.replace('ANOVA', 'ANCOVA')
 
         """
 
         # Write everything into a verbose file
         with open('%s/info.vrb' % self.PathResult, 'w') as vrbFile:
+            vrbFile.write(Analysis)
+            vrbFile.write('\n\n')
             vrbFile.write(Param)
             vrbFile.write('\n\n')
-            vrbFile.write(Title)
+            vrbFile.write(ModelInfoTxt)
             vrbFile.write('\n\n')
             vrbFile.write(CalcProg)
