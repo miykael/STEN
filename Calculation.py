@@ -3,7 +3,6 @@ import Stat
 import tables
 import PostStat
 import os
-import time
 import numpy as np
 
 
@@ -133,11 +132,9 @@ class Start:
             self.Wave.file.close()
             self.Cancel = self.Wave.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write Data
-
-            # TODO: skip Post Stat (PostHoc) as long as PostStat.py is not updated
-            #if not self.Cancel:
-            if False:
+            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Data
+            if False:  # if not self.Cancel:
 
                 pathResult = os.path.join(self.PathResult, 'Anova')
 
@@ -230,11 +227,9 @@ class Start:
             self.WavePostHoc.file.close()
             self.Cancel = self.WavePostHoc.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write Data
-
-            # TODO: skip Post Stat (PostHoc) as long as PostStat.py is not updated
-            #if not self.Cancel:
-            if False:
+            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Data
+            if False:  # if not self.Cancel:
 
                 pathResult = os.path.join(self.PathResult, 'PostHoc')
 
@@ -270,8 +265,8 @@ class Start:
                         SpaceCriteria=self.PostHocClust,
                         SpaceFile=self.SpaceFile)
                     self.progressTxt.append(
-                        'Multiple Test Correction on PostHoc (All electrodes): %s'
-                        % self.TimeTxt)
+                        'Multiple Test Correction on PostHoc ' +
+                        '(All electrodes): %s' % self.TimeTxt)
 
                     self.WavePostStat.WriteData(pathResult)
                     self.progressTxt.append(
@@ -279,7 +274,6 @@ class Start:
                     self.WavePostStat.file.close()
 
     def calcAnovaIS(self):
-
         """TODO: implement the checks for rerun"""
 
         # calculates Anova on inverse space (IS)
@@ -303,11 +297,9 @@ class Start:
             self.IS.file.close()
             self.Cancel = self.IS.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write Data
-
-            # TODO: skip Post Stat (PostHoc) as long as PostStat.py is not updated
-            #if not self.Cancel:
-            if False:
+            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Data
+            if False:  # if not self.Cancel:
 
                 pathResult = os.path.join(self.PathResult, 'Anova_IS')
 
@@ -357,12 +349,9 @@ class Start:
             self.ISPostHoc.file.close()
             self.Cancel = self.ISPostHoc.Cancel
 
-
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write Data
-
-            # TODO: skip Post Stat (PostHoc) as long as PostStat.py is not updated
-            #if not self.Cancel:
-            if False:
+            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Data
+            if False:  # if not self.Cancel:
 
                 pathResult = os.path.join(self.PathResult, 'PostHoc_IS')
 
@@ -386,7 +375,6 @@ class Start:
                 self.ISPostStat.file.close()
 
     def checkIfCancel(self):
-
         """TODO: Check this function"""
 
         # If cancel press
@@ -414,7 +402,6 @@ class Start:
             dlg.Destroy()
 
     def checkForRerun(self):
-
         """
         TODO: Description TEXT
         """
@@ -476,7 +463,6 @@ class Start:
         h5file.close()
 
     def rerunMessage(self, h5file, calcMode):
-
         """Checks if a specific calculation mode was already computed
         and asks if it should be run again or not
         """
@@ -524,7 +510,6 @@ class Start:
         return doRerun
 
     def writeVrb(self, dataset):
-
         """
         Writes verbose file into result folder
         """
