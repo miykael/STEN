@@ -508,8 +508,8 @@ class Start:
                 node = 'Anova'
 
             # Cleares Node that should be rerun
-            description = h5file.getNode(nodePath+'/'+node).description
-            h5file.removeNode(nodePath+'/'+node, recursive=True)
+            description = h5file.getNode(nodePath + '/' + node).description
+            h5file.removeNode(nodePath + '/' + node, recursive=True)
             h5file.createTable(nodePath, node, description)
 
             # Delete progress Text from already computed step
