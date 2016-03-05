@@ -132,7 +132,7 @@ class Start:
             self.Wave.file.close()
             self.Cancel = self.Wave.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
             if False:  # if not self.Cancel:
 
@@ -227,7 +227,7 @@ class Start:
             self.WavePostHoc.file.close()
             self.Cancel = self.WavePostHoc.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
             if False:  # if not self.Cancel:
 
@@ -297,7 +297,7 @@ class Start:
             self.IS.file.close()
             self.Cancel = self.IS.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
             if False:  # if not self.Cancel:
 
@@ -329,10 +329,10 @@ class Start:
         # calculates PostHoc on inverse space (IS)
         if self.PostHocCheck:
 
-            self.ISPostHoc = Stat.Anova(self.H5, self)
+            self.ISPostHoc = Stat.PostHoc(self.H5, self)
 
             # Parametric Analysis
-            if self.AnovaParam:
+            if self.PostHocParam:
                 self.ISPostHoc.Param()
                 self.progressTxt.append(
                     'Parametric PostHoc (IS) : %s'
@@ -349,7 +349,7 @@ class Start:
             self.ISPostHoc.file.close()
             self.Cancel = self.ISPostHoc.Cancel
 
-            # Post Stat (PostHoc) Analysis - i.e Mathematical Morphology, write
+            # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
             if False:  # if not self.Cancel:
 
@@ -375,7 +375,7 @@ class Start:
                 self.ISPostStat.file.close()
 
     def checkIfCancel(self):
-        """TODO: Check this function"""
+        """TODO: Check this function - isn't called yet"""
 
         # If cancel press
         if self.Cancel:
