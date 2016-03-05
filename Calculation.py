@@ -19,7 +19,7 @@ class Start:
         self.notebookSelected = Mainframe.PanelOption.GetSelection()
         self.H5 = Mainframe.H5
         self.Mainframe = Mainframe
-        self.Cancel = False
+        self.cancel = False
 
         # ANOVA on Wave/GFP
         if self.notebookSelected == 0:
@@ -130,11 +130,11 @@ class Start:
 
             # Makes sure that the h5 files are always closed at the end
             self.Wave.file.close()
-            self.Cancel = self.Wave.Cancel
+            self.cancel = self.Wave.cancel
 
             # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
-            if False:  # if not self.Cancel:
+            if False:  # if not self.cancel:
 
                 pathResult = os.path.join(self.PathResult, 'Anova')
 
@@ -225,11 +225,11 @@ class Start:
 
             # Makes sure that the h5 files are always closed at the end
             self.WavePostHoc.file.close()
-            self.Cancel = self.WavePostHoc.Cancel
+            self.cancel = self.WavePostHoc.cancel
 
             # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
-            if False:  # if not self.Cancel:
+            if False:  # if not self.cancel:
 
                 pathResult = os.path.join(self.PathResult, 'PostHoc')
 
@@ -242,7 +242,7 @@ class Start:
                         self.H5, self, Anova=False, DataGFP=True,
                         Param=self.PostHocParam)
                     self.WavePostStat.MathematicalMorphology(
-                        self.PostHocAlpha, TF=self.PostHocPtsConsec,
+                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
                         SpaceCriteria=self.PostHocClust,
                         SpaceFile=self.SpaceFile)
                     self.progressTxt.append(
@@ -261,7 +261,7 @@ class Start:
                         self.H5, self, Anova=False, DataGFP=False,
                         Param=self.PostHocParam)
                     self.WavePostStat.MathematicalMorphology(
-                        self.PostHocAlpha, TF=self.PostHocPtsConsec,
+                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
                         SpaceCriteria=self.PostHocClust,
                         SpaceFile=self.SpaceFile)
                     self.progressTxt.append(
@@ -295,11 +295,11 @@ class Start:
 
             # Makes sure that the h5 files are always closed at the end
             self.IS.file.close()
-            self.Cancel = self.IS.Cancel
+            self.cancel = self.IS.cancel
 
             # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
-            if False:  # if not self.Cancel:
+            if False:  # if not self.cancel:
 
                 pathResult = os.path.join(self.PathResult, 'Anova_IS')
 
@@ -347,11 +347,11 @@ class Start:
 
             # Makes sure that the h5 files are always closed at the end
             self.ISPostHoc.file.close()
-            self.Cancel = self.ISPostHoc.Cancel
+            self.cancel = self.ISPostHoc.cancel
 
             # Post Stat Analysis - i.e Mathematical Morphology, write
             # Data
-            if False:  # if not self.Cancel:
+            if False:  # if not self.cancel:
 
                 pathResult = os.path.join(self.PathResult, 'PostHoc_IS')
 
@@ -362,7 +362,7 @@ class Start:
                     self.H5, self, Anova=False, DataGFP=False,
                     Param=self.PostHocParam)
                 self.ISPostStat.MathematicalMorphology(
-                    self.PostHocAlpha, TF=self.PostHocPtsConsec,
+                    self.PostHocAlpha, TF=self.PostHocPtsConseq,
                     SpaceCriteria=self.PostHocClust, SpaceFile=self.SpaceFile)
                 self.progressTxt.append(
                     'Multiple Test Correction on PostHoc (IS) : %s'
@@ -378,7 +378,7 @@ class Start:
         """TODO: Check this function - isn't called yet"""
 
         # If cancel press
-        if self.Cancel:
+        if self.cancel:
             file = tables.openFile(self.H5, 'r+')
             GFPDataTest = file.listNodes('/Result/GFP/Anova')
             AllDataTest = file.listNodes('/Result/All/Anova')
@@ -561,7 +561,7 @@ class Start:
         if self.PostHocCheck:
             Param += 'Post hoc :\n'
             Param += '\tAlpha = %s\n' % self.PostHocAlpha
-            Param += '\tConsecutive Time Frame = %s\n' % self.PostHocPtsConsec
+            Param += '\tConsecutive Time Frame = %s\n' % self.PostHocPtsConseq
 
             if self.PostHocParam:
                 Analysis += 'Parametric Post hoc\n'
