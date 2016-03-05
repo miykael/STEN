@@ -21,7 +21,7 @@ class Anova:
         """
 
         # Specify relevant variables
-        self.Cancel = False
+        self.cancel = False
         self.parent = parent
 
         # Reading H5 File
@@ -86,7 +86,7 @@ class Anova:
 
         # Check if the computation was canceled
         if not dlg.Update(i)[0]:
-            self.Cancel = True
+            self.cancel = True
 
         dlg.Destroy()
 
@@ -181,7 +181,7 @@ class Anova:
 
         # Check if the computation was canceled
         if not dlg.Update(i)[0]:
-            self.Cancel = True
+            self.cancel = True
 
         dlg.Destroy()
 
@@ -305,85 +305,100 @@ def calculatingAovR(tableFactor, Data, Formula):
 
 class PostHoc:
 
+    """PostHoc Analysis using data from the H5 files"""
+
     def __init__(self, H5, parent):
 
-        """ Reading H5 Files to extract Factor infrmations and creating R formula"""
-        # Reading H5 File
-        numpy2ri.activate()
-        self.Cancel = False
+        """
+        Reading H5 Files to extract factor information and creating R formula
+        """
+
+        # Specify relevant variables
+        self.cancel = False
         self.parent = parent
+
+        # Reading H5 File
         self.file = tables.openFile(H5, mode='a')
-        # tableFactor is a vector with n dimenssion wher n = number of terms incuding Subject
-        self.tableFactor=self.file.getNode('/Model').read()
-        #exporting information (name of Factor, type of factor, create the Formula)
-        Between={}
-        Within={}
-        BetweenName=[]
-        WithinName=[]
+
+        # Numerical Factor Information from the Datatable
+        self.tableFactor = self.file.getNode('/Model').read()
+
+        # Extraction of relevant factor information from tableFactor
+        self.between = {}
+        self.within = {}
+        self.betweenName = []
+        self.withinName = []
+        # Generating within and between dictionary with condition name
         for t in self.tableFactor:
-            factorName=t[0]
-            factorType=t[1]
-            factorData=t[2]
-            # Generating Within and Between Dictionary with condition Name
-            if factorType=='Between':
-                Between[factorName]=factorData
-                BetweenName.append(factorName)
-            elif factorType=='Within':
-                Within[factorName]=factorData
-                WithinName.append(factorName)
-            elif factorType=='Subject':
-                Subject=factorData
-        # Extract all within subject possibilities using subject 1
-        # transform Dict into matrix easy to use
-        self.Within=np.array(Within.values())
-        WithinCombi=self.Within[:,Subject==1].T
-        self.Between=np.array(Between.values())
-        # extracting different levels for each Between Subject factor
-        LevelsBetween=self.Between.max(axis=1).astype('int')
-        # cacluate all possible Combination using the max number of levels
-        AllCombinationBetween=itertools.product(range(1,LevelsBetween.max()+1),repeat=len(LevelsBetween))
-        # reduce combination with only existing one 
-        ExistingCombi=[]
-        for c in AllCombinationBetween:
-            Combi=np.array(c)
-            if (LevelsBetween-Combi<0).sum()==0: # existing combination
-                ExistingCombi.append(Combi)
-        ExistingCombi=np.array(ExistingCombi)
-        BetweenCombi=ExistingCombi
-        AllCombiBool={}
-        CondName=[]
-        # create all arrangement and extract the booleaan coresponding to the arrangement
-        # us a Ductionary that containe bool value correcponding to the condition
-        # the key of the dictionary correspond to the arrangement 
-        for b in BetweenCombi:
-            BoolBetween=[]
-            NameBetweentmp=[]
-            for c,l in enumerate(b):
-                BoolBetween.append(self.Between[c,:]==l)
-                NameBetweentmp.append("-".join([BetweenName[c],str(int(l))]))
-            BoolBetween=np.array(BoolBetween)
-            for w in WithinCombi:
-                BoolWithin=[]
-                NameWithintmp=[]
-                for c,l in enumerate(w):
-                    BoolWithin.append(self.Within[c,:]==l)
-                    NameWithintmp.append("-".join([WithinName[c],str(int(l))]))
-                BoolWithin=np.array(BoolWithin)
-                Bool=np.append(BoolBetween,BoolWithin,axis=0)
+            factorName = t[0]
+            factorType = t[1]
+            factorData = t[2]
+            if factorType == 'Between':
+                self.between[factorName] = factorData
+                self.betweenName.append(factorName)
+            elif factorType == 'Within':
+                self.within[factorName] = factorData
+                self.withinName.append(factorName)
+            elif factorType == 'Subject':
+                self.subject = factorData
+
+        # Transform dict into matrix for easy use
+        self.within = np.array(self.within.values())
+        self.between = np.array(self.between.values())
+
+        # Extract different levels for each between subject factor
+        levelsBetween = self.between.max(axis=1).astype('int')
+
+        # Cacluate all possible combinations using the max number of levels
+        allCombinationBetween = itertools.product(
+            range(1, levelsBetween.max() + 1), repeat=len(levelsBetween))
+
+        # Reduce combination to only existing ones
+        existingCombi = []
+        for c in allCombinationBetween:
+            combinations = np.array(c)
+            # existing combinations
+            if (levelsBetween - combinations < 0).sum() == 0:
+                existingCombi.append(combinations)
+        existingCombi = np.array(existingCombi)
+
+        # Create all possible combinations and extract the booleans
+        # corresponding to it.
+        allCombiBool = {}
+        condName = []
+        for e in existingCombi:
+            boolBetween = []
+            tmpNameBetween = []
+            for c, l in enumerate(e):
+                boolBetween.append(self.between[c, :] == l)
+                tmpNameBetween.append("-".join([self.betweenName[c],
+                                      str(int(l))]))
+            boolBetween = np.array(boolBetween)
+
+            withinCombi = self.within[:, self.subject == 1].T
+            for w in withinCombi:
+                boolWithin = []
+                tmpNameWithin = []
+                for c, l in enumerate(w):
+                    boolWithin.append(self.within[c, :] == l)
+                    tmpNameWithin.append("-".join([self.withinName[c],
+                                         str(int(l))]))
+                boolWithin = np.array(boolWithin)
+                bools = np.append(boolBetween, boolWithin, axis=0)
                 # name of the arrangement
-                NameTmp=".".join([".".join(NameBetweentmp),".".join(NameWithintmp)])
-                CondName.append(NameTmp)
-                AllCombiBool[NameTmp]=Bool.prod(axis=0)==1
-        #Creation of all the combination with the 2 arrangements for the t-test
-        AllCombiName=itertools.combinations(CondName,2)
-        # number of test using combinatory calculation use for the progression bar
-        self.NbTest=int(np.math.factorial(len(CondName))/(np.math.factorial(len(CondName)-2)*np.math.factorial(2)))
-        # Keep subject Factor to determine if it will be paired on un paired t-test
-        self.Subject=Subject
-        # Dictionary of boolean correcponding to alla arangement
-        self.Arrangement=AllCombiBool
-        # all combinasion of T-test 2 by 2
-        self.Combi=AllCombiName
+                tmpName = ".".join([".".join(tmpNameBetween),
+                                    ".".join(tmpNameWithin)])
+                condName.append(tmpName)
+                allCombiBool[tmpName] = bools.prod(axis=0) == 1
+
+        # Dictionary of boolean correcponding to all arangements
+        self.Arrangement = allCombiBool
+
+        # Creation of all combinations with the 2 arrangements for the t-test
+        self.combination = itertools.combinations(condName, 2)
+
+        # Number of tests using combinatory calculation for the progression bar
+        self.nbTest = len([t for t in itertools.combinations(condName, 2)])
 
     def CalculationTTest(self, data,Combination,SubjectFactor,Arrangement,NonParam=False):
         # H5 array don't be acces with bool
@@ -464,28 +479,28 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(self.NbTest)]),
-                                self.NbTest,
+                                          str(self.nbTest)]),
+                                self.nbTest,
                                 parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
-        for Combination in self.Combi:
-            t,p=self.CalculationTTest(data,Combination,self.Subject,self.Arrangement)
+        for Combination in self.combination:
+            t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
             # Reshaping Data
             t=t.reshape((shapeOrigData[0], shapeOrigData[1]))
             p=p.reshape((shapeOrigData[0], shapeOrigData[1]))
             # Saving Result into the H5
-            NewRow['Name']=Combination
+            NewRow['Name']='_'.join(Combination)
             NewRow['P']=p
             NewRow['T']=t
             NewRow.append()
             # update the remaing time dilog box
             
             n+=1
-            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.NbTest)])
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.nbTest)])
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
@@ -495,10 +510,10 @@ class PostHoc:
                 result = dlgQuest.ShowModal()
                 dlgQuest.Destroy()
                 if result == wx.ID_OK:
-                    self.Cancel = True
+                    self.cancel = True
                     break
                 else:
-                    self.Cancel = False
+                    self.cancel = False
                     dlg.Resume()
 
         self.elapsedTime = str(dlg.GetChildren()[3].Label)
@@ -519,8 +534,8 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
-                                          str(self.NbTest)]),
-                                self.NbTest,
+                                          str(self.nbTest)]),
+                                self.nbTest,
                                 parent=self.parent,
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
@@ -528,12 +543,12 @@ class PostHoc:
         n=0
         NewRow=Res.row
         
-        for Combination in self.Combi:
-            t,p=self.CalculationTTest(data,Combination,self.Subject,self.Arrangement)
+        for Combination in self.combination:
+            t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
             TReal=t
             Count=np.zeros(TReal.shape)
             for i in range(Iter):
-                t,p=self.CalculationTTest(data,Combination,self.Subject,self.Arrangement,NonParam=True)
+                t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement,NonParam=True)
                 TBoot=t
                 Diff=TBoot-TReal
                 Count[Diff>0]+=1
@@ -549,7 +564,7 @@ class PostHoc:
             # update the remaing time dilog box
             
             n+=1
-            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.NbTest)])
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.nbTest)])
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
@@ -559,10 +574,10 @@ class PostHoc:
                 result = dlgQuest.ShowModal()
                 dlgQuest.Destroy()
                 if result == wx.ID_OK:
-                    self.Cancel = True
+                    self.cancel = True
                     break
                 else:
-                    self.Cancel = False
+                    self.cancel = False
                     dlg.Resume()
         dlg.Close()
         dlg.Destroy()
