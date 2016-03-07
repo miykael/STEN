@@ -59,9 +59,10 @@ class Anova:
         blockSize = 250
         boundaries = range(0, data.shape[0]-1, blockSize) + [data.shape[0]]
         cutList = [boundaries[i:i + 2] for i in range(len(boundaries) - 1)]
-        results = [pool.apply_async(calculatingAovR, (
+        results = [(cut[0], pool.apply_async(calculatingAovR, (
             self.tableFactor, data[cut[0]:cut[1], :],
-            self.Formula)) for cut in cutList]
+            self.Formula))) for cut in cutList]
+        results = [r[1] for r in sorted(results)]
 
         # Update window
         dlg = wx.ProgressDialog(
@@ -144,9 +145,10 @@ class Anova:
         blockSize = 250
         boundaries = range(0, data.shape[0]-1, blockSize) + [data.shape[0]]
         cutList = [boundaries[i:i + 2] for i in range(len(boundaries) - 1)]
-        resultsReal = [pool.apply_async(calculatingAovR, (
+        resultsReal = [(cut[0], pool.apply_async(calculatingAovR, (
             self.tableFactor, data[cut[0]:cut[1], :],
-            self.Formula)) for cut in cutList]
+            self.Formula))) for cut in cutList]
+        resultsReal = [r[1] for r in sorted(resultsReal)]
 
         # Aggregate the resultsReal
         for i, r in enumerate(resultsReal):
@@ -161,9 +163,10 @@ class Anova:
         for itID in xrange(nIteration):
             dataBoot = self.bootstrapData(data[:], self.FactorSubject)
 
-            resultsBoot = [pool.apply_async(calculatingAovR, (
+            resultsBoot = [(cut[0], pool.apply_async(calculatingAovR, (
                 self.tableFactor, dataBoot[cut[0]:cut[1], :],
-                self.Formula)) for cut in cutList]
+                self.Formula))) for cut in cutList]
+            resultsBoot = [r[1] for r in sorted(resultsBoot)]
 
             # Aggregate the resultsBoot
             for i, r in enumerate(resultsBoot):
@@ -300,7 +303,7 @@ def calculatingAovR(tableFactor, Data, Formula):
                 for t in r.rownames[0:-1]:
                     terms.append(t.replace(' ', ''))
 
-    return (pValue, FValue, terms)
+    return pValue, FValue, terms
 
 
 class PostHoc:
