@@ -2,6 +2,7 @@
 ##
 ##tables:
 ##/Shape # Keep the shape of the Data, to reshape after calculation # simple array
+##/Fs # Keep the frequency sampling for out put result 
 ##/Data/All #using createEArray('/','AllData',tables.Float64Atom(),(TF,Electrodes,0))
 ##/Data/GFP #using createEArray('/','AllData',tables.Float64Atom(),(TF,1,0))
 ##/Model #using a tables with col= {Name of the factor, Value of factor (Vector), type of Factor (Within,between, covariate, subject)

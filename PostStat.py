@@ -145,6 +145,27 @@ class MultipleTestingCorrection:
        
 ##############            
 class WriteData:
+    def __init__(self,ResultFolder,H5):
+        Type = Param/Non Param
+    def StatistcalData(self,CorrectedMask,DataGFP=False,Param=True):
+        """wrte Staristicla Data"""
+    def IntermediateResult(self):
+        """Write statistical Result"""
+    def WriteEph(self,FileName):
+        """ write Eph File"""
+        File=open(FileName,"w")
+        # on prend le header
+        header=[str(self.Electrodes),'\t',str(self.TF),'\t',str(self.Fs),'\n']
+        #ecrtiture du header
+        fichier.write("".join(header))
+        # boucle sur les time chaque ligne est un temps
+        for time in self.Data:
+            #ecriture ligne par ligne
+            time.tofile(fichier,sep='\t',format="%s")
+            #saut de ligne
+            fichier.write('\n')
+        fichier.close()
+class Xyz:
     # Writing Intermediate Result and Result
     def write(self, ResultFolder, DataGFP=False):
         """ Write Estimator, not real slope and
