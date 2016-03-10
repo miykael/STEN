@@ -250,10 +250,10 @@ class AnovaWave(wx.Panel):
         # Panel: Analyse Type (GFP, All electrodes or both)
         TxtAnalyse = wx.StaticText(
             self, wx.ID_ANY, label="Choose Analyse Type", style=wx.CENTRE)
-        analyseTypes = ["All Electrodes", "GFP Only", "Both"]
+        analyseTypes = ["", "All Electrodes", "GFP Only", "Both"]
         self.BoxAnalyse = wx.ComboBox(self, wx.ID_ANY, choices=analyseTypes,
                                       style=wx.CB_READONLY)
-        self.BoxAnalyse.SetSelection(1)
+        self.BoxAnalyse.SetSelection(0)
 
         # Create structure of Analysis Frame
         sizerFrame = wx.BoxSizer(wx.VERTICAL)
