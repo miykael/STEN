@@ -35,10 +35,15 @@ class Anova:
             self.tableFactor)
 
         # Wrting Formula
+<<<<<<< HEAD
+        if FormulaErrorTerm!=[]:
+            self.Formula = 'DataR~%s+ Error(%s/(%s))' % ("*".join(FormulaModel), SubjectName, "*".join(FormulaErrorTerm))
+=======
         if formulaErrorTerm != []:
             self.Formula = 'DataR~%s+Error(%s/(%s))' % (
                 "*".join(formulaModel), subjectName,
                 "*".join(formulaErrorTerm))
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         else:
             self.Formula = 'DataR~%s' % "*".join(formulaModel)
 
@@ -79,10 +84,35 @@ class Anova:
                 pValues = P
                 FValues = F
             else:
+<<<<<<< HEAD
+                PValue=np.append(PValue,P,axis=0)
+                FValue=np.append(FValue,F,axis=0)
+            n += 1
+            #Dialog box for timing
+            pourcent = str(100.0 * end / (NbAnova))
+            pourcent = pourcent[0:pourcent.find('.') + 3]
+            Cancel = dlg.Update(end, " ".join(['Progression  :', pourcent, ' %']))
+            if Cancel[0] == False:
+                dlgQuest = wx.MessageDialog(
+                    None,
+                    "Do you really want to cancel?",
+                    "Confirm Cancel",
+                    wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+                result = dlgQuest.ShowModal()
+                dlgQuest.Destroy()
+                if result == wx.ID_OK:
+                    self.Cancel = True
+                    break
+                else:
+                    self.Cancel = False
+                    dlg.Resume()
+        len(PValue)
+=======
                 pValues = np.vstack((pValues, P))
                 FValues = np.vstack((FValues, F))
 
             dlg.Update(i)
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
         # Check if the computation was canceled
@@ -96,9 +126,15 @@ class Anova:
                                       self.Formula)
 
         if DataGFP:
+<<<<<<< HEAD
+            Res=self.file.getNode('/Result/GFP/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+=======
             res = self.file.getNode('/Result/GFP/Anova')
             pValues = pValues.reshape((shapeOrigData[0], 1, len(terms)))
             FValues = FValues.reshape((shapeOrigData[0], 1, len(terms)))
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         else:
             res = self.file.getNode('/Result/All/Anova')
             pValues = pValues.reshape((shapeOrigData[0], shapeOrigData[1],
@@ -122,6 +158,28 @@ class Anova:
 
     def NonParam(self, nIteration, DataGFP=False):
 
+<<<<<<< HEAD
+        NewRow=Res.row
+        for i,t in enumerate(Terms):
+            if t.find(':')!=-1: # interaction Term
+                ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
+            else:# Main Effect
+                ConditionName="_".join(['Main Effect',t])
+            NewRow['StatEffect']=ConditionName
+            if DataGFP:
+                NewRow['P']=PValue[:,i]
+                NewRow['F']=FValue[:,i]
+            else:
+                NewRow['P']=PValue[:,:,i]
+                NewRow['F']=FValue[:,:,i]
+            NewRow.append()
+        dlg.Close()
+        dlg.Destroy()
+                
+    def NonParam(self, Iter, DataGFP=False):
+        Iter=int(Iter)
+=======
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         # Extracting GFP or All Data
         if DataGFP:
             data = self.file.getNode('/Data/GFP')
@@ -194,9 +252,15 @@ class Anova:
                                       self.Formula)
 
         if DataGFP:
+<<<<<<< HEAD
+            Res=self.file.getNode('/Result/GFP/Anova')
+            PValue=PValue.reshape((ShapeOriginalData[0],len(Terms)))
+            FValue=FValue.reshape((ShapeOriginalData[0],len(Terms)))
+=======
             res = self.file.getNode('/Result/GFP/Anova')
             pValues = pValues.reshape((shapeOrigData[0], 1, len(terms)))
             FValues = FRealList.reshape((shapeOrigData[0], 1, len(terms)))
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         else:
             res = self.file.getNode('/Result/All/Anova')
             pValues = pValues.reshape((shapeOrigData[0], shapeOrigData[1],
@@ -204,6 +268,52 @@ class Anova:
             FValues = FRealList.reshape((shapeOrigData[0], shapeOrigData[1],
                                         len(terms)))
 
+<<<<<<< HEAD
+        NewRow=Res.row
+        for i,t in enumerate(Terms):
+            if t.find(':')!=-1: # interaction Term
+                ConditionName="_".join(['Interaction',"-".join(t.split(':'))])
+            else:# Main Effect
+                ConditionName="_".join(['Main Effect',t])
+            NewRow['StatEffect']=ConditionName
+            if DataGFP:
+                NewRow['P']=PValue[:,i]
+                NewRow['F']=FValue[:,i]
+            else:
+                NewRow['P']=PValue[:,:,i]
+                NewRow['F']=FValue[:,:,i]
+            NewRow.append()
+        dlg.Close()
+        dlg.Destroy()
+# Tables with col ={Name of the effect (i.e main effect, interaction, ..),1-p Data(Without any threshold (alpha, consecpoits, ...),F Data}
+    def ExtractingStat(self, Raw):
+        for i,r in enumerate(Raw):
+            Dat=np.array(r)
+            if i==0:
+                P=Dat[:,4,0:-1]
+                F=Dat[:,3,0:-1]
+            else:
+                P=np.append(P,Dat[:,4,0:-1],axis=1)
+                F=np.append(F,Dat[:,3,0:-1],axis=1)
+        P[np.isnan(P)]=1
+        F[np.isnan(F)]=0
+        return P,F
+
+    def CalculatingAovR(self, Data,Formula):
+        DataR = robjects.Matrix(Data.T)
+        robjects.globalenv["DataR"] = DataR
+        TextR = 'aov(%s)' % Formula
+        express = rpy2.robjects.r.parse(text=TextR)
+        Fit = rpy2.robjects.r.eval(express)
+        robjects.globalenv["Fit"] = Fit
+        # calcul Anova
+        Raw = robjects.r.summary(Fit)
+        return Raw
+    def BootstrapedData(self, Data,FactorSubject):
+        NbSubject=FactorSubject.max()
+        SubjectLabel=np.arange(1,NbSubject+1)
+        Order=[]
+=======
         newRow = res.row
         for i, t in enumerate(terms):
 
@@ -222,6 +332,7 @@ class Anova:
         NbSubject = factorSubject.max()
         subjectLabel = np.arange(1, NbSubject + 1)
         order = []
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         for r in range(NbSubject):
             np.random.shuffle(subjectLabel)
             drawing = np.nonzero(factorSubject == subjectLabel[0])[0]
@@ -322,6 +433,80 @@ class PostHoc:
 
         # Reading H5 File
         self.file = tables.openFile(H5, mode='a')
+<<<<<<< HEAD
+        # TableFactor is a vector with n dimenssion wher n = number of Terms incuding Subject
+        TableFactor=self.file.getNode('/Model').read()
+        #exporting information (name of Factor, type of factor, create the Formula)
+        Between={}
+        Within={}
+        BetweenName=[]
+        WithinName=[]
+        for t in TableFactor:
+            FactorName=t[0]
+            FactorType=t[1]
+            FactorData=t[2]
+            # Generating Within and Between Dictionary with condition Name
+            if FactorType=='Between':
+                Between[FactorName]=FactorData
+                BetweenName.append(FactorName)
+            elif FactorType=='Within':
+                Within[FactorName]=FactorData
+                WithinName.append(FactorName)
+            elif FactorType=='Subject':
+                Subject=FactorData
+        # Extract all within subject possibilities using subject 1
+        # transform Dict into matrix easy to use
+        self.Within=np.array(Within.values())
+        WithinCombi=Within[:,Subject==1].T
+        self.Between=np.array(Between.values())
+        # extracting different levels for each Between Subject factor
+        LevelsBetween=self.Between.max(axis=1)
+        # cacluate all possible Combination using the max number of levels
+        AllCombinationBetween=itertools.product(range(1,LevelsBetween.max()+1),repeat=len(LevelsBetween))
+        # reduce combination with only existing one 
+        ExistingCombi=[]
+        for c in AllCombinationBetween:
+            Combi=np.array(c)
+            if (LevelsBetween-Combi<0).sum()==0: # existing combination
+                ExistingCombi.append(Combi)
+        ExistingCombi=np.array(ExistingCombi)
+        BetweenCombi=ExistingCombi
+        AllCombiBool={}
+        CondName=[]
+        # create all arrangement and extract the booleaan coresponding to the arrangement
+        # us a Ductionary that containe bool value correcponding to the condition
+        # the key of the dictionary correspond to the arrangement 
+        for b in BetweenCombi:
+            BoolBetween=[]
+            NameBetweentmp=[]
+            for c,l in enumerate(b):
+                BoolBetween.append(Between[c,:]==l)
+                NameBetweentmp.append("-".join([BetweenName[c],str(int(l))]))
+            BoolBetween=np.array(BoolBetween)
+            for w in WithinCombi:
+                BoolWithin=[]
+                NameWithintmp=[]
+                for c,l in enumerate(w):
+                    BoolWithin.append(Within[c,:]==l)
+                    NameWithintmp.append("-".join([WithinName[c],str(int(l))]))
+                BoolWithin=np.array(BoolWithin)
+                Bool=np.append(BoolBetween,BoolWithin,axis=0)
+                # name of the arrangement
+                Nametmp=".".join([".".join(NameBetweentmp),".".join(NameWithintmp)])
+                CondName.append(Nametmp)
+                AllCombiBool[NameTmp]=Bool.prod(axis=0)==1
+        #Creation of all the combination with the 2 arrangements for the t-test
+        AllCombiName=itertools.combinations(CondName,2)
+        # number of test using combinatory calculation use for the progression bar
+        sefl.Nbtest=int(np.math.factorial(len(CondName))/(np.math.factorial(len(CondName)-2)*np.math.factorial(2)))
+        # Keep subject Factor to determine if it will be paired on un paired t-test
+        self.Subject=Subject
+        # Dictionary of boolean correcponding to alla arangement
+        self.Arrangement=AllCombiBool
+        # all combinasion of T-test 2 by 2
+        self.Combi=AllCombiName
+    def CalculationTTest(Data,Combination,SubjectFactor,Arrangement,NonParam=False):
+=======
 
         # Numerical Factor Information from the Datatable
         self.tableFactor = self.file.getNode('/Model').read()
@@ -409,6 +594,7 @@ class PostHoc:
 
 
     def CalculationTTest(self, data,Combination,SubjectFactor,Arrangement,NonParam=False):
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
         # H5 array don't be acces with bool
         Cond=np.arange(0,data.shape[1])
         # Value1 and Value2 = Bolean vector correponding to the condition for the t-test based on name in Combination
@@ -487,16 +673,27 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
+<<<<<<< HEAD
+                                          str(sefl.Nbtest)]),
+                                NbTest,
+                                parent=self.Parent,
+=======
                                           str(self.nbTest)]),
                                 self.nbTest,
                                 parent=self.parent,
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
+<<<<<<< HEAD
+        for Combination in self.Combi:
+            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+=======
         for Combination in self.combination:
             t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
             # Reshaping Data
             t=t.reshape((shapeOrigData[0], shapeOrigData[1]))
             p=p.reshape((shapeOrigData[0], shapeOrigData[1]))
@@ -508,7 +705,11 @@ class PostHoc:
             # update the remaing time dilog box
             
             n+=1
+<<<<<<< HEAD
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+=======
             prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.nbTest)])
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
@@ -542,21 +743,36 @@ class PostHoc:
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
                                 "/".join(['PostHoc T-Test : 0',
+<<<<<<< HEAD
+                                          str(sefl.Nbtest)]),
+                                NbTest,
+                                parent=self.Parent,
+=======
                                           str(self.nbTest)]),
                                 self.nbTest,
                                 parent=self.parent,
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
         n=0
         NewRow=Res.row
         
+<<<<<<< HEAD
+        for Combination in self.Combi:
+            t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement)
+            TReal=t
+            Count=np.zeros(TReal.shape)
+            for i in range(Iter):
+                t,p=CalculationTTest(Data,Combination,self.Subject,self.Arrangement,NonParam=True)
+=======
         for Combination in self.combination:
             t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
             TReal=t
             Count=np.zeros(TReal.shape)
             for i in range(Iter):
                 t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement,NonParam=True)
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
                 TBoot=t
                 Diff=TBoot-TReal
                 Count[Diff>0]+=1
@@ -572,7 +788,11 @@ class PostHoc:
             # update the remaing time dilog box
             
             n+=1
+<<<<<<< HEAD
+            prog = "".join(['PostHoc T-Test : ', str(n), '/', str(NbTest)])
+=======
             prog = "".join(['PostHoc T-Test : ', str(n), '/', str(self.nbTest)])
+>>>>>>> 29ffbcbc95a6cdcf7f67fa6113847927092caa8c
             Cancel = dlg.Update(n, prog)
             if Cancel[0] == False:
                 dlgQuest = wx.MessageDialog(None,
