@@ -56,7 +56,7 @@ class Anova:
         # Calculating the Anova using R and multiprocessing (=parallel)
         n_jobs = multiprocessing.cpu_count()
         pool = multiprocessing.Pool(n_jobs)
-        blockSize = 250
+        blockSize = 100
         boundaries = range(0, data.shape[0]-1, blockSize) + [data.shape[0]]
         cutList = [boundaries[i:i + 2] for i in range(len(boundaries) - 1)]
         results = [(cut[0], pool.apply_async(calculatingAovR, (
@@ -142,7 +142,7 @@ class Anova:
         # Calculating the Anova using R and multiprocessing (=parallel)
         n_jobs = multiprocessing.cpu_count()
         pool = multiprocessing.Pool(n_jobs)
-        blockSize = 250
+        blockSize = 100
         boundaries = range(0, data.shape[0]-1, blockSize) + [data.shape[0]]
         cutList = [boundaries[i:i + 2] for i in range(len(boundaries) - 1)]
         resultsReal = [(cut[0], pool.apply_async(calculatingAovR, (
@@ -402,6 +402,11 @@ class PostHoc:
 
         # Number of tests using combinatory calculation for the progression bar
         self.nbTest = len([t for t in itertools.combinations(condName, 2)])
+
+
+        print 'DONE. Till here.'
+
+
 
     def CalculationTTest(self, data,Combination,SubjectFactor,Arrangement,NonParam=False):
         # H5 array don't be acces with bool
