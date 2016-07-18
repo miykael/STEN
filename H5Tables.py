@@ -190,13 +190,14 @@ class ReadDataset:
         dataset = np.load('bla.npy').tolist()
         """
 
-        # TODO: check and rewrite this section
 
         # Simulation of reading grid
         subjectName = dataset['Subject'][0]
         subjectID = dataset['Subject'][1]
-        NbLine = len(subjectID)
-        SubjectFactor = np.ravel([subjectID] * NbLine)
+        NbLine=len(subjectID)
+        WithinFactor=dataset['Factors']
+        NbFactorWithin = np.array(WithinFactor[1]).prod()
+        SubjectFactor = np.ravel([subjectID] * NbFactorWithin)
         SubjectName = {subjectName: SubjectFactor}
         AllFactor = {subjectName: SubjectName}
 
@@ -204,37 +205,51 @@ class ReadDataset:
         # coming from grid
         InfoDict = {subjectName: subjectID}
 
-        # TODO: make sure that multiple variables are considered
+        # Calulation Model Between OK
+        # TODO Check with more than one Bewteen subject Factor
         if dataset['BetweenFactor'] != []:
             groupName = dataset['BetweenFactor'][0][0]
             groupID = dataset['BetweenFactor'][0][1]
             InfoDict[groupName] = groupID
-            Between = np.ravel([groupID] * NbLine)
+            Between = np.ravel([groupID] * NbFactorWithin)
             BetweeName = {groupName: Between}
             AllFactor['Between'] = BetweeName
 
-        # TODO: make sure that multiple variables are considered
+        # Calulation of Model Covariate OK
+        # TODO Check with more than one 
         if dataset['Covariate'] != []:
             covariateName = dataset['Covariate'][0][0]
             covariateID = dataset['Covariate'][0][1]
             InfoDict[covariateName] = covariateID
-            Covariate = np.ravel([covariateID] * NbLine)
+            Covariate = np.ravel([covariateID] * NbFactorWithin)
             CovariateName = {covariateName: Covariate}
             AllFactor['Covariate'] = CovariateName
-
+        
         for i, e in enumerate(dataset['WithinFactor']):
             fName = e[0].replace('.', '_').replace(' ', '')
             InfoDict[fName] = e[2]
 
         AllEph = np.ravel([e[2] for e in dataset['WithinFactor']])
 
-        # TODO: not sure if this is the right way
-        Within = np.ravel([[int(e[1][1:-1])] * NbLine
-                           for i, e in enumerate(dataset['WithinFactor'])])
-
+        # Calculation within subject Factor Model
+        WithinFactorList=[e[1] for i, e in enumerate(dataset['WithinFactor'])]
+        for i,WithinList in enumerate(WithinFactorList):
+            WithinList =WithinList [1:-1]
+            WithinList =np.int64(np.array(WithinList .split(',')))
+            WithinList =WithinList .reshape((len(WithinList),1))
+            WithinList =WithinList.repeat(len(subjectID ),axis=1)
+            if i==0:
+                Within=WithinList.T
+            else:
+                Within = np.append(Within,WithinList.T,axis=0)
+        
         # factor Name coming from selecting factor
-        WithinName = {'Cond': Within}
-        AllFactor['Within'] = WithinName
+        WithinName = WithinFactor[0]
+        WithinDict={}
+        for i,n in enumerate(WithinName):
+            WithinDict[n]=Within[:,i]
+        AllFactor['Within'] =WithinDict
+        
 
         # Creation H5 File and differnt group
         H5 = tables.open_file(name, 'r+')
@@ -277,7 +292,6 @@ class ReadDataset:
 
         ShapeOriginalData = H5.create_array('/', 'Shape',
                                             np.array(e.data.shape))
-
         ModelParticle = {'Name': tables.StringCol(40),
                          'Value': tables.Float32Col(shape=len(SubjectFactor)),
                          'Type': tables.StringCol(40)}
