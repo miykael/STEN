@@ -1,4 +1,4 @@
-﻿import wx
+import wx
 import PanelData
 import PanelAnalysis
 import Calculation
@@ -129,6 +129,7 @@ class MainFrame(wx.Frame):
                 style=wx.OK | wx.ICON_QUESTION)
             dlg.ShowModal()
             dlg.Destroy()
+        
         elif self.Dataset != {} and not self.saved:
             dlg = wx.MessageDialog(
                 self, caption='Unsaved Dataset',

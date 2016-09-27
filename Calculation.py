@@ -598,14 +598,13 @@ class Start:
         # Get Model Information
         ModelInfoTxt = 'Model Information :\n-------------------\n'
         ModelTmp = self.Mainframe.PanelData.TxtModelInfo.GetLabel()[19:]
-        ModelInfo = [e for e in ModelTmp.replace('\n', '\t').split('\t')
-                     if e != '']
-        ModelInfoTxt += 'Subject         %s\n' % ModelInfo[1]
-        ModelInfoTxt += 'Factor          %s\n' % ModelInfo[3]
-        ModelInfoTxt += 'Within Factor   %s\n' % ModelInfo[5]
-        ModelInfoTxt += 'Between Factor  %s\n' % ModelInfo[7]
-        ModelInfoTxt += 'Covariate       %s\n' % ModelInfo[9]
-        ModelInfoTxt += 'R-Formula       %s\n' % ModelInfo[11]
+        ModelInfo=[e.split('\t')[-1] for e in ModelTmp.split('\n')]
+        ModelInfoTxt += 'Subject         %s\n' % ModelInfo[0]
+        ModelInfoTxt += 'Factor          %s\n' % ModelInfo[1]
+        ModelInfoTxt += 'Within Factor   %s\n' % ModelInfo[2]
+        ModelInfoTxt += 'Between Factor  %s\n' % ModelInfo[3]
+        ModelInfoTxt += 'Covariate       %s\n' % ModelInfo[4]
+        ModelInfoTxt += 'R-Formula       %s\n' % ModelInfo[5]
 
         # Get detailed model Information
         ModelDetailTxt = 'Model Details :\n---------------\n'

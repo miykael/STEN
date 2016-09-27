@@ -143,6 +143,9 @@ class ReadEPH:
             self.TF = int(header[1])
             self.FS = float(header[2])
         self.data = np.loadtxt(filename, skiprows=1)
+        if len(self.data.shape)==1:
+            self.data=self.data.reshape((1,self.electrodes))
+        print(self.data.shape)
         self.GFP = self.data.std(axis=1)
 
 
@@ -263,7 +266,7 @@ class ReadDataset:
             [eph.electrodes for eph in ephData]).astype('uint16')
         FS = np.stack([eph.FS for eph in ephData]).astype('uint16')
         TF = np.stack([eph.TF for eph in ephData]).astype('uint16')
-
+        print(TF)
         # make sure that all eph files have the same dimension and frequency
         # TODO: Have warning message to aborts the whole thing instead of print
         if len(np.unique(electrodes)) == 1:
@@ -288,6 +291,8 @@ class ReadDataset:
         # Reading EphFile and store into Tables with EArray
         for e in ephData:
             AllData.append(e.data.reshape(np.array(e.data.shape).prod(), 1))
+            print(TF)
+            print(e.GFP.shape)
             GFPData.append(e.GFP.reshape(TF, 1))
 
         ShapeOriginalData = H5.create_array('/', 'Shape',

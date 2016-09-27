@@ -143,14 +143,18 @@ class MultipleTestingCorrection:
         self.CorrectedMask=CorrectedMask
 
        
-##############            
+##############  TODO ###############################          
 class WriteData:
     def __init__(self,ResultFolder,H5):
-        Type = Param/Non Param
+        #Type = Param/Non Param
+        self.resultFolder=ResultFolder
+        self.H5File=tables.openFile(H5,'r')
     def StatistcalData(self,CorrectedMask,DataGFP=False,Param=True):
         """wrte Staristicla Data"""
+        self.H5File.close()
     def IntermediateResult(self):
-        """Write statistical Result"""
+        """Write intermediate Result"""
+        self.H5File.close()
     def WriteEph(self,FileName):
         """ write Eph File"""
         File=open(FileName,"w")
@@ -165,6 +169,10 @@ class WriteData:
             #saut de ligne
             fichier.write('\n')
         fichier.close()
+
+
+
+#################### Old STEN ######################
 class Xyz:
     # Writing Intermediate Result and Result
     def write(self, ResultFolder, DataGFP=False):

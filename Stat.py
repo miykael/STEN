@@ -6,7 +6,7 @@ import multiprocessing
 from scipy import stats
 import rpy2.robjects as robjects
 import rpy2.robjects.numpy2ri as numpy2ri
-
+from datetime import datetime
 
 class Anova:
 
@@ -33,14 +33,13 @@ class Anova:
         # Extraction of relevant factor information from tableFactor
         formulaModel, formulaErrorTerm, subjectName = self.extractTableFactor(
             self.tableFactor)
-
         # Wrting Formula
         if formulaErrorTerm != []:
             self.Formula = 'DataR~%s+Error(%s/(%s))' % (
                 "*".join(formulaModel), subjectName,
                 "*".join(formulaErrorTerm))
         else:
-            self.Formula = 'DataR~%s' % "*".join(formulaModel)
+            self.Formula = 'DataR~%s + Error(%s)' % ("*".join(formulaModel),subjectName)
 
     def Param(self, DataGFP=False):
 
@@ -63,7 +62,6 @@ class Anova:
             self.tableFactor, data[cut[0]:cut[1], :],
             self.Formula))) for cut in cutList]
         results = [r[1] for r in sorted(results)]
-
         # Update window
         dlg = wx.ProgressDialog(
             'Parametric Anova', 'Time remaining for Calculation:',
@@ -73,6 +71,7 @@ class Anova:
         dlg.SetSize((200, 175))
 
         # Aggregate the results
+        tic=datetime.now()
         for i, r in enumerate(results):
             P, F, _ = r.get()
             if i == 0:
@@ -83,12 +82,14 @@ class Anova:
                 FValues = np.vstack((FValues, F))
 
             dlg.Update(i)
-        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+            toc=datetime.now()
+        self.elapsedTime=toc-tic
+##        self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
         # Check if the computation was canceled
         if not dlg.Update(i)[0]:
             self.cancel = True
-
+        
         dlg.Destroy()
 
         # Saving results to H5 file
@@ -140,6 +141,7 @@ class Anova:
         dlg.SetSize((200, 175))
 
         # Calculating the Anova using R and multiprocessing (=parallel)
+        tic=datetime.now()
         n_jobs = multiprocessing.cpu_count()
         pool = multiprocessing.Pool(n_jobs)
         blockSize = 100
@@ -179,8 +181,9 @@ class Anova:
             # Count occurrence where Boot has higher F-value than Real
             occurrence[FBootList - FRealList >= 0] += 1
             dlg.Update(itID)
-
-        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+        toc=datetime.now()
+        self.elapsedTim=toc-tic
+##        self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
         # Check if the computation was canceled
         if not dlg.Update(i)[0]:
@@ -289,12 +292,13 @@ def calculatingAovR(tableFactor, Data, Formula):
     Fit = robjects.r.eval(express)
     robjects.globalenv["Fit"] = Fit
     raw = robjects.r.summary(Fit)
+    print(raw)
     pValue = np.hstack([np.array([c[4][:-1] for c in r]) for r in raw])
     FValue = np.hstack([np.array([c[3][:-1] for c in r]) for r in raw])
 
     terms = []
     if len(raw) == 1:
-        for r in raw:
+        for r in raw[0]:
             for t in r.rownames[0:-1]:
                 terms.append(t.replace(' ', ''))
     else:
@@ -493,6 +497,7 @@ class PostHoc:
                                 style=wx.PD_CAN_ABORT |
                                 wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
         dlg.SetSize((200, 175))
+        tic=datetime.now()
         n=0
         NewRow=Res.row
         for Combination in self.combination:
@@ -523,8 +528,9 @@ class PostHoc:
                 else:
                     self.cancel = False
                     dlg.Resume()
-
-        self.elapsedTime = str(dlg.GetChildren()[3].Label)
+        toc=datetime.now()
+        self.elapsedTime=toc-tic
+##        self.elapsedTime = str(dlg.GetChildren()[3].Label)
 
         dlg.Close()
         dlg.Destroy()
