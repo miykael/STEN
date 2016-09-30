@@ -145,7 +145,6 @@ class ReadEPH:
         self.data = np.loadtxt(filename, skiprows=1)
         if len(self.data.shape)==1:
             self.data=self.data.reshape((1,self.electrodes))
-        print(self.data.shape)
         self.GFP = self.data.std(axis=1)
 
 
@@ -266,7 +265,6 @@ class ReadDataset:
             [eph.electrodes for eph in ephData]).astype('uint16')
         FS = np.stack([eph.FS for eph in ephData]).astype('uint16')
         TF = np.stack([eph.TF for eph in ephData]).astype('uint16')
-        print(TF)
         # make sure that all eph files have the same dimension and frequency
         # TODO: Have warning message to aborts the whole thing instead of print
         if len(np.unique(electrodes)) == 1:
@@ -283,6 +281,7 @@ class ReadDataset:
             print 'Number of sampling points is unequal in EPH files.'
 
         DataGroup = H5.create_group('/', 'Data')
+        H5.create_array(DataGroup,'Header',np.array([TF,electrodes,FS]))
         AllData = H5.create_earray(
             DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
         GFPData = H5.create_earray(
@@ -291,8 +290,6 @@ class ReadDataset:
         # Reading EphFile and store into Tables with EArray
         for e in ephData:
             AllData.append(e.data.reshape(np.array(e.data.shape).prod(), 1))
-            print(TF)
-            print(e.GFP.shape)
             GFPData.append(e.GFP.reshape(TF, 1))
 
         ShapeOriginalData = H5.create_array('/', 'Shape',
@@ -307,10 +304,12 @@ class ReadDataset:
 
         AnovaAllParticle = {'StatEffect': tables.StringCol(40),
                             'P': tables.Float32Col(shape=(TF, electrodes)),
-                            'F': tables.Float32Col(shape=(TF, electrodes))}
+                            'F': tables.Float32Col(shape=(TF, electrodes)),
+                            'Df': tables.Int32Col(shape=(2))}
         AnovaGFPParticle = {'StatEffect': tables.StringCol(40),
                             'P': tables.Float32Col(shape=(TF, 1)),
-                            'F': tables.Float32Col(shape=(TF, 1))}
+                            'F': tables.Float32Col(shape=(TF, 1)),
+                            'Df': tables.Int32Col(shape=(2))}
 
         IntermediateResultAllParticle = {'CondName': tables.StringCol(40),
                                          'Type': tables.StringCol(40),
@@ -321,12 +320,14 @@ class ReadDataset:
                                          'Data': tables.Float32Col(
             shape=(TF, 1))}
 
-        PostHocAllParticle = {'Name': tables.StringCol(60),
+        PostHocAllParticle = {'StatEffect': tables.StringCol(60),
                               'P': tables.Float32Col(shape=(TF, electrodes)),
-                              'T': tables.Float32Col(shape=(TF, electrodes))}
-        PostHocGFPParticle = {'Name': tables.StringCol(60),
+                              'T': tables.Float32Col(shape=(TF, electrodes)),
+                              'Df': tables.Int32Col(shape=(1))}
+        PostHocGFPParticle = {'StatEffect': tables.StringCol(60),
                               'P': tables.Float32Col(shape=(TF, 1)),
-                              'T': tables.Float32Col(shape=(TF, 1))}
+                              'T': tables.Float32Col(shape=(TF, 1)),
+                              'Df': tables.Int32Col(shape=(1))}
 
         # crating tables for model
         TablesModel = H5.create_table('/', 'Model', ModelParticle)

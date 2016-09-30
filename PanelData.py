@@ -1,4 +1,4 @@
-﻿import wx
+import wx
 import os
 import tables
 import PanelTable
@@ -205,6 +205,7 @@ class CreateDataset(wx.Panel):
             self.DataSaveFile.SetValue(filename)
             self.MainFrame.saved = True
             self.MainFrame.H5 = filename
+            self.extractFormula()
         event.Skip()
 
     def loadData(self, event):

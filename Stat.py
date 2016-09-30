@@ -73,7 +73,8 @@ class Anova:
         # Aggregate the results
         tic=datetime.now()
         for i, r in enumerate(results):
-            P, F, _ = r.get()
+##            P, F, _ = r.get()
+            P, F, _,df = r.get()
             if i == 0:
                 pValues = P
                 FValues = F
@@ -93,9 +94,9 @@ class Anova:
         dlg.Destroy()
 
         # Saving results to H5 file
-        _, _, terms = calculatingAovR(self.tableFactor, data[0, :],
+        _, _, terms,_ = calculatingAovR(self.tableFactor, data[0, :],
                                       self.Formula)
-
+        
         if DataGFP:
             res = self.file.getNode('/Result/GFP/Anova')
             pValues = pValues.reshape((shapeOrigData[0], 1, len(terms)))
@@ -114,13 +115,12 @@ class Anova:
                 condType = 'Interaction'
             else:
                 condType = 'Main_Effect'
-
             conditionName = "_".join([condType, t]).replace(':', '-')
             newRow['StatEffect'] = conditionName
             newRow['P'] = pValues[:, :, i]
             newRow['F'] = FValues[:, :, i]
+            newRow['Df']=np.array(df[i])
             newRow.append()
-
     def NonParam(self, nIteration, DataGFP=False):
 
         # Extracting GFP or All Data
@@ -154,7 +154,7 @@ class Anova:
 
         # Aggregate the resultsReal
         for i, r in enumerate(resultsReal):
-            _, FReal, _ = r.get()
+            _, FReal, _,_ = r.get()
             if i == 0:
                 FRealList = FReal
             else:
@@ -172,7 +172,7 @@ class Anova:
 
             # Aggregate the resultsBoot
             for i, r in enumerate(resultsBoot):
-                _, FBoot, _ = r.get()
+                _, FBoot, _,df = r.get()
                 if i == 0:
                     FBootList = FBoot
                 else:
@@ -193,7 +193,7 @@ class Anova:
 
         # Saving results to H5 file
         pValues = occurrence/float(nIteration)
-        _, _, terms = calculatingAovR(self.tableFactor, data[0, :],
+        _, _, terms,_ = calculatingAovR(self.tableFactor, data[0, :],
                                       self.Formula)
 
         if DataGFP:
@@ -219,8 +219,8 @@ class Anova:
             newRow['StatEffect'] = conditionName
             newRow['P'] = pValues[:, :, i]
             newRow['F'] = FValues[:, :, i]
+            newrow['Df']=np.array(df[i])
             newRow.append()
-
     def bootstrapData(self, data, factorSubject):
         NbSubject = factorSubject.max()
         subjectLabel = np.arange(1, NbSubject + 1)
@@ -292,10 +292,12 @@ def calculatingAovR(tableFactor, Data, Formula):
     Fit = robjects.r.eval(express)
     robjects.globalenv["Fit"] = Fit
     raw = robjects.r.summary(Fit)
-    print(raw)
+    df=[]
+    for r in raw:
+        for d in r[0][0][:-1]:
+            df.append([int(d),int(r[0][0][-1])])
     pValue = np.hstack([np.array([c[4][:-1] for c in r]) for r in raw])
     FValue = np.hstack([np.array([c[3][:-1] for c in r]) for r in raw])
-
     terms = []
     if len(raw) == 1:
         for r in raw[0]:
@@ -307,7 +309,7 @@ def calculatingAovR(tableFactor, Data, Formula):
                 for t in r.rownames[0:-1]:
                     terms.append(t.replace(' ', ''))
 
-    return pValue, FValue, terms
+    return pValue, FValue, terms,df
 
 
 class PostHoc:
@@ -407,11 +409,6 @@ class PostHoc:
         # Number of tests using combinatory calculation for the progression bar
         self.nbTest = len([t for t in itertools.combinations(condName, 2)])
 
-
-        print 'DONE. Till here.'
-
-
-
     def CalculationTTest(self, data,Combination,SubjectFactor,Arrangement,NonParam=False):
         # H5 array don't be acces with bool
         Cond=np.arange(0,data.shape[1])
@@ -453,9 +450,10 @@ class PostHoc:
                         C1Boot.append(C2[Sbj])
                 # Randomization procidure (Paired) (Bootstrapping Subject then permutation within subject)
                 t,p=stats.ttest_rel(data[:,C1Boot],data[:,C2Boot],axis=1)
-                
+                  
             else:
                 t,p=stats.ttest_rel(data[:,Cond[Value1]],data[:,Cond[Value2]],axis=1)
+            df= len(Cond[Value1]-1)
         else:
             if NonParam:
                 # extracting the label of each condition
@@ -476,7 +474,8 @@ class PostHoc:
                 t,p=stats.ttest_ind(data[:,C1Boot],data[:,C2Boot],axis=1)
             else:
                t,p=stats.ttest_ind(data[:,Cond[Value1]],data[:,Cond[Value2]],axis=1)
-        return t,p
+            df= len(Cond[Value1])+len(Cond[Value2])-2
+        return t,p,df
 
     def Param(self, DataGFP=False):
         # Extracting GFP or All Data
@@ -501,14 +500,15 @@ class PostHoc:
         n=0
         NewRow=Res.row
         for Combination in self.combination:
-            t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
+            t,p,df=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
             # Reshaping Data
             t=t.reshape((shapeOrigData[0], shapeOrigData[1]))
             p=p.reshape((shapeOrigData[0], shapeOrigData[1]))
             # Saving Result into the H5
-            NewRow['Name']='_'.join(Combination)
+            NewRow['StatEffect']='_'.join(Combination)
             NewRow['P']=p
             NewRow['T']=t
+            NewRow['Df']=df
             NewRow.append()
             # update the remaing time dilog box
             
@@ -558,7 +558,7 @@ class PostHoc:
         NewRow=Res.row
         
         for Combination in self.combination:
-            t,p=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
+            t,p,df=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
             TReal=t
             Count=np.zeros(TReal.shape)
             for i in range(Iter):
@@ -571,9 +571,10 @@ class PostHoc:
             t=TReal.reshape((shapeOrigData[0], shapeOrigData[1]))
             p=p.reshape((shapeOrigData[0], shapeOrigData[1]))
             # Saving Result into the H5
-            NewRow['Name']=Combination
+            NewRow['StatEffect']=Combination
             NewRow['P']=p
             NewRow['T']=t
+            NewRow['Df']=df
             NewRow.append()
             # update the remaing time dilog box
             

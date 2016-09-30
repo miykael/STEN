@@ -24,38 +24,49 @@ class Start:
         # ANOVA on Wave/GFP
         if self.notebookSelected == 0:
             self.AnovaCheck = self.Mainframe.AnovaWave.AnovaCheck
-            self.AnovaAlpha = self.Mainframe.AnovaWave.Alpha
-            self.AnovaClust = self.Mainframe.AnovaWave.Clust
             self.AnovaIteration = self.Mainframe.AnovaWave.nIteration
             self.AnovaParam = self.Mainframe.AnovaWave.Param
-            self.AnovaPtsConsec = self.Mainframe.AnovaWave.PtsConseq
             self.PostHocCheck = self.Mainframe.AnovaWave.PostHocCheck
-            self.PostHocAlpha = self.Mainframe.AnovaWave.AlphaPostHoc
-            self.PostHocClust = self.Mainframe.AnovaWave.ClustPostHoc
             self.PostHocnIteration = self.Mainframe.AnovaWave.nIterationPostHoc
             self.PostHocParam = self.Mainframe.AnovaWave.ParamPostHoc
-            self.PostHocPtsConseq = self.Mainframe.AnovaWave.PtsConseqPostHoc
             self.SpaceFile = self.Mainframe.AnovaWave.SPIFile
             self.SPIPath = self.Mainframe.AnovaWave.SPIPath
             self.AnalyseType = self.Mainframe.AnovaWave.AnalyseType
 
+
+            self.AnovaAlpha = self.Mainframe.AnovaWave.Alpha
+            self.AnovaClust = self.Mainframe.AnovaWave.Clust
+            self.AnovaPtsConsec = self.Mainframe.AnovaWave.PtsConseq
+            self.PostHocAlpha = self.Mainframe.AnovaWave.AlphaPostHoc
+            self.PostHocClust = self.Mainframe.AnovaWave.ClustPostHoc
+            self.PostHocPtsConseq = self.Mainframe.AnovaWave.PtsConseqPostHoc
+            
+            self.Alpha={'Anova':self.AnovaAlpha,'PostHoc':self.PostHocAlpha}
+            self.PtsConsec={'Anova':self.AnovaPtsConsec,'PostHoc':self.PostHocPtsConseq}
+            self.Clust={'Anova':self.AnovaClust,'PostHoc':self.PostHocClust}
+            
         # ANOVA in Brain Space
         elif self.notebookSelected == 1:
             self.AnovaCheck = self.Mainframe.AnovaIS.AnovaCheck
-            self.AnovaAlpha = self.Mainframe.AnovaIS.Alpha
-            self.AnovaClust = self.Mainframe.AnovaIS.Clust
             self.AnovaIteration = self.Mainframe.AnovaIS.nIteration
             self.AnovaParam = self.Mainframe.AnovaIS.Param
-            self.AnovaPtsConsec = self.Mainframe.AnovaIS.PtsConseq
             self.PostHocCheck = self.Mainframe.AnovaIS.PostHocCheck
-            self.PostHocAlpha = self.Mainframe.AnovaIS.AlphaPostHoc
-            self.PostHocClust = self.Mainframe.AnovaIS.ClustPostHoc
             self.PostHocnIteration = self.Mainframe.AnovaIS.nIterationPostHoc
             self.PostHocParam = self.Mainframe.AnovaIS.ParamPostHoc
-            self.PostHocPtsConseq = self.Mainframe.AnovaIS.PtsConseqPostHoc
             self.SpaceFile = self.Mainframe.AnovaIS.SPIFile
             self.SPIPath = self.Mainframe.AnovaIS.SPIPath
             self.AnalyseType = None
+
+            self.AnovaAlpha = self.Mainframe.AnovaWave.Alpha
+            self.AnovaClust = self.Mainframe.AnovaWave.Clust
+            self.AnovaPtsConsec = self.Mainframe.AnovaWave.PtsConseq
+            self.PostHocAlpha = self.Mainframe.AnovaWave.AlphaPostHoc
+            self.PostHocClust = self.Mainframe.AnovaWave.ClustPostHoc
+            self.PostHocPtsConseq = self.Mainframe.AnovaWave.PtsConseqPostHoc
+            
+            self.Alpha={'Anova':self.AnovaAlpha,'PostHoc':self.PostHocAlpha}
+            self.PtsConsec={'Anova':self.AnovaPtsConsec,'PostHoc':self.PostHocPtsConseq}
+            self.Clust={'Anova':self.AnovaClust,'PostHoc':self.PostHocClust}
 
         # Create result folder
         if not os.path.exists(self.PathResult):
@@ -90,20 +101,18 @@ class Start:
         self.writeVrb(self.Mainframe.Dataset)
 
     def calcAnovaWave(self):
-
         # calculates Anova on wave and/or GFP
         if self.AnovaCheck:
 
             self.Wave = Stat.Anova(self.H5, self.Mainframe)
-
             # Parametric Analysis
             if self.AnovaParam:
-
                 if self.AnalyseType in ["GFP Only", "Both"] \
                         and self.doAnovaParamGFP:
                     self.Wave.Param(DataGFP=True)
                     self.progressTxt.append(
                         'Parametric Anova (GFP) : %s' % self.Wave.elapsedTime)
+                 
 
                 if self.AnalyseType in ["All Electrodes", "Both"] \
                         and self.doAnovaParamElect:
@@ -111,7 +120,7 @@ class Start:
                     self.progressTxt.append(
                         'Parametric Anova (All Electrodes) : %s'
                         % self.Wave.elapsedTime)
-
+       
             # Non Parametric Analysis
             else:
                 if self.AnalyseType in ["GFP Only", "Both"] \
@@ -120,7 +129,7 @@ class Start:
                     self.progressTxt.append(
                         'Non-Parametric Anova (GFP) : %s'
                         % self.Wave.elapsedTime)
-
+                    
                 if self.AnalyseType in ["All Electrodes", "Both"] \
                         and self.doAnovaNonParamElect:
                     self.Wave.NonParam(self.AnovaIteration)
@@ -129,62 +138,10 @@ class Start:
                         % self.Wave.elapsedTime)
 
             # Makes sure that the h5 files are always closed at the end
-            self.Wave.file.close()
             self.cancel = self.Wave.cancel
+            self.Wave.file.close()
 
-            # Post Stat Analysis - i.e Mathematical Morphology, write
-            # Data
-            if False:  # if not self.cancel:
-
-                pathResult = os.path.join(self.PathResult, 'Anova')
-
-                if not os.path.exists(pathResult):
-                    os.makedirs(pathResult)
-
-                # TODO: Save elapsed time for all conditions - like above
-                if self.AnalyseType in ["GFP Only", "Both"]:
-                    self.WavePostStat = PostStat.Data(
-                        self.H5, self, Anova=True, DataGFP=True,
-                        Param=self.AnovaParam)
-                    self.WavePostStat.MathematicalMorphology(
-                        self.AnovaAlpha, TF=self.AnovaPtsConsec,
-                        SpaceCriteria=1, SpaceFile=None)
-                    self.progressTxt.append(
-                        'Multiple Test Correction (GFP): %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.WriteData(pathResult)
-                    self.progressTxt.append(
-                        'Writing EPH Results : %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.WriteIntermediateResult(self.PathResult,
-                                                              DataGFP=True)
-                    self.progressTxt.append(
-                        'Writing intermediater EPH Results : %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.file.close()
-
-                if self.AnalyseType in ["All Electrodes", "Both"]:
-                    self.WavePostStat = PostStat.Data(self.H5, self,
-                                                      Anova=True,
-                                                      DataGFP=False,
-                                                      Param=self.AnovaParam)
-                    self.WavePostStat.MathematicalMorphology(
-                        self.AnovaAlpha, TF=self.AnovaPtsConsec,
-                        SpaceCriteria=self.AnovaClust,
-                        SpaceFile=self.SpaceFile)
-                    self.progressTxt.append(
-                        'Multiple Test Correction (All electrodes): %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.WriteData(pathResult)
-                    self.progressTxt.append(
-                        'Writing EPH Results : %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.WriteIntermediateResult(self.PathResult)
-                    self.progressTxt.append(
-                        'Writing intermediater EPH Results : %s'
-                        % self.WavePostStat.elapsedTime)
-                    self.WavePostStat.file.close()
-
+        
         # calculates PostHoc on wave and/or GFP
         if self.PostHocCheck:
 
@@ -215,63 +172,143 @@ class Start:
                     self.progressTxt.append(
                         'Non-Parametric PostHoc (GFP) : %s'
                         % self.WavePostHoc.elapsedTime)
-
+                    
                 if self.AnalyseType in ["All Electrodes", "Both"] \
                         and self.doPostHocNonParamElect:
                     self.WavePostHoc.NonParam(self.PostHocIteration)
                     self.progressTxt.append(
                         'Non-Parametric PostHoc (All Electrodes) : %s'
                         % self.WavePostHoc.elapsedTime)
-
             # Makes sure that the h5 files are always closed at the end
-            self.WavePostHoc.file.close()
             self.cancel = self.WavePostHoc.cancel
+            self.WavePostHoc.file.close()
+            
+        # Multiple testing and writing Data
+        if self.SpaceFile=='':
+            self.SpaceFile=None
+        else:
+            print(self.SpaceFile)
+        Correction=PostStat.MultipleTestingCorrection(self.H5,self.Mainframe,
+                                                          TF=self.PtsConsec,Alpha=self.Alpha,
+                                                          SpaceCont=self.Clust,
+                                                          SpaceFile=self.SpaceFile)
+        Correction.Calculation()
+        self.Param={'Anova':self.AnovaParam,'PostHoc':self.PostHocParam}
+        if self.AnalyseType in ["GFP Only", "Both"]:
+            Writing=PostStat.WriteData(self.PathResult,self.H5,self.Param,DataGFP=True)
+            Writing.StatistcalData(Correction.CorrectedMask)
+            Writing.IntermediateResult()
+            Writing.file.close()
+        if self.AnalyseType in ["All Electrodes", "Both"]:
+            Writing=PostStat.WriteData(self.PathResult,self.H5,self.Param,DataGFP=False)
+            Writing.StatistcalData(Correction.CorrectedMask)
+            Writing.IntermediateResult()
+            Writing.file.close()
+                                                   
 
-            # Post Stat Analysis - i.e Mathematical Morphology, write
-            # Data
-            if False:  # if not self.cancel:
 
-                pathResult = os.path.join(self.PathResult, 'PostHoc')
-
-                if not os.path.exists(pathResult):
-                    os.makedirs(pathResult)
-
-                if self.AnalyseType in ["GFP Only", "Both"]:
-
-                    self.WavePostStat = PostStat.Data(
-                        self.H5, self, Anova=False, DataGFP=True,
-                        Param=self.PostHocParam)
-                    self.WavePostStat.MathematicalMorphology(
-                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
-                        SpaceCriteria=self.PostHocClust,
-                        SpaceFile=self.SpaceFile)
-                    self.progressTxt.append(
-                        'Multiple Test Correction on PostHoc (GFP): %s'
-                        % self.TimeTxt)
-
-                    self.WavePostStat.WriteData(pathResult)
-                    self.progressTxt.append(
-                        'Writing EPH Results on PostHoc(GFP) : %s'
-                        % self.TimeTxt)
-                    self.WavePostStat.file.close()
-
-                if self.AnalyseType in ["All Electrodes", "Both"]:
-
-                    self.WavePostStat = PostStat.Data(
-                        self.H5, self, Anova=False, DataGFP=False,
-                        Param=self.PostHocParam)
-                    self.WavePostStat.MathematicalMorphology(
-                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
-                        SpaceCriteria=self.PostHocClust,
-                        SpaceFile=self.SpaceFile)
-                    self.progressTxt.append(
-                        'Multiple Test Correction on PostHoc ' +
-                        '(All electrodes): %s' % self.TimeTxt)
-
-                    self.WavePostStat.WriteData(pathResult)
-                    self.progressTxt.append(
-                        'Writing EPH Results on PostHoc : %s' % self.TimeTxt)
-                    self.WavePostStat.file.close()
+        
+##            ##################To Do ################################
+##            # Post Stat Analysis - i.e Mathematical Morphology, write
+##            # Data
+##            if False:
+##                print('jfk')
+##                pathResult = os.path.join(self.PathResult, 'Anova')
+##
+##                if not os.path.exists(pathResult):
+##                    os.makedirs(pathResult)
+##
+##                # TODO: Save elapsed time for all conditions - like above
+##                if self.AnalyseType in ["GFP Only", "Both"]:
+##                    self.WavePostStat = PostStat.Data(
+##                        self.H5, self, Anova=True, DataGFP=True,
+##                        Param=self.AnovaParam)
+##                    self.WavePostStat.MathematicalMorphology(
+##                        self.AnovaAlpha, TF=self.AnovaPtsConsec,
+##                        SpaceCriteria=1, SpaceFile=None)
+##                    self.progressTxt.append(
+##                        'Multiple Test Correction (GFP): %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.WriteData(pathResult)
+##                    self.progressTxt.append(
+##                        'Writing EPH Results : %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.WriteIntermediateResult(self.PathResult,
+##                                                              DataGFP=True)
+##                    self.progressTxt.append(
+##                        'Writing intermediater EPH Results : %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.file.close()
+##
+##                if self.AnalyseType in ["All Electrodes", "Both"]:
+##                    self.WavePostStat = PostStat.Data(self.H5, self,
+##                                                      Anova=True,
+##                                                      DataGFP=False,
+##                                                      Param=self.AnovaParam)
+##                    self.WavePostStat.MathematicalMorphology(
+##                        self.AnovaAlpha, TF=self.AnovaPtsConsec,
+##                        SpaceCriteria=self.AnovaClust,
+##                        SpaceFile=self.SpaceFile)
+##                    self.progressTxt.append(
+##                        'Multiple Test Correction (All electrodes): %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.WriteData(pathResult)
+##                    self.progressTxt.append(
+##                        'Writing EPH Results : %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.WriteIntermediateResult(self.PathResult)
+##                    self.progressTxt.append(
+##                        'Writing intermediater EPH Results : %s'
+##                        % self.WavePostStat.elapsedTime)
+##                    self.WavePostStat.file.close()
+##
+##        
+##
+##            # Post Stat Analysis - i.e Mathematical Morphology, write
+##            # Data
+##            if False:  # if not self.cancel:
+##
+##                pathResult = os.path.join(self.PathResult, 'PostHoc')
+##
+##                if not os.path.exists(pathResult):
+##                    os.makedirs(pathResult)
+##
+##                if self.AnalyseType in ["GFP Only", "Both"]:
+##
+##                    self.WavePostStat = PostStat.Data(
+##                        self.H5, self, Anova=False, DataGFP=True,
+##                        Param=self.PostHocParam)
+##                    self.WavePostStat.MathematicalMorphology(
+##                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
+##                        SpaceCriteria=self.PostHocClust,
+##                        SpaceFile=self.SpaceFile)
+##                    self.progressTxt.append(
+##                        'Multiple Test Correction on PostHoc (GFP): %s'
+##                        % self.TimeTxt)
+##
+##                    self.WavePostStat.WriteData(pathResult)
+##                    self.progressTxt.append(
+##                        'Writing EPH Results on PostHoc(GFP) : %s'
+##                        % self.TimeTxt)
+##                    self.WavePostStat.file.close()
+##
+##                if self.AnalyseType in ["All Electrodes", "Both"]:
+##
+##                    self.WavePostStat = PostStat.Data(
+##                        self.H5, self, Anova=False, DataGFP=False,
+##                        Param=self.PostHocParam)
+##                    self.WavePostStat.MathematicalMorphology(
+##                        self.PostHocAlpha, TF=self.PostHocPtsConseq,
+##                        SpaceCriteria=self.PostHocClust,
+##                        SpaceFile=self.SpaceFile)
+##                    self.progressTxt.append(
+##                        'Multiple Test Correction on PostHoc ' +
+##                        '(All electrodes): %s' % self.TimeTxt)
+##
+##                    self.WavePostStat.WriteData(pathResult)
+##                    self.progressTxt.append(
+##                        'Writing EPH Results on PostHoc : %s' % self.TimeTxt)
+##                    self.WavePostStat.file.close()
 
     def calcAnovaIS(self):
         """TODO: implement the checks for rerun"""
