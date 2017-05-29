@@ -207,20 +207,20 @@ class Start:
 
         # calculates Anova on inverse space (IS)
         if self.AnovaCheck:
-
             self.IS = Stat.Anova(self.H5, self.Mainframe)
-
             # Parametric Analysis
             if self.AnovaParam:
-                self.IS.Param()
-                self.progressTxt.append(
-                    'Parametric Anova (IS) : %s' % self.IS.elapsedTime)
+                if self.doAnovaParamIS:
+                    self.IS.Param()
+                    self.progressTxt.append(
+                        'Parametric Anova (IS) : %s' % self.IS.elapsedTime)
 
             # Non Parametric Analysis
             else:
-                self.IS.NonParam(self.AnovaIteration)
-                self.progressTxt.append(
-                    'Non-Parametric Anova (IS) : %s' % self.IS.elapsedTime)
+                if self.doAnovaNonParamIS:
+                    self.IS.NonParam(self.AnovaIteration)
+                    self.progressTxt.append(
+                        'Non-Parametric Anova (IS) : %s' % self.IS.elapsedTime)
 
             # Makes sure that the h5 files are always closed at the end
             self.IS.file.close()
@@ -235,17 +235,19 @@ class Start:
 
             # Parametric Analysis
             if self.PostHocParam:
-                self.ISPostHoc.Param()
-                self.progressTxt.append(
-                    'Parametric PostHoc (IS) : %s'
-                    % self.ISPostHoc.elapsedTime)
+                if self.doPostHocParamIS:
+                    self.ISPostHoc.Param()
+                    self.progressTxt.append(
+                        'Parametric PostHoc (IS) : %s'
+                        % self.ISPostHoc.elapsedTime)
 
             # Non Parametric Analysis
             else:
-                self.ISPostHoc.NonParam(self.PostHocIteration)
-                self.progressTxt.append(
-                    'Non-Parametric PostHoc (IS) : %s'
-                    % self.ISPostHoc.elapsedTime)
+                if self.doPostHocNonParamIS:
+                    self.ISPostHoc.NonParam(self.PostHocIteration)
+                    self.progressTxt.append(
+                        'Non-Parametric PostHoc (IS) : %s'
+                        % self.ISPostHoc.elapsedTime)
 
             # Makes sure that the h5 files are always closed at the end
             self.ISPostHoc.file.close()
@@ -349,7 +351,27 @@ class Start:
             if np.any([calcMode in p for p in self.progressTxt]):
                 self.doPostHocNonParamElect = self.rerunMessage(h5file,
                                                                 calcMode)
+        
+        if self.AnalyseType == None:
+            self.doAnovaParamIS=True
+            self.doAnovaNonParamIS=True
+            self.doPostHocParamIS=True
+            self.doPostHocNonParamIS=True
+            calcMode = 'Parametric Anova (IS)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaParamIS = self.rerunMessage(h5file, calcMode)
+                
+            calcMode = 'Non-Parametric Anova (IS)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doAnovaNonParamIS = self.rerunMessage(h5file, calcMode)
 
+            calcMode = 'Parametric PostHoc (IS)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocParamIS = self.rerunMessage(h5file, calcMode)
+
+            calcMode = 'Non-Parametric PostHoc (IS)'
+            if np.any([calcMode in p for p in self.progressTxt]):
+                self.doPostHocNonParamIS = self.rerunMessage(h5file, calcMode)
         h5file.close()
 
     def rerunMessage(self, h5file, calcMode):
