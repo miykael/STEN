@@ -60,7 +60,7 @@ class AnovaWave(wx.Panel):
                                  style=wx.ALIGN_CENTER)
         self.AlphaInput = wx.TextCtrl(
             PanelAlpha, wx.ID_ANY, value=str(self.Alpha), style=wx.TE_CENTRE)
-
+        
         PanelPtsConseq = wx.Panel(PanelStats, wx.ID_ANY)
         PtsConseqText = wx.StaticText(
             PanelPtsConseq, wx.ID_ANY, label="Consecutive Time Frames",

@@ -57,12 +57,12 @@ class Start:
             self.SPIPath = self.Mainframe.AnovaIS.SPIPath
             self.AnalyseType = None
 
-            self.AnovaAlpha = self.Mainframe.AnovaWave.Alpha
-            self.AnovaClust = self.Mainframe.AnovaWave.Clust
-            self.AnovaPtsConsec = self.Mainframe.AnovaWave.PtsConseq
-            self.PostHocAlpha = self.Mainframe.AnovaWave.AlphaPostHoc
-            self.PostHocClust = self.Mainframe.AnovaWave.ClustPostHoc
-            self.PostHocPtsConseq = self.Mainframe.AnovaWave.PtsConseqPostHoc
+            self.AnovaAlpha = self.Mainframe.AnovaIS.Alpha
+            self.AnovaClust = self.Mainframe.AnovaIS.Clust
+            self.AnovaPtsConsec = self.Mainframe.AnovaIS.PtsConseq
+            self.PostHocAlpha = self.Mainframe.AnovaIS.AlphaPostHoc
+            self.PostHocClust = self.Mainframe.AnovaIS.ClustPostHoc
+            self.PostHocPtsConseq = self.Mainframe.AnovaIS.PtsConseqPostHoc
             
             self.Alpha={'Anova':self.AnovaAlpha,'PostHoc':self.PostHocAlpha}
             self.PtsConsec={'Anova':self.AnovaPtsConsec,'PostHoc':self.PostHocPtsConseq}
@@ -231,7 +231,7 @@ class Start:
         # calculates PostHoc on inverse space (IS)
         if self.PostHocCheck:
 
-            self.ISPostHoc = Stat.PostHoc(self.H5, self)
+            self.ISPostHoc = Stat.PostHoc(self.H5, self.Mainframe)
 
             # Parametric Analysis
             if self.PostHocParam:

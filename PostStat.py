@@ -58,9 +58,17 @@ class MultipleTestingCorrection:
             The infromation like BinaryData, Number on Conseq TF , Number of Contigouis points, and the Amtrix Distance are in self
          """
         if self.TF ==1 and self.SpaceCont==1:
+            print('1')
             Mask=self.BinaryData
+            print(self.BinaryData.sum())
         else:
-             # Definition of problematic time point that correspond to time border
+            # Definition of problematic time point that correspond to time border
+            if Dilate:
+                print('Dilate')
+                print(self.BinaryData.sum())
+            else:
+                print('Erode')
+                print(self.BinaryData.sum())
             TimeStart = (self.TF - 1) / 2
             TimeEnd = self.TF - TimeStart
             # creation of a Mask of 0 and size of the Bianary Data
@@ -83,7 +91,7 @@ class MultipleTestingCorrection:
                         # Extract the Distance of the point in space of interest in the matrix of all Distance
                         # Space is a mvector containting all the distance between the point dim to the other point
                         if self.Distance[0,0]==-1: # no correction
-                            element = self.BinaryData[BeginTime:EndTime,dim] ==1
+                            element = self.BinaryData[BeginTime:EndTime,dim]==1
                         else:
                             space = self.Distance[dim, :]
                             # sort these distance and extract the index from the colser (itself) to the farer
@@ -96,16 +104,20 @@ class MultipleTestingCorrection:
                         if Dilate:# dilatatioon
                             if element.any():
                                 # if at least one point in element is significant mask at time =time and space =dim => 1 else leave 0
-                                Mask[time, dim]=1
+                                Mask[time,dim]=1
                         else: #Erosion
                             if element.all():
                                 # if all poitns of element = 1 mask at time =time and space =dim => 1  else leave a 0
                                 Mask[time, dim]=1
-                        self.n += 1
                         pourcent = str(100.0 * (self.n) / (self.NbCalcul))
+                        
                         pourcent = pourcent[0:pourcent.find('.') + 3]
+                        if float(pourcent)>100:
+                            pourcent='100'
+                            self.n=self.NbCalcul
                         self.dlg.Update(self.n, " ".join(['Progression  :',
                                                pourcent, ' %']))
+                        self.n += 1
         self.Mask=Mask
 
     def Calculation(self):
@@ -127,7 +139,7 @@ class MultipleTestingCorrection:
                 # extrating infromion usefull
                 # used for user interface feed back
                 # number of terms in Anova or in PostHoc mulipled by the number of TF* number of space point muliply * 2(Erosion/Dilatation)
-                self.NbCalcul=ShapeOriginalData.prod()
+                self.NbCalcul=2*ShapeOriginalData.prod()
                 #Dictionary Correction Anova Contain the mask of All Anova Mask Keys = statistical Condition name
                 self.dlg = wx.ProgressDialog(
                                 'Multiple Test Correction for '+r,
@@ -135,9 +147,10 @@ class MultipleTestingCorrection:
                                 self.NbCalcul, parent=self.parent,
                                 style=wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME)
                 self.dlg.SetSize((200, 130))
-                self.n=0
                 tmp={}
+                print(res)
                 for v in res:
+                    self.n=0
                     FolderName=r.split('.')[0]
                     try:
                         os.mkdir(self.resultFolder+'\\'+FolderName)
@@ -162,12 +175,15 @@ class MultipleTestingCorrection:
                     # we compute an openning more restrictive that means errosion folwed by a dilatation
                     # the BinaryData is all the pvalue lower than Alpha
                     self.BinaryData=np.zeros(P.shape)
+                    print('init')
+                    print(self.AlphaDict[FolderName])
                     self.BinaryData[P<self.AlphaDict[FolderName]]=1
-                    # Erosion
-                    self.__MathematicalMorphology__()
+                    print(self.BinaryData.sum())
+                    # Dilatation
+                    self.__MathematicalMorphology__(Dilate=False)
                     # the BinaryData is the Mask the come from the errosion
                     self.BinaryData=self.Mask
-                    # Dilatation
+                    # Erosion
                     self.__MathematicalMorphology__(Dilate=True)
                     tmp[Name]=self.Mask
                 # Corrected Mask is a Dicionary tha containe all the binarymask
@@ -233,11 +249,12 @@ class WriteData:
      
     def IntermediateResult(self):
         """Write intermediate Result"""
-        # Extract Effectsize
+        
         try:
             os.mkdir(self.resultFolder+'\IntermediateResults')
         except:
             pass
+        # Extract Effectsize
         self.__EfectSize__('IntermediateResults')
         if self.DataGFP:
             Intermediate=self.file.getNode('/Result/GFP/IntermediateResult')
@@ -264,32 +281,34 @@ class WriteData:
             # idx to ovoid memory problem and acces only part of the datas
             idx=np.arange(Data.shape[1])
             for ar in self.Arrangement:
-                Mean=Data[:,idx[self.Arrangement[ar]]].mean(axis=1)
-                Se=(Data[:,idx[self.Arrangement[ar]]].std(axis=1))/(np.sqrt(self.Arrangement[ar].sum()))
-                if self.DataGFP==False:
-                    Mean=Mean.reshape(DataShape)
-                    Se=Se.reshape(DataShape)
-                else:
-                    Mean=Mean.reshape((Mean.shape[0],1))
-                    Se=Se.reshape((Se.shape[0],1))
-                self.TF=Mean.shape[0]
-                self.Electrodes=Mean.shape[1]
-                self.Data=Mean
-                newRow['Data'] = Mean
-                newRow['Type'] = 'mean'
-                newRow['CondName']=ar
-                newRow.append()
-                self.__WriteEph__(self.resultFolder+'\IntermediateResults\\'+ar+'.mean.eph')
-                self.Data=Se
-                newRow['Data'] = Se
-                newRow['Type'] = 'Se'
-                newRow['CondName']=ar
-                newRow.append()
-                self.__WriteEph__(self.resultFolder+'\IntermediateResults\\'+ar+'.Se.eph')
-            # calculation R for covariate Arrangegment
+                if ar!='Simple Regression':
+                    Mean=Data[:,idx[self.Arrangement[ar]]].mean(axis=1)
+                    Se=(Data[:,idx[self.Arrangement[ar]]].std(axis=1))/(np.sqrt(self.Arrangement[ar].sum()))
+                    if self.DataGFP==False:
+                        Mean=Mean.reshape(DataShape)
+                        Se=Se.reshape(DataShape)
+                    else:
+                        Mean=Mean.reshape((Mean.shape[0],1))
+                        Se=Se.reshape((Se.shape[0],1))
+                    self.TF=Mean.shape[0]
+                    self.Electrodes=Mean.shape[1]
+                    self.Data=Mean
+                    newRow['Data'] = Mean
+                    newRow['Type'] = 'mean'
+                    newRow['CondName']=ar
+                    newRow.append()
+                    self.__WriteEph__(self.resultFolder+'\IntermediateResults\\'+ar+'.mean.eph')
+                    self.Data=Se
+                    newRow['Data'] = Se
+                    newRow['Type'] = 'Se'
+                    newRow['CondName']=ar
+                    newRow.append()
+                    self.__WriteEph__(self.resultFolder+'\IntermediateResults\\'+ar+'.Se.eph')
+                # calculation R for covariate Arrangegment
             for c in self.Covariate:
                 CovData= self.Covariate[c]
                 for ar in self.Arrangement:
+                    
                     covtmp=CovData[self.Arrangement[ar]]
                     datatmp=Data[:,idx[self.Arrangement[ar]]]
                     R=[]
@@ -322,6 +341,7 @@ class WriteData:
         betweenName = []
         withinName = []
         self.Covariate={}
+        CovariateName=[]
         # Generating within and between dictionary with condition name
         for t in tableFactor:
             factorName = t[0]
@@ -335,28 +355,37 @@ class WriteData:
                 withinName.append(factorName)
             elif factorType == 'Covariate':
                 self.Covariate[factorName]=factorData
+                CovariateName.append(factorName)
             elif factorType == 'Subject':
                 subject = factorData
+                self.subject = subject
 
         # Transform dict into matrix for easy use
         within = np.array(within.values())
         between = np.array(between.values())
 
         # Extract different levels for each between subject factor
-        levelsBetween = between.max(axis=1).astype('int')
-
-        # Cacluate all possible combinations using the max number of levels
-        allCombinationBetween = itertools.product(
-            range(1, levelsBetween.max() + 1), repeat=len(levelsBetween))
-
-        # Reduce combination to only existing ones
         existingCombi = []
-        for c in allCombinationBetween:
-            combinations = np.array(c)
-            # existing combinations
-            if (levelsBetween - combinations < 0).sum() == 0:
-                existingCombi.append(combinations)
+        # Between subject factor Exist
+        if between !=[]: 
+            levelsBetween = between.max(axis=1).astype('int')
+             # Cacluate all possible combinations using the max number of levels
+            allCombinationBetween = itertools.product(
+                range(1, levelsBetween.max() + 1), repeat=len(levelsBetween))
+
+            # Reduce combination to only existing ones
+            
+            for c in allCombinationBetween:
+                combinations = np.array(c)
+                # existing combinations
+                if (levelsBetween - combinations < 0).sum() == 0:
+                    existingCombi.append(combinations)
+        else:
+            existingCombi.append(between)
         existingCombi = np.array(existingCombi)
+        
+
+       
 
         # Create all possible combinations and extract the booleans
         # corresponding to it.
@@ -370,8 +399,10 @@ class WriteData:
                 tmpNameBetween.append("-".join([betweenName[c],
                                       str(int(l))]))
             boolBetween = np.array(boolBetween)
-
-            withinCombi = within[:,subject == 1].T
+            if within!=[]:
+                withinCombi = within[:,subject == 1].T
+            else:
+                withinCombi=[within]
             for w in withinCombi:
                 boolWithin = []
                 tmpNameWithin = []
@@ -380,12 +411,32 @@ class WriteData:
                     tmpNameWithin.append("-".join([withinName[c],
                                          str(int(l))]))
                 boolWithin = np.array(boolWithin)
-                bools = np.append(boolBetween, boolWithin, axis=0)
-                # name of the arrangement
-                tmpName = ".".join([".".join(tmpNameBetween),
-                                    ".".join(tmpNameWithin)])
+                # we have betwenn and within subject Factor
+                if between!=[] and within !=[]:
+                    print('1')
+                    bools = np.append(boolBetween, boolWithin, axis=0)
+                    # name of the arrangement
+                    tmpName = ".".join([".".join(tmpNameBetween),
+                                        ".".join(tmpNameWithin)])
+                # Only Between subject factor
+                elif between!=[]:
+                    print('2')
+                    bools = boolBetween
+                    # name of the arrangement
+                    tmpName = ".".join(tmpNameBetween)
+                # Only Within subject factor
+                elif within !=[]:
+                    print('3')
+                    bools = boolWithin
+                    # name of the arrangement
+                    tmpName = ".".join(tmpNameWithin)
+                else:
+                    bools=subject>-1
+                    bools=bools.reshape((1,len(bools)))
+                    tmpName='Simple Regression'
                 condName.append(tmpName)
                 allCombiBool[tmpName] = bools.prod(axis=0) == 1
+
 
         # Dictionary of boolean correcponding to all arangements
         self.Arrangement = allCombiBool

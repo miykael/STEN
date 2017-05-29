@@ -144,7 +144,10 @@ class ReadEPH:
             self.FS = float(header[2])
         self.data = np.loadtxt(filename, skiprows=1)
         if len(self.data.shape)==1:
-            self.data=self.data.reshape((1,self.electrodes))
+            print(self.TF)
+            print(self.data.shape)
+            print(self.electrodes)
+            self.data=self.data.reshape((self.TF,self.electrodes))
         self.GFP = self.data.std(axis=1)
 
 
@@ -279,16 +282,25 @@ class ReadDataset:
             TF = TF[0]
         else:
             print 'Number of sampling points is unequal in EPH files.'
-
+        
         DataGroup = H5.create_group('/', 'Data')
         H5.create_array(DataGroup,'Header',np.array([TF,electrodes,FS]))
+        print(TF)
+        print(electrodes)
+        print(type(TF))
+        print(type(electrodes))
+        print(TF*electrodes)
         AllData = H5.create_earray(
-            DataGroup, 'All', tables.Float32Atom(), (TF * electrodes, 0))
+            DataGroup, 'All', tables.Float32Atom(), (float(TF) * float(electrodes), 0))
+        print(AllData)
         GFPData = H5.create_earray(
-            DataGroup, 'GFP', tables.Float32Atom(), (TF, 0))
+            DataGroup, 'GFP', tables.Float32Atom(), (float(TF), 0))
 
         # Reading EphFile and store into Tables with EArray
         for e in ephData:
+            print(e.data.shape)
+            print(e.data.reshape(np.array(e.data.shape).prod(), 1).shape)
+            print(AllData)
             AllData.append(e.data.reshape(np.array(e.data.shape).prod(), 1))
             GFPData.append(e.GFP.reshape(TF, 1))
 

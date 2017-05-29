@@ -219,7 +219,7 @@ class Anova:
             newRow['StatEffect'] = conditionName
             newRow['P'] = pValues[:, :, i]
             newRow['F'] = FValues[:, :, i]
-            newrow['Df']=np.array(df[i])
+            newRow['Df']=np.array(df[i])
             newRow.append()
     def bootstrapData(self, data, factorSubject):
         NbSubject = factorSubject.max()
@@ -228,7 +228,7 @@ class Anova:
         for r in range(NbSubject):
             np.random.shuffle(subjectLabel)
             drawing = np.nonzero(factorSubject == subjectLabel[0])[0]
-            # Shuffle the subjectLabel to permute within subject Factor within
+            # Shuffle the subjectLabel to permute  subject Factor within
             # each Subject. If their is no within Subject factor len(drawing)=1
             np.random.shuffle(drawing)
             order.append(drawing)
@@ -354,36 +354,57 @@ class PostHoc:
         # Transform dict into matrix for easy use
         self.within = np.array(self.within.values())
         self.between = np.array(self.between.values())
-
         # Extract different levels for each between subject factor
-        levelsBetween = self.between.max(axis=1).astype('int')
-
-        # Cacluate all possible combinations using the max number of levels
-        allCombinationBetween = itertools.product(
-            range(1, levelsBetween.max() + 1), repeat=len(levelsBetween))
-
-        # Reduce combination to only existing ones
+        # Between subject factor exist
         existingCombi = []
-        for c in allCombinationBetween:
-            combinations = np.array(c)
-            # existing combinations
-            if (levelsBetween - combinations < 0).sum() == 0:
-                existingCombi.append(combinations)
-        existingCombi = np.array(existingCombi)
+        if self.between!=[]:
+            levelsBetween = self.between.max(axis=1).astype('int')
 
-        # Create all possible combinations and extract the booleans
-        # corresponding to it.
-        allCombiBool = {}
-        condName = []
-        for e in existingCombi:
-            boolBetween = []
-            tmpNameBetween = []
-            for c, l in enumerate(e):
-                boolBetween.append(self.between[c, :] == l)
-                tmpNameBetween.append("-".join([self.betweenName[c],
-                                      str(int(l))]))
-            boolBetween = np.array(boolBetween)
+            # Cacluate all possible combinations using the max number of levels
+            allCombinationBetween = itertools.product(
+                range(1, levelsBetween.max() + 1), repeat=len(levelsBetween))
 
+            # Reduce combination to only existing ones
+          
+            for c in allCombinationBetween:
+                combinations = np.array(c)
+                # existing combinations
+                if (levelsBetween - combinations < 0).sum() == 0:
+                    existingCombi.append(combinations)
+            existingCombi = np.array(existingCombi)
+
+            # Create all possible combinations and extract the booleans
+            # corresponding to it.
+            allCombiBool = {}
+            condName = []
+
+            for e in existingCombi:
+                boolBetween = []
+                tmpNameBetween = []
+                for c, l in enumerate(e):
+                    boolBetween.append(self.between[c, :] == l)
+                    tmpNameBetween.append("-".join([self.betweenName[c],
+                                          str(int(l))]))
+                boolBetween = np.array(boolBetween)
+
+                withinCombi = self.within[:, self.subject == 1].T
+                for w in withinCombi:
+                    boolWithin = []
+                    tmpNameWithin = []
+                    for c, l in enumerate(w):
+                        boolWithin.append(self.within[c, :] == l)
+                        tmpNameWithin.append("-".join([self.withinName[c],
+                                             str(int(l))]))
+                    boolWithin = np.array(boolWithin)
+                    bools = np.append(boolBetween, boolWithin, axis=0)
+                    # name of the arrangement
+                    tmpName = ".".join([".".join(tmpNameBetween),
+                                        ".".join(tmpNameWithin)])
+                    condName.append(tmpName)
+                    allCombiBool[tmpName] = bools.prod(axis=0) == 1
+        else:
+            allCombiBool = {}
+            condName = []
             withinCombi = self.within[:, self.subject == 1].T
             for w in withinCombi:
                 boolWithin = []
@@ -393,19 +414,16 @@ class PostHoc:
                     tmpNameWithin.append("-".join([self.withinName[c],
                                          str(int(l))]))
                 boolWithin = np.array(boolWithin)
-                bools = np.append(boolBetween, boolWithin, axis=0)
+                bools = boolWithin
                 # name of the arrangement
-                tmpName = ".".join([".".join(tmpNameBetween),
-                                    ".".join(tmpNameWithin)])
+                tmpName = ".".join(tmpNameWithin)
                 condName.append(tmpName)
                 allCombiBool[tmpName] = bools.prod(axis=0) == 1
 
         # Dictionary of boolean correcponding to all arangements
         self.Arrangement = allCombiBool
-
         # Creation of all combinations with the 2 arrangements for the t-test
         self.combination = itertools.combinations(condName, 2)
-
         # Number of tests using combinatory calculation for the progression bar
         self.nbTest = len([t for t in itertools.combinations(condName, 2)])
 
@@ -489,18 +507,20 @@ class PostHoc:
             shapeOrigData=self.file.getNode('/Shape').read()
             Res=self.file.getNode('/Result/All/PostHoc')
         dlg = wx.ProgressDialog('Parametric T-test',
-                                "/".join(['PostHoc T-Test : 0',
-                                          str(self.nbTest)]),
+                                "/".join(['PostHoc T-Test : 0',str(self.nbTest)]),
                                 self.nbTest,
                                 parent=self.parent,
-                                style=wx.PD_CAN_ABORT |
-                                wx.PD_AUTO_HIDE | wx.PD_REMAINING_TIME | wx.PD_ELAPSED_TIME)
+                                style=wx.PD_CAN_ABORT | wx.PD_AUTO_HIDE | wx.PD_ELAPSED_TIME |
+                                wx.PD_REMAINING_TIME | wx.PD_SMOOTH)
+        
         dlg.SetSize((200, 175))
         tic=datetime.now()
         n=0
         NewRow=Res.row
         for Combination in self.combination:
             t,p,df=self.CalculationTTest(data,Combination,self.subject,self.Arrangement)
+            print(Combination)
+            print(p)
             # Reshaping Data
             t=t.reshape((shapeOrigData[0], shapeOrigData[1]))
             p=p.reshape((shapeOrigData[0], shapeOrigData[1]))
