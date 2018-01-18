@@ -13,13 +13,13 @@ The most commonly used input data for STEN so far are evoked potential files wit
 Citation
 --------
 
-If you used to process or manipulate your data with STEN, please add the following sentence in the Acknowledgments section:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxx)
+
+If you used the STEN toolbox in your project, please cite as: Knebel, Jean-Francois, Notter, Michael P., & Murray, Micah M. (2018). STEN: Statistical Toolbox for Electrical Neuroimaging. Zenodo. [http://doi.org/10.5281/zenodo.xxxxxx](http://doi.org/10.5281/zenodo.xxxxxx).
+
+Additionally, add the following sentence in the Acknowledgments section:
 
 *The STEN toolbox (https://github.com/jknebel/STEN) has been programmed by Jean-François Knebel and Michael Notter, from the Laboratory for Investigative Neurophysiology (the LINE), Lausanne, Switzerland, and is supported by the Center for Biomedical Imaging (CIBM) of Geneva and Lausanne and by National Center of Competence in Research project “SYNAPSY – The Synaptic Bases of Mental Disease”; project no. 51AU40_125759.*
-
-In addition, reference to STEN within the Material and Methods section should be done in the following way:
-
-*The analysis was performed using the STEN toolbox developed by Jean-François Knebel and Michael Notter (https://github.com/jknebel/STEN).*
 
 
 Installation
