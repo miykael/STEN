@@ -1,7 +1,7 @@
 STEN: Statistical Toolbox for Electrical Neuroimaging
 =====================================================
 
-<img align="right" height="300" src="STEN_logo.png">STEN is an open source software toolbox based on Python and R that can be used to compute statistics on several measures of electro- and magnetoencephalographic (EEG and MEG) signals.
+<img align="right" height="290" src="STEN_logo.png">STEN is an open source software toolbox based on Python and R that can be used to compute statistics on several measures of electro- and magnetoencephalographic (EEG and MEG) signals.
 
 STEN enables the sample-point and sensor-wise analysis of EEG and MEG data, but also at the level of Global Field Power (GFP) and distributed neural source estimations (e.g. LAURA or LORETTA) by means of parametric and non-parametric (bootstrapping) repeated measure ANOVAs, ANCOVAs and regression analyses. Correction thresholds for temporal and spatial auto-correlations in the data can be individually adjusted.
 
@@ -13,8 +13,7 @@ The most commonly used input data for STEN so far are evoked potential files wit
 Citation
 --------
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxx.svg
-   :target: https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxx
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxx)
 
 If you used the STEN toolbox in your project, please cite as: Knebel, Jean-Francois, Notter, Michael P., & Murray, Micah M. (2018). STEN: Statistical Toolbox for Electrical Neuroimaging. *Zenodo*. [http://doi.org/10.5281/zenodo.xxxxxx](http://doi.org/10.5281/zenodo.xxxxxx).
 
