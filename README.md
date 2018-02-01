@@ -13,13 +13,13 @@ The most commonly used input data for STEN so far are evoked potential files wit
 Citation
 --------
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxx)
+[![DOI](https://doi.org/10.5281/zenodo.1164151.svg)](https://doi.org/10.5281/zenodo.1164151
 
-If you used the STEN toolbox in your project, please cite as: Knebel, Jean-Francois, Notter, Michael P., & Murray, Micah M. (2018). STEN: Statistical Toolbox for Electrical Neuroimaging. *Zenodo*. [http://doi.org/10.5281/zenodo.xxxxxx](http://doi.org/10.5281/zenodo.xxxxxx).
+If you used the STEN toolbox in your project, please cite as: Knebel, Jean-François, & Notter, Michael Philipp. (2018, February 1). STEN 2.0: Statistical Toolbox for Electrical Neuroimaging. *Zenodo*. [https://doi.org/10.5281/zenodo.1164151](https://doi.org/10.5281/zenodo.1164151).
 
 Additionally, add the following sentence in the Acknowledgments section:
 
-*The STEN toolbox (https://doi.org/10.5281/zenodo.xxxxxx) has been programmed by Jean-François Knebel and Michael Notter, from the Laboratory for Investigative Neurophysiology (the LINE), Lausanne, Switzerland, and is supported by the Center for Biomedical Imaging (CIBM) of Geneva and Lausanne and by National Center of Competence in Research project “SYNAPSY – The Synaptic Bases of Mental Disease”; project no. 51AU40_125759.*
+*The STEN toolbox (https://doi.org/10.5281/zenodo.1164151 has been programmed by Jean-François Knebel and Michael Notter, from the Laboratory for Investigative Neurophysiology (the LINE), Lausanne, Switzerland, and is supported by the Center for Biomedical Imaging (CIBM) of Geneva and Lausanne and by National Center of Competence in Research project “SYNAPSY – The Synaptic Bases of Mental Disease”; project no. 51AU40_125759.*
 
 
 Installation
