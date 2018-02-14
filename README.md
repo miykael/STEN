@@ -13,7 +13,7 @@ The most commonly used input data for STEN so far are evoked potential files wit
 Citation
 --------
 
-[![DOI](https://doi.org/10.5281/zenodo.1164151.svg)](https://doi.org/10.5281/zenodo.1164151
+[![doi.org/10.5281/zenodo.1164151](https://zenodo.org/badge/doi/10.5281/zenodo.1164151.svg)](http://doi.org/10.5281/zenodo.1164151)
 
 If you used the STEN toolbox in your project, please cite as: Knebel, Jean-François, & Notter, Michael Philipp. (2018, February 1). STEN 2.0: Statistical Toolbox for Electrical Neuroimaging. *Zenodo*. [https://doi.org/10.5281/zenodo.1164151](https://doi.org/10.5281/zenodo.1164151).
 
