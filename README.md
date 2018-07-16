@@ -1,6 +1,14 @@
 STEN: Statistical Toolbox for Electrical Neuroimaging
 =====================================================
 
+[![GitHub issues](https://img.shields.io/github/issues/jknebel/STEN.svg)](https://github.com/jknebel/STEN/issues/)
+[![GitHub pull-requests](https://img.shields.io/github/issues-pr/jknebel/STEN.svg)](https://github.com/jknebel/STEN/pulls/)
+[![GitHub contributors](https://img.shields.io/github/contributors/jknebel/STEN.svg)](https://GitHub.com/jknebel/STEN/graphs/contributors/)
+[![GitHub Commits](https://github-basic-badges.herokuapp.com/commits/jknebel/STEN.svg)](https://github.com/jknebel/STEN/commits/master)
+[![GitHub size](https://github-size-badge.herokuapp.com/jknebel/STEN.svg)](https://github.com/jknebel/STEN/archive/master.zip)
+[![GitHub HitCount](http://hits.dwyl.io/jknebel/STEN.svg)](http://hits.dwyl.io/jknebel/STEN)
+
+
 <img align="right" height="290" src="STEN_logo.png">STEN is an open source software toolbox based on Python and R that can be used to compute statistics on several measures of electro- and magnetoencephalographic (EEG and MEG) signals.
 
 STEN enables the sample-point and sensor-wise analysis of EEG and MEG data, but also at the level of Global Field Power (GFP) and distributed neural source estimations (e.g. LAURA or LORETA) by means of parametric and non-parametric (bootstrapping) repeated measure ANOVAs, ANCOVAs and regression analyses. Correction thresholds for temporal and spatial auto-correlations in the data can be individually adjusted.
