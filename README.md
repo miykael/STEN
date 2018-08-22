@@ -33,7 +33,20 @@ Additionally, add the following sentence in the Acknowledgments section:
 Installation
 ------------
 
-Description will follow...
+The easiest way to install STEN is to use conda to create the necessary python environment to run STEN:
+
+1. If you haven't yet, get conda on your system: https://conda.io/miniconda.html
+2. Download the `environment.yml` file from [here]](https://github.com/jfknebel/STEN/blob/master/environment.yml)
+3. Open up a conda terminal (or any other terminal), and create a new conda environment with the following command: `conda env create --name sten --file /path/to/file/environment.yml`
+
+Et voilà, STEN is on your system. Now to run STEN, you first need to activate the right conda environment. So, again, open a conda terminal and run the following command:
+
+- Windows: activate sten
+- macOS and Linux: source activate sten
+
+Now that you're in the right environment, start STEN with the following command:
+
+`ipython --c "import sten; sten.gui()"`
 
 
 License information
